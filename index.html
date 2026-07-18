@@ -1,0 +1,1178 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chris · 产品设计展示</title>
+  <link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    /* ============================================
+       DESIGN SYSTEM TOKENS — 编辑极简风
+       Source: DesignSystemManifest v1.0
+       ============================================ */
+    :root {
+      /* Colors */
+      --bg-primary: #0b0b10;
+      --bg-secondary: #111118;
+      --bg-tertiary: #1a1a25;
+      --text-primary: #e8e8ed;
+      --text-secondary: #7c7c8a;
+      --text-tertiary: #4a4a58;
+      --accent: #5e6ad2;
+      --accent-dim: #4649a3;
+      --border: #1e1e2a;
+      --border-hover: #2e2e3d;
+
+      /* Typography */
+      --font-display: 'Satoshi', system-ui, -apple-system, sans-serif;
+      --font-body: 'Satoshi', system-ui, -apple-system, sans-serif;
+      --font-mono: 'JetBrains Mono', 'Cascadia Code', 'Fira Code', monospace;
+
+      /* Spacing (4px base, 8px multiples) */
+      --space-xs: 4px;
+      --space-sm: 8px;
+      --space-md: 16px;
+      --space-lg: 24px;
+      --space-xl: 32px;
+      --space-2xl: 48px;
+      --space-3xl: 64px;
+      --space-4xl: 96px;
+
+      /* Radii */
+      --radius-none: 0;
+      --radius-sm: 2px;
+      --radius-md: 4px;
+      --radius-full: 9999px;
+
+      /* Borders */
+      --border-thin: 1px solid var(--border);
+
+      /* Shadows (浮层 only) */
+      --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+      --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+      --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
+
+      /* Transitions */
+      --ease-out: 0.2s ease;
+      --ease-smooth: 0.3s ease;
+    }
+
+    /* ============================================
+       RESET
+       ============================================ */
+    *, *::before, *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    body {
+      font-family: var(--font-body);
+      font-weight: 400;
+      font-size: 1rem;
+      line-height: 1.65;
+      color: var(--text-primary);
+      background-color: var(--bg-primary);
+    }
+
+    img {
+      display: block;
+      max-width: 100%;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    /* ============================================
+       TYPOGRAPHY
+       ============================================ */
+    .display {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: clamp(2.5rem, 5vw, 4rem);
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+    }
+
+    .heading-2 {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: clamp(1.5rem, 3vw, 2rem);
+      line-height: 1.2;
+      letter-spacing: -0.01em;
+    }
+
+    .heading-3 {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 1.125rem;
+      line-height: 1.3;
+    }
+
+    .label {
+      font-size: 0.75rem;
+      line-height: 1.4;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+    }
+
+    .body-sm {
+      font-size: 0.875rem;
+      line-height: 1.6;
+    }
+
+    .caption {
+      font-size: 0.75rem;
+      line-height: 1.5;
+      letter-spacing: 0.02em;
+      color: var(--text-secondary);
+    }
+
+    .mono {
+      font-family: var(--font-mono);
+      font-size: 0.8125rem;
+      line-height: 1.5;
+    }
+
+    .text-secondary {
+      color: var(--text-secondary);
+    }
+
+    /* ============================================
+       LAYOUT
+       ============================================ */
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 var(--space-lg);
+    }
+
+    section {
+      padding: var(--space-3xl) 0;
+    }
+
+    /* ============================================
+       NAV
+       ============================================ */
+    .nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background-color: rgba(11, 11, 16, 0.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: var(--border-thin);
+    }
+
+    .nav-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 56px;
+    }
+
+    .nav-brand {
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+      font-weight: 700;
+      font-size: 1rem;
+      letter-spacing: -0.01em;
+    }
+
+    .nav-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background-color: var(--accent);
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: var(--space-lg);
+    }
+
+    .nav-link {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      transition: color var(--ease-out);
+      padding: var(--space-xs) 0;
+    }
+
+    .nav-link:hover,
+    .nav-link:focus-visible {
+      color: var(--text-primary);
+    }
+
+    .nav-link:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 4px;
+      border-radius: var(--radius-sm);
+    }
+
+    /* ============================================
+       HERO
+       ============================================ */
+    .hero {
+      padding: var(--space-4xl) 0 var(--space-3xl);
+      text-align: center;
+    }
+
+    .hero-title {
+      margin-bottom: var(--space-md);
+    }
+
+    .hero-subtitle {
+      font-size: 1.125rem;
+      color: var(--text-secondary);
+      max-width: 480px;
+      margin: 0 auto var(--space-xl);
+    }
+
+    .hero-tags {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: var(--space-sm);
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 12px;
+      border: var(--border-thin);
+      border-radius: var(--radius-full);
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+      background: var(--bg-secondary);
+      transition: border-color var(--ease-out), color var(--ease-out);
+    }
+
+    .tag:hover {
+      border-color: var(--border-hover);
+      color: var(--text-primary);
+    }
+
+    /* ============================================
+       SECTION HEADER
+       ============================================ */
+    .section-header {
+      text-align: center;
+      margin-bottom: var(--space-2xl);
+    }
+
+    .section-label {
+      margin-bottom: var(--space-sm);
+    }
+
+    /* ============================================
+       PRODUCT GRID
+       ============================================ */
+    .product-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: var(--space-lg);
+    }
+
+    .product-card {
+      background: var(--bg-secondary);
+      border: var(--border-thin);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      transition: border-color var(--ease-out), background var(--ease-out);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .product-card:hover {
+      border-color: var(--border-hover);
+      background: var(--bg-tertiary);
+    }
+
+    .product-card:focus-within {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+      border-radius: var(--radius-md);
+    }
+
+    .product-screenshot {
+      aspect-ratio: 16 / 10;
+      background: var(--bg-tertiary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-bottom: var(--border-thin);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .product-screenshot-inner {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--space-md);
+    }
+
+    /* Simulated screenshot look per product */
+    .scr-gdp {
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    }
+
+    .scr-firelive {
+      background: linear-gradient(135deg, #1a1a1a 0%, #2d1b2e 50%, #1a1a2e 100%);
+    }
+
+    .scr-dashboard {
+      background: linear-gradient(135deg, #0d1b2a 0%, #1b2838 50%, #0a1628 100%);
+    }
+
+    .scr-placeholder-chart {
+      width: 60px;
+      height: 80px;
+      border-radius: var(--radius-sm);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      align-items: flex-end;
+    }
+
+    .scr-placeholder-bar {
+      width: 12px;
+      margin: 4px 2px;
+      border-radius: 1px;
+      background: rgba(255, 255, 255, 0.12);
+    }
+
+    .scr-placeholder-circle {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      border: 3px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .scr-placeholder-dot-group {
+      display: flex;
+      gap: 4px;
+    }
+
+    .scr-placeholder-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.15);
+    }
+
+    .product-card-body {
+      padding: var(--space-lg);
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .product-card-name {
+      margin-bottom: var(--space-sm);
+    }
+
+    .product-card-desc {
+      color: var(--text-secondary);
+      margin-bottom: var(--space-lg);
+      flex: 1;
+    }
+
+    .product-card-actions {
+      display: flex;
+      gap: var(--space-md);
+    }
+
+    /* ============================================
+       BUTTONS
+       ============================================ */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-xs);
+      font-family: var(--font-body);
+      font-weight: 500;
+      font-size: 0.875rem;
+      border: none;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: all var(--ease-out);
+      padding: 8px 16px;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+
+    .btn:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .btn-primary:hover {
+      background: var(--accent-dim);
+    }
+
+    .btn-primary:active {
+      transform: scale(0.98);
+    }
+
+    .btn-secondary {
+      background: transparent;
+      color: var(--text-primary);
+      border: var(--border-thin);
+    }
+
+    .btn-secondary:hover {
+      background: var(--bg-tertiary);
+      border-color: var(--border-hover);
+    }
+
+    .btn-secondary:active {
+      transform: scale(0.98);
+    }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--text-secondary);
+      padding: 8px 12px;
+    }
+
+    .btn-ghost:hover {
+      color: var(--text-primary);
+    }
+
+    .btn-ghost:active {
+      transform: scale(0.98);
+    }
+
+    .btn:disabled,
+    .btn[aria-disabled="true"] {
+      opacity: 0.4;
+      cursor: not-allowed;
+      pointer-events: none;
+    }
+
+    /* ============================================
+       ABOUT
+       ============================================ */
+    .about {
+      text-align: center;
+      padding: var(--space-3xl) 0;
+      border-top: var(--border-thin);
+    }
+
+    .about-text {
+      max-width: 520px;
+      margin: 0 auto var(--space-xl);
+      color: var(--text-secondary);
+    }
+
+    .about-links {
+      display: flex;
+      justify-content: center;
+      gap: var(--space-lg);
+      flex-wrap: wrap;
+    }
+
+    .about-link {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-xs);
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      padding: var(--space-xs) var(--space-sm);
+      border-radius: var(--radius-sm);
+      transition: color var(--ease-out);
+    }
+
+    .about-link:hover,
+    .about-link:focus-visible {
+      color: var(--text-primary);
+    }
+
+    .about-link:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+
+    /* ============================================
+       FOOTER
+       ============================================ */
+    .footer {
+      border-top: var(--border-thin);
+      padding: var(--space-xl) 0;
+    }
+
+    .footer-inner {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: var(--space-md);
+    }
+
+    .footer-stack {
+      display: flex;
+      align-items: center;
+      gap: var(--space-md);
+      flex-wrap: wrap;
+    }
+
+    .footer-copy {
+      color: var(--text-tertiary);
+      font-size: 0.8125rem;
+    }
+
+    .stack-item {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--text-tertiary);
+      padding: 2px 8px;
+      border: var(--border-thin);
+      border-radius: var(--radius-sm);
+    }
+
+    /* ============================================
+       STATUS INDICATOR
+       ============================================ */
+    .status-dot {
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #22c55e;
+      flex-shrink: 0;
+    }
+
+    .status-dot-sm {
+      width: 5px;
+      height: 5px;
+    }
+
+    .status-bar {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--space-sm);
+      padding: var(--space-lg) 0;
+      border-top: var(--border-thin);
+      border-bottom: var(--border-thin);
+    }
+
+    .status-bar-text {
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+    }
+
+    /* ============================================
+       PRODUCT NUMBER BADGE
+       ============================================ */
+    .product-number {
+      position: absolute;
+      top: var(--space-md);
+      left: var(--space-md);
+      font-family: var(--font-mono);
+      font-size: 0.6875rem;
+      color: var(--text-tertiary);
+      letter-spacing: 0.06em;
+      z-index: 2;
+    }
+
+    /* ============================================
+       PRODUCT META ROW
+       ============================================ */
+    .product-meta {
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+      margin-bottom: var(--space-md);
+    }
+
+    .product-meta-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.75rem;
+      color: #22c55e;
+    }
+
+    .product-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-xs);
+      margin-bottom: var(--space-md);
+    }
+
+    .tech-tag {
+      font-family: var(--font-mono);
+      font-size: 0.6875rem;
+      color: var(--text-tertiary);
+      padding: 1px 6px;
+      border: var(--border-thin);
+      border-radius: var(--radius-sm);
+    }
+
+    /* ============================================
+       COMING SOON HINT
+       ============================================ */
+    .coming-soon {
+      position: relative;
+    }
+
+    .coming-soon-badge {
+      font-size: 0.625rem;
+      letter-spacing: 0.06em;
+      color: var(--text-tertiary);
+      margin-left: 2px;
+    }
+
+    /* ============================================
+       WIP & RESERVED CARD STATES
+       ============================================ */
+    .product-card.is-wip {
+      opacity: 0.85;
+    }
+
+    .product-card.is-wip .product-screenshot {
+      position: relative;
+    }
+
+    .product-card.is-wip .product-screenshot::after {
+      content: "设计中";
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 0.875rem;
+      letter-spacing: 0.06em;
+      color: var(--text-tertiary);
+      background: rgba(11, 11, 16, 0.6);
+      backdrop-filter: blur(2px);
+      -webkit-backdrop-filter: blur(2px);
+    }
+
+    .product-meta-status.is-designing {
+      color: #f59e0b;
+    }
+
+    .status-dot-amber {
+      display: inline-block;
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: #f59e0b;
+      flex-shrink: 0;
+    }
+
+    .product-card.is-reserved {
+      border-style: dashed;
+      background: transparent;
+      cursor: default;
+      min-height: 320px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .product-card.is-reserved:hover {
+      border-color: var(--border);
+      background: transparent;
+    }
+
+    .reserved-content {
+      text-align: center;
+      padding: var(--space-xl);
+    }
+
+    .reserved-icon {
+      font-family: var(--font-mono);
+      font-size: 2rem;
+      color: var(--text-tertiary);
+      margin-bottom: var(--space-md);
+      opacity: 0.3;
+    }
+
+    .reserved-label {
+      font-size: 0.75rem;
+      letter-spacing: 0.08em;
+      color: var(--text-tertiary);
+      text-transform: uppercase;
+    }
+
+    /* ============================================
+       SCROLL HINT
+       ============================================ */
+    .scroll-hint {
+      margin-top: var(--space-xl);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--space-xs);
+      color: var(--text-tertiary);
+      font-size: 0.75rem;
+    }
+
+    .scroll-hint-line {
+      width: 1px;
+      height: 24px;
+      background: var(--border);
+    }
+
+    /* ============================================
+       SKELETON STATES
+       ============================================ */
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    .skeleton {
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+
+    /* ============================================
+       RESPONSIVE — Mobile (< 768px)
+       ============================================ */
+    @media (max-width: 768px) {
+      .product-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .nav-links {
+        display: none;
+      }
+
+      .hero {
+        padding: var(--space-2xl) 0 var(--space-xl);
+      }
+
+      section {
+        padding: var(--space-2xl) 0;
+      }
+
+      .footer-inner {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      /* Ensure touch targets >= 44px */
+      .btn {
+        min-height: 44px;
+        padding: 10px 16px;
+      }
+
+      .nav-link {
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+      }
+
+      .about-link {
+        min-height: 44px;
+      }
+    }
+
+    /* ============================================
+       RESPONSIVE — Tablet (768px–1023px)
+       ============================================ */
+    @media (min-width: 769px) and (max-width: 1023px) {
+      .product-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    /* ============================================
+       REDUCED MOTION
+       ============================================ */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+
+      html {
+        scroll-behavior: auto;
+      }
+    }
+
+    /* ============================================
+       FOCUS VISIBLE (global)
+       ============================================ */
+    :focus:not(:focus-visible) {
+      outline: none;
+    }
+
+    :focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- =====================================
+       NAV
+       ===================================== -->
+  <nav class="nav" role="navigation" aria-label="主导航">
+    <div class="container nav-inner">
+      <a href="#" class="nav-brand" aria-label="回到首页">
+        <span class="nav-dot" aria-hidden="true"></span>
+        <span>Chris</span>
+      </a>
+      <div class="nav-links">
+        <a href="#products" class="nav-link">产品</a>
+        <a href="#about" class="nav-link">关于</a>
+        <a href="tencent://message/?uin=16003269" class="nav-link" rel="external noopener">QQ</a>
+      </div>
+    </div>
+  </nav>
+
+  <main>
+    <!-- =====================================
+         HERO
+         ===================================== -->
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="container">
+          <p class="label" style="margin-bottom: var(--space-sm); color: var(--accent)">Chris</p>
+          <h1 class="display hero-title" id="hero-title">
+            产品设计<br>与工程实践
+          </h1>
+        <p class="hero-subtitle">
+          从数据看板到调度系统，每一个产品都是设计与代码的完整表达。
+          3 个在线运行，2 个设计中，持续迭代中。
+        </p>
+        <div class="hero-tags" aria-label="专注领域">
+          <span class="tag">产品设计</span>
+          <span class="tag">数据可视化</span>
+          <span class="tag">全栈开发</span>
+        </div>
+        <div class="scroll-hint" aria-hidden="true">
+          <span>浏览产品</span>
+          <div class="scroll-hint-line"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =====================================
+         STATUS BAR
+         ===================================== -->
+    <div class="status-bar" aria-label="服务状态">
+      <span class="status-dot" aria-hidden="true"></span>
+      <span class="status-bar-text">3 个在线 + 2 个设计中 — 持续构建产品矩阵</span>
+      <span class="mono" style="color:var(--text-tertiary);font-size:0.6875rem">101.34.86.47</span>
+    </div>
+
+    <!-- =====================================
+         PRODUCTS
+         ===================================== -->
+    <section id="products" aria-labelledby="products-heading">
+      <div class="container">
+        <div class="section-header">
+          <p class="label section-label">在线产品</p>
+          <h2 class="heading-2" style="margin-top:4px">每一个产品，一种设计语言</h2>
+        </div>
+
+        <div class="product-grid" role="list">
+
+          <!-- GDP Core Index -->
+          <article class="product-card" role="listitem" aria-labelledby="product-1-name">
+            <div class="product-screenshot scr-gdp" aria-hidden="true">
+              <span class="product-number">01</span>
+              <div class="product-screenshot-inner">
+                <div class="scr-placeholder-chart">
+                  <div class="scr-placeholder-bar" style="height:40%"></div>
+                  <div class="scr-placeholder-bar" style="height:65%"></div>
+                  <div class="scr-placeholder-bar" style="height:85%"></div>
+                  <div class="scr-placeholder-bar" style="height:55%"></div>
+                </div>
+                <div class="scr-placeholder-circle"></div>
+                <div class="scr-placeholder-dot-group">
+                  <div class="scr-placeholder-dot"></div>
+                  <div class="scr-placeholder-dot"></div>
+                  <div class="scr-placeholder-dot"></div>
+                </div>
+              </div>
+            </div>
+            <div class="product-card-body">
+              <div class="product-meta">
+                <span class="product-meta-status">
+                  <span class="status-dot status-dot-sm" aria-hidden="true"></span>
+                  运行中
+                </span>
+                <span class="mono" style="font-size:0.6875rem;color:var(--text-tertiary)">:8080</span>
+              </div>
+              <h3 class="heading-3 product-card-name" id="product-1-name">GDP Core Index</h3>
+              <p class="body-sm product-card-desc">
+                宏观经济数据可视化看板。D3.js + ECharts 双引擎驱动，Flask 后端，支持多维度指标对比与历史回溯。
+              </p>
+              <div class="product-tags" aria-label="技术栈">
+                <span class="tech-tag">D3.js</span>
+                <span class="tech-tag">ECharts</span>
+                <span class="tech-tag">Flask</span>
+                <span class="tech-tag">Gunicorn</span>
+              </div>
+              <div class="product-card-actions">
+                <a href="https://szjg.top/gdp/" class="btn btn-primary">
+                  进入 Demo
+                  <span aria-hidden="true">→</span>
+                </a>
+                <button class="btn btn-ghost coming-soon" disabled aria-disabled="true">
+                  设计笔记
+                  <span class="coming-soon-badge">即将上线</span>
+                </button>
+              </div>
+            </div>
+          </article>
+
+          <!-- FireLive -->
+          <article class="product-card" role="listitem" aria-labelledby="product-2-name">
+            <div class="product-screenshot scr-firelive" aria-hidden="true">
+              <span class="product-number">02</span>
+              <div class="product-screenshot-inner">
+                <div class="scr-placeholder-dot-group">
+                  <div class="scr-placeholder-dot"></div>
+                  <div class="scr-placeholder-dot"></div>
+                  <div class="scr-placeholder-dot"></div>
+                  <div class="scr-placeholder-dot"></div>
+                </div>
+                <div style="width:80px;height:40px;border:1px solid rgba(255,255,255,0.08);border-radius:2px;display:flex;align-items:center;justify-content:center;">
+                  <div style="width:60%;height:2px;background:rgba(255,255,255,0.1);border-radius:1px;"></div>
+                </div>
+                <div class="scr-placeholder-dot-group">
+                  <div class="scr-placeholder-dot"></div>
+                  <div class="scr-placeholder-dot"></div>
+                </div>
+              </div>
+            </div>
+            <div class="product-card-body">
+              <div class="product-meta">
+                <span class="product-meta-status">
+                  <span class="status-dot status-dot-sm" aria-hidden="true"></span>
+                  运行中
+                </span>
+                <span class="mono" style="font-size:0.6875rem;color:var(--text-tertiary)">:8081</span>
+              </div>
+              <h3 class="heading-3 product-card-name" id="product-2-name">FireLive</h3>
+              <p class="body-sm product-card-desc">
+                消防调度协同系统。移动端 Vue 3 + Vant 4，管理端 Element Plus，FastAPI 后端 + SQLite，支持实时工单流转。
+              </p>
+              <div class="product-tags" aria-label="技术栈">
+                <span class="tech-tag">Vue 3</span>
+                <span class="tech-tag">FastAPI</span>
+                <span class="tech-tag">SQLite</span>
+                <span class="tech-tag">Docker</span>
+              </div>
+              <div class="product-card-actions">
+                <a href="http://101.34.86.47:8081/admin/" class="btn btn-primary">
+                  进入 Demo
+                  <span aria-hidden="true">→</span>
+                </a>
+                <button class="btn btn-ghost coming-soon" disabled aria-disabled="true">
+                  设计笔记
+                  <span class="coming-soon-badge">即将上线</span>
+                </button>
+              </div>
+            </div>
+          </article>
+
+          <!-- Dashboard-885 -->
+          <article class="product-card" role="listitem" aria-labelledby="product-3-name">
+            <div class="product-screenshot scr-dashboard" aria-hidden="true">
+              <span class="product-number">03</span>
+              <div class="product-screenshot-inner">
+                <div class="scr-placeholder-circle"></div>
+                <div class="scr-placeholder-chart">
+                  <div class="scr-placeholder-bar" style="height:50%"></div>
+                  <div class="scr-placeholder-bar" style="height:75%"></div>
+                  <div class="scr-placeholder-bar" style="height:60%"></div>
+                  <div class="scr-placeholder-bar" style="height:90%"></div>
+                  <div class="scr-placeholder-bar" style="height:45%"></div>
+                </div>
+                <div class="scr-placeholder-circle" style="width:30px;height:30px;border-width:2px;"></div>
+              </div>
+            </div>
+            <div class="product-card-body">
+              <div class="product-meta">
+                <span class="product-meta-status">
+                  <span class="status-dot status-dot-sm" aria-hidden="true"></span>
+                  运行中
+                </span>
+                <span class="mono" style="font-size:0.6875rem;color:var(--text-tertiary)">:8082</span>
+              </div>
+              <h3 class="heading-3 product-card-name" id="product-3-name">Dashboard-885</h3>
+              <p class="body-sm product-card-desc">
+                实时数据监控大屏。纯静态 HTML + ECharts，零后端依赖，Docker 一键部署，适合快速原型与持续交付。
+              </p>
+              <div class="product-tags" aria-label="技术栈">
+                <span class="tech-tag">ECharts</span>
+                <span class="tech-tag">纯静态</span>
+                <span class="tech-tag">Nginx</span>
+                <span class="tech-tag">Docker</span>
+              </div>
+              <div class="product-card-actions">
+                <a href="https://szjg.top/dashboard/" class="btn btn-primary">
+                  进入 Demo
+                  <span aria-hidden="true">→</span>
+                </a>
+                <button class="btn btn-ghost coming-soon" disabled aria-disabled="true">
+                  设计笔记
+                  <span class="coming-soon-badge">即将上线</span>
+                </button>
+              </div>
+            </div>
+          </article>
+
+          <!-- Data Cockpit（设计中） -->
+          <article class="product-card is-wip" role="listitem" aria-labelledby="product-4-name">
+            <div class="product-screenshot scr-gdp" aria-hidden="true">
+              <span class="product-number">04</span>
+              <div class="product-screenshot-inner">
+                <div class="scr-placeholder-circle"></div>
+                <div class="scr-placeholder-circle" style="width:70px;height:70px;border-width:2px;"></div>
+                <div class="scr-placeholder-dot-group">
+                  <div class="scr-placeholder-dot"></div>
+                  <div class="scr-placeholder-dot"></div>
+                  <div class="scr-placeholder-dot"></div>
+                  <div class="scr-placeholder-dot"></div>
+                  <div class="scr-placeholder-dot"></div>
+                </div>
+              </div>
+            </div>
+            <div class="product-card-body">
+              <div class="product-meta">
+                <span class="product-meta-status is-designing">
+                  <span class="status-dot-amber" aria-hidden="true"></span>
+                  设计中
+                </span>
+              </div>
+              <h3 class="heading-3 product-card-name" id="product-4-name">Data Cockpit</h3>
+              <p class="body-sm product-card-desc">
+                多源数据聚合驾驶舱。统一接入 GDP、监控、业务等多维度数据源，一屏纵览全局。下钻分析 + 实时预警联动。
+              </p>
+              <div class="product-tags" aria-label="技术栈">
+                <span class="tech-tag">React</span>
+                <span class="tech-tag">ECharts</span>
+                <span class="tech-tag">WebSocket</span>
+                <span class="tech-tag">FastAPI</span>
+              </div>
+              <div class="product-card-actions">
+                <button class="btn btn-secondary" disabled aria-disabled="true">
+                  开发中
+                </button>
+              </div>
+            </div>
+          </article>
+
+          <!-- Smart Monitor（设计中） -->
+          <article class="product-card is-wip" role="listitem" aria-labelledby="product-5-name">
+            <div class="product-screenshot scr-dashboard" aria-hidden="true">
+              <span class="product-number">05</span>
+              <div class="product-screenshot-inner">
+                <div class="scr-placeholder-chart">
+                  <div class="scr-placeholder-bar" style="height:30%"></div>
+                  <div class="scr-placeholder-bar" style="height:50%"></div>
+                  <div class="scr-placeholder-bar" style="height:80%"></div>
+                  <div class="scr-placeholder-bar" style="height:95%"></div>
+                  <div class="scr-placeholder-bar" style="height:65%;background:rgba(245,158,11,0.3)"></div>
+                </div>
+                <div class="scr-placeholder-circle" style="border-color:rgba(245,158,11,0.2)"></div>
+              </div>
+            </div>
+            <div class="product-card-body">
+              <div class="product-meta">
+                <span class="product-meta-status is-designing">
+                  <span class="status-dot-amber" aria-hidden="true"></span>
+                  设计中
+                </span>
+              </div>
+              <h3 class="heading-3 product-card-name" id="product-5-name">Smart Monitor</h3>
+              <p class="body-sm product-card-desc">
+                智能阈值监控告警系统。基于历史数据自适应阈值，异常检测 + 多渠道通知，让数据异常在酿成事故前被发现。
+              </p>
+              <div class="product-tags" aria-label="技术栈">
+                <span class="tech-tag">Python</span>
+                <span class="tech-tag">Pandas</span>
+                <span class="tech-tag">Vue 3</span>
+                <span class="tech-tag">Webhook</span>
+              </div>
+              <div class="product-card-actions">
+                <button class="btn btn-secondary" disabled aria-disabled="true">
+                  开发中
+                </button>
+              </div>
+            </div>
+          </article>
+
+          <!-- 预留位 06 -->
+          <article class="product-card is-reserved" role="listitem" aria-label="预留产品位">
+            <div class="reserved-content">
+              <div class="reserved-icon" aria-hidden="true">+</div>
+              <p class="reserved-label">即将推出</p>
+            </div>
+          </article>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- =====================================
+         ABOUT
+         ===================================== -->
+    <section class="about" id="about" aria-labelledby="about-heading">
+      <div class="container">
+        <p class="label section-label" id="about-heading">关于</p>
+        <p class="about-text">
+          一个相信产品设计应该从头到尾被一个人理解的人。从数据 schema 到交互动效，
+          从 Docker 部署到色彩系统——每个环节都是设计决策。
+        </p>
+        <div class="about-links">
+          <a href="mailto:16003269@qq.com" class="about-link" rel="nofollow">
+            邮件联系
+            <span aria-hidden="true">→</span>
+          </a>
+          <a href="tencent://message/?uin=16003269" class="about-link" rel="external noopener">
+            QQ 联系
+            <span aria-hidden="true">→</span>
+          </a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- =====================================
+       FOOTER
+       ===================================== -->
+  <footer class="footer" role="contentinfo">
+    <div class="container footer-inner">
+      <p class="footer-copy">© 2026 Chris</p>
+      <div class="footer-stack" aria-label="本站技术栈">
+        <span class="stack-item">HTML/CSS</span>
+        <span class="stack-item">无框架</span>
+        <span class="stack-item">Satoshi</span>
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>
