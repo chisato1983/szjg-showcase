@@ -1,0 +1,2633 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1920, initial-scale=1.0">
+<title>885数据驾驶舱 · 八张报表 v1.0</title>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+<style>
+/* ====== Reset & Variables ====== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg-primary: #0a0e1a;
+  --bg-secondary: #111827;
+  --bg-card: #1a1f2e;
+  --bg-card-hover: #1e2440;
+  --border: #2a2f3f;
+  --text-primary: #e2e8f0;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --grade-a: #2ECC71; --grade-b: #3498DB; --grade-c: #F1C40F; --grade-d: #E67E22; --grade-e: #E74C3C; --grade-n: #95A5A6;
+  --gold: #F5A623;
+  --radius: 10px; --radius-sm: 8px;
+  --shadow: 0 2px 8px rgba(0,0,0,0.3);
+  --shadow-hover: 0 4px 20px rgba(0,0,0,0.5);
+  --transition: 0.2s ease;
+}
+body {
+  font-family: -apple-system, "Microsoft YaHei", "PingFang SC", sans-serif;
+  background: var(--bg-primary); color: var(--text-primary);
+  min-width: 1366px; min-height: 100vh;
+  line-height: 1.5;
+}
+
+/* ====== Layout ====== */
+.page { display: none; padding: 0; }
+.page.active { display: block; }
+
+/* ====== Breadcrumb ====== */
+.breadcrumb {
+  display: flex; align-items: center; gap: 8px;
+  padding: 14px 28px; background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100;
+}
+.breadcrumb .crumb { color: var(--text-secondary); font-size: 14px; cursor: pointer; text-decoration: none; }
+.breadcrumb .crumb:hover { color: #60a5fa; }
+.breadcrumb .crumb.current { color: var(--text-primary); font-weight: 700; cursor: default; }
+.breadcrumb .sep { color: var(--text-muted); font-size: 12px; }
+.breadcrumb .quarter-badge {
+  margin-left: auto; background: var(--bg-card); color: var(--text-secondary);
+  padding: 4px 14px; border-radius: 20px; font-size: 13px; border: 1px solid var(--border);
+}
+
+/* ====== Navigation Switcher ====== */
+.nav-switcher {
+  display: flex; align-items: center; justify-content: center; gap: 16px;
+  padding: 8px 0; font-size: 14px; color: var(--text-secondary);
+}
+.nav-switcher .nav-arrow { cursor: pointer; color: var(--text-muted); font-size: 16px; user-select: none; }
+.nav-switcher .nav-arrow:hover { color: var(--text-primary); }
+.nav-switcher .nav-item { cursor: pointer; padding: 4px 12px; border-radius: 4px; color: var(--text-secondary); }
+.nav-switcher .nav-item:hover { background: var(--bg-card); color: var(--text-primary); }
+.nav-switcher .nav-item.active { background: var(--bg-card); color: #60a5fa; font-weight: 600; }
+
+/* ====== Cards ====== */
+.card {
+  background: var(--bg-card); border-radius: var(--radius);
+  padding: 20px; border: 1px solid var(--border);
+  box-shadow: var(--shadow); transition: all var(--transition);
+}
+.card:hover { box-shadow: var(--shadow-hover); transform: translateY(-1px); }
+.card.clickable { cursor: pointer; }
+.card.clickable:hover { border-color: #3b82f6; }
+
+/* ====== Metric Card ====== */
+.metric-card { text-align: center; padding: 18px 24px; }
+.metric-card .label { font-size: 13px; color: var(--text-muted); margin-bottom: 6px; }
+.metric-card .value { font-size: 40px; font-weight: 800; line-height: 1.1; }
+.metric-card .sub { font-size: 14px; color: var(--text-secondary); margin-top: 4px; }
+
+/* ====== Grade Colors ====== */
+.grade-A { color: var(--grade-a); } .grade-B { color: var(--grade-b); }
+.grade-C { color: var(--grade-c); } .grade-D { color: var(--grade-d); }
+.grade-E { color: var(--grade-e); } .grade-N { color: var(--grade-n); }
+.bg-grade-A { background: var(--grade-a); } .bg-grade-B { background: var(--grade-b); }
+.bg-grade-C { background: var(--grade-c); } .bg-grade-D { background: var(--grade-d); }
+.bg-grade-E { background: var(--grade-e); } .bg-grade-N { background: var(--grade-n); }
+
+/* ====== Star Rating ====== */
+.star { color: var(--gold); font-size: 20px; letter-spacing: 2px; }
+.star-empty { color: #4a5568; }
+.star-sm { font-size: 14px; letter-spacing: 1px; }
+
+/* ====== Matrix Grid ====== */
+.matrix-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+.matrix-cell {
+  background: var(--bg-card); border-radius: var(--radius-sm); padding: 18px 14px;
+  text-align: center; cursor: pointer; transition: all var(--transition);
+  border: 2px solid transparent; position: relative; overflow: hidden;
+}
+.matrix-cell:hover { transform: translateY(-2px); box-shadow: var(--shadow-hover); }
+.matrix-cell.A { border-color: var(--grade-a); }
+.matrix-cell.B { border-color: var(--grade-b); }
+.matrix-cell.C { border-color: var(--grade-c); }
+.matrix-cell.D { border-color: var(--grade-d); }
+.matrix-cell.E { border-color: var(--grade-e); }
+.matrix-cell .cell-name { font-size: 17px; font-weight: 700; margin-bottom: 6px; }
+.matrix-cell .cell-grade { font-size: 28px; font-weight: 800; margin-bottom: 4px; }
+.matrix-cell .cell-change { font-size: 13px; }
+.cell-change-up { color: var(--grade-a); }
+.cell-change-down { color: var(--grade-e); }
+
+/* ====== Tables ====== */
+.data-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.data-table th {
+  text-align: left; padding: 10px 14px; color: var(--text-muted);
+  font-weight: 600; font-size: 13px; border-bottom: 2px solid var(--border);
+  white-space: nowrap;
+}
+.data-table td {
+  padding: 10px 14px; border-bottom: 1px solid var(--border);
+  color: var(--text-secondary);
+}
+.data-table tr:hover td { background: rgba(59,130,246,0.05); color: var(--text-primary); }
+.data-table tr { cursor: pointer; }
+
+/* ====== Buttons ====== */
+.btn {
+  display: inline-block; padding: 6px 16px; border-radius: 6px;
+  font-size: 13px; cursor: pointer; transition: all var(--transition);
+  border: 1px solid var(--border); background: var(--bg-card); color: var(--text-secondary);
+  text-decoration: none;
+}
+.btn:hover { background: #1e2440; color: #60a5fa; border-color: #3b82f6; }
+.btn-sm { padding: 4px 10px; font-size: 12px; }
+.btn-link { border: none; background: none; color: #60a5fa; padding: 0; cursor: pointer; }
+
+/* ====== Badges ====== */
+.badge {
+  display: inline-block; padding: 2px 10px; border-radius: 12px;
+  font-size: 12px; font-weight: 600; white-space: nowrap;
+}
+.badge-A { background: rgba(46,204,113,0.15); color: var(--grade-a); border: 1px solid rgba(46,204,113,0.3); }
+.badge-B { background: rgba(52,152,219,0.15); color: var(--grade-b); border: 1px solid rgba(52,152,219,0.3); }
+.badge-C { background: rgba(241,196,15,0.15); color: var(--grade-c); border: 1px solid rgba(241,196,15,0.3); }
+.badge-D { background: rgba(230,126,34,0.15); color: var(--grade-d); border: 1px solid rgba(230,126,34,0.3); }
+.badge-E { background: rgba(231,76,60,0.15); color: var(--grade-e); border: 1px solid rgba(231,76,60,0.3); }
+.badge-done { background: rgba(46,204,113,0.15); color: var(--grade-a); }
+.badge-progress { background: rgba(52,152,219,0.15); color: var(--grade-b); }
+
+/* ====== Progress Bar ====== */
+.progress-bar {
+  height: 8px; background: #2a2f3f; border-radius: 4px; overflow: hidden; width: 80px;
+}
+.progress-fill { height: 100%; border-radius: 4px; transition: width 0.3s; }
+.progress-fill.high { background: var(--grade-a); }
+.progress-fill.mid { background: var(--grade-c); }
+.progress-fill.low { background: var(--grade-e); }
+
+/* ====== Section ====== */
+.section { padding: 20px 28px; }
+.section-title { font-size: 20px; font-weight: 700; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+.section-title .link { margin-left: auto; font-size: 14px; color: #60a5fa; cursor: pointer; font-weight: 400; }
+.section-title .link:hover { text-decoration: underline; }
+.section-subtitle { font-size: 16px; font-weight: 600; margin-bottom: 12px; color: var(--text-secondary); }
+
+/* ====== Page 1: Home ====== */
+.home-top { display: grid; grid-template-columns: 1fr; gap: 16px; padding: 22px 28px; }
+.home-middle { display: grid; grid-template-columns: 1fr; gap: 16px; padding: 0 28px 22px; }
+.home-bottom { padding: 0 28px 22px; }
+
+/* ====== Alert Zone ====== */
+.alert-list { list-style: none; }
+.alert-item {
+  padding: 12px 16px; border-radius: var(--radius-sm);
+  margin-bottom: 8px; background: var(--bg-card); cursor: pointer;
+  border-left: 4px solid var(--border); transition: all var(--transition);
+}
+.alert-item:hover { background: var(--bg-card-hover); }
+.alert-item.high { border-left-color: var(--grade-e); }
+.alert-item.mid { border-left-color: var(--grade-d); }
+.alert-item.low { border-left-color: var(--grade-c); }
+.alert-item .severity { font-size: 11px; font-weight: 700; margin-right: 8px; }
+.alert-item .severity.high { color: var(--grade-e); }
+.alert-item .severity.mid { color: var(--grade-d); }
+.alert-item .severity.low { color: var(--grade-c); }
+
+/* ====== Filter Stats ====== */
+.filter-stats { display: flex; align-items: center; gap: 16px; padding: 16px 28px; border-bottom: 1px solid var(--border); }
+.stat-chip {
+  padding: 8px 18px; border-radius: 20px; font-size: 14px; font-weight: 600; cursor: pointer;
+  background: var(--bg-card); border: 1px solid var(--border); text-align: center;
+}
+.stat-chip:hover { border-color: #3b82f6; }
+.stat-chip.count-A { border-color: var(--grade-a); color: var(--grade-a); }
+.stat-chip.count-B { border-color: var(--grade-b); color: var(--grade-b); }
+.stat-chip.count-C { border-color: var(--grade-c); color: var(--grade-c); }
+.stat-chip.count-D { border-color: var(--grade-d); color: var(--grade-d); }
+.stat-chip.count-E { border-color: var(--grade-e); color: var(--grade-e); }
+.filter-select {
+  margin-left: auto; padding: 8px 14px; border-radius: 6px;
+  background: var(--bg-card); color: var(--text-primary); border: 1px solid var(--border);
+  font-size: 14px; cursor: pointer;
+}
+
+/* ====== Page 3: Report Detail ====== */
+.indicator-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 20px; }
+.indicator-grid.cols4 { grid-template-columns: repeat(4, 1fr); }
+.indicator-grid.cols2 { grid-template-columns: repeat(2, 1fr); }
+.indicator-grid.cols5 { grid-template-columns: repeat(5, 1fr); }
+
+/* V2 Indicator Card: ~280px × 240px, 7 info zones */
+.indicator-card {
+  background: var(--bg-card); border-radius: var(--radius-sm); padding: 18px 16px 14px;
+  border: 2px solid transparent; transition: all var(--transition);
+  cursor: pointer; position: relative; min-height: 240px;
+  display: flex; flex-direction: column; gap: 8px;
+}
+.indicator-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-hover); }
+.indicator-card.A { border-color: var(--grade-a); box-shadow: 0 0 12px rgba(46,204,113,0.1); }
+.indicator-card.B { border-color: var(--grade-b); box-shadow: 0 0 12px rgba(52,152,219,0.1); }
+.indicator-card.C { border-color: var(--grade-c); box-shadow: 0 0 12px rgba(241,196,15,0.1); }
+.indicator-card.D { border-color: var(--grade-d); box-shadow: 0 0 12px rgba(230,126,34,0.1); }
+.indicator-card.E { border-color: var(--grade-e); box-shadow: 0 0 12px rgba(231,76,60,0.1); }
+
+/* Zone 1: indicator name + new badge */
+.ind-card-header { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+.ind-card-header .ind-name { font-size: 15px; font-weight: 600; color: var(--text-primary); }
+.ind-card-header .ind-new-badge {
+  font-size: 11px; padding: 1px 6px; border-radius: 8px;
+  background: rgba(46,204,113,0.2); color: var(--grade-a); white-space: nowrap;
+}
+
+/* Zone 2+3: grade badge row + change */
+.ind-card-grade-row { display: flex; align-items: center; gap: 10px; }
+.ind-card-grade-badge {
+  display: inline-block; padding: 4px 14px; border-radius: 6px;
+  font-size: 24px; font-weight: 800; line-height: 1.2;
+}
+.ind-card-grade-badge.grade-A-bg { background: rgba(46,204,113,0.15); color: var(--grade-a); }
+.ind-card-grade-badge.grade-B-bg { background: rgba(52,152,219,0.15); color: var(--grade-b); }
+.ind-card-grade-badge.grade-C-bg { background: rgba(241,196,15,0.15); color: var(--grade-c); }
+.ind-card-grade-badge.grade-D-bg { background: rgba(230,126,34,0.15); color: var(--grade-d); }
+.ind-card-grade-badge.grade-E-bg { background: rgba(231,76,60,0.15); color: var(--grade-e); }
+.ind-card-change { font-size: 13px; }
+
+/* Zone divider */
+.ind-card-divider { height: 1px; background: var(--border); margin: 2px 0; }
+
+/* Zone 4+5: core value 1 */
+.ind-card-core1-label { font-size: 12px; color: #fff; font-weight: 700; }
+.ind-card-core1-value { font-size: 28px; font-weight: 800; color: var(--text-primary); line-height: 1.1; }
+.ind-card-core1-desc { font-size: 12px; color: var(--text-secondary); }
+
+/* Zone 6: core value 2 */
+.ind-card-core2-label { font-size: 12px; color: #fff; font-weight: 700; }
+.ind-card-core2-value { font-size: 22px; font-weight: 700; color: var(--text-primary); line-height: 1.1; }
+
+/* Zone 7: run summary (truncated) */
+.ind-card-summary { font-size: 12px; color: var(--text-secondary); margin-top: auto; }
+
+/* ====== Page 8: Street Eval ====== */
+.street-eval-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; padding: 0 28px 22px; position: relative; transition: grid-template-columns 0.675s cubic-bezier(0.25, 0.8, 0.25, 1.2); }
+.street-eval-layout.layout-expanded { grid-template-columns: 1fr; }
+.street-radar-container { width: 100%; height: 420px; }
+.street-matrix-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.street-matrix-table th {
+  text-align: center; padding: 8px 6px; color: var(--text-muted);
+  font-weight: 600; font-size: 12px; border-bottom: 2px solid var(--border);
+  white-space: nowrap; cursor: pointer;
+}
+.street-matrix-table th:hover { color: #60a5fa; }
+.street-matrix-table th.sticky-col { text-align: left; cursor: default; }
+.street-matrix-table th.sticky-col:hover { color: var(--text-muted); }
+.street-matrix-table td {
+  padding: 8px 6px; text-align: center; border-bottom: 1px solid var(--border);
+  color: var(--text-secondary);
+}
+.street-matrix-table td.sticky-col { text-align: left; font-weight: 600; color: var(--text-primary); }
+.street-matrix-table tr:hover td { background: rgba(59,130,246,0.08); }
+.street-matrix-table tr.selected td { background: rgba(59,130,246,0.15); }
+.street-matrix-table tr.avg-row td { background: var(--bg-card); font-weight: 600; color: var(--text-primary); border-top: 2px solid var(--border); }
+.street-matrix-table .score-badge {
+  display: inline-block; padding: 2px 6px; border-radius: 4px;
+  font-size: 11px; font-weight: 600; margin-left: 4px;
+}
+.score-badge-A { background: rgba(46,204,113,0.15); color: var(--grade-a); }
+.score-badge-B { background: rgba(52,152,219,0.15); color: var(--grade-b); }
+.score-badge-C { background: rgba(241,196,15,0.15); color: var(--grade-c); }
+.score-badge-D { background: rgba(230,126,34,0.15); color: var(--grade-d); }
+.street-detail-card {
+  margin: 16px 28px; padding: 18px 24px; background: var(--bg-card);
+  border-radius: var(--radius); border: 1px solid var(--border);
+}
+.street-detail-card .sd-title { font-size: 16px; font-weight: 700; margin-bottom: 12px; }
+.street-detail-card .sd-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; }
+.street-detail-card .sd-item {
+  text-align: center; padding: 10px 8px; background: var(--bg-secondary);
+  border-radius: var(--radius-sm); border: 1px solid var(--border);
+}
+.street-detail-card .sd-item-label { font-size: 11px; color: var(--text-muted); margin-bottom: 4px; }
+.street-detail-card .sd-item-value { font-size: 18px; font-weight: 700; }
+
+/* ====== Page 8: Street Radar Expand/Collapse ====== */
+@keyframes glowPulse {
+  0%, 100% { box-shadow: 0 0 4px rgba(96, 165, 250, 0.4), 0 0 8px rgba(96, 165, 250, 0.1); }
+  50% { box-shadow: 0 0 12px rgba(96, 165, 250, 0.8), 0 0 24px rgba(96, 165, 250, 0.3); }
+}
+.btn-tech {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 16px; border: 1px solid rgba(96, 165, 250, 0.4);
+  border-radius: 6px; background: rgba(96, 165, 250, 0.08);
+  color: #93c5fd; font-size: 13px; font-weight: 500;
+  cursor: pointer; transition: all 0.3s ease;
+  user-select: none; white-space: nowrap;
+}
+.btn-tech:hover {
+  background: rgba(96, 165, 250, 0.16);
+  border-color: rgba(96, 165, 250, 0.7);
+  color: #bfdbfe;
+}
+.btn-tech.glow-active {
+  animation: glowPulse 0.9s ease-in-out 2;
+  border-color: rgba(96, 165, 250, 0.9);
+  background: rgba(96, 165, 250, 0.2);
+}
+.street-radar-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  padding: 4px 0;
+}
+.mini-radar {
+  position: relative;
+  width: 100%;
+  height: 360px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+.mini-radar .mini-radar-title {
+  position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%);
+  font-size: 13px; font-weight: 600; color: var(--text-primary);
+  z-index: 2; pointer-events: none;
+}
+.mini-radar-entering {
+  animation: radarScaleIn 0.675s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+@keyframes radarScaleIn {
+  from { transform: scale(0.3); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+@keyframes radarScaleOut {
+  from { transform: scale(1); opacity: 1; }
+  to { transform: scale(0.3); opacity: 0; }
+}
+.street-radar-container.fading-out {
+  opacity: 0; transform: scale(0.95);
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+/* ====== Tech Cinematic: Scan Line ====== */
+.street-eval-layout.scan-forward::before,
+.street-eval-layout.scan-reverse::before {
+  content: '';
+  position: absolute; z-index: 50; pointer-events: none;
+  left: 0; right: 0; height: 3px;
+  background: linear-gradient(90deg, transparent 0%, rgba(96,165,250,0.1) 20%, #60a5fa 50%, rgba(168,139,250,0.8) 52%, #60a5fa 54%, rgba(96,165,250,0.1) 80%, transparent 100%);
+  border-radius: 2px;
+}
+.street-eval-layout.scan-forward::before {
+  animation: scanSweepDown 0.6s ease-out forwards;
+}
+.street-eval-layout.scan-reverse::before {
+  animation: scanSweepUp 0.525s ease-out forwards;
+}
+@keyframes scanSweepDown {
+  0%   { top: -5%; opacity: 0; filter: blur(0px); }
+  15%  { opacity: 1; filter: blur(1px); }
+  85%  { opacity: 1; filter: blur(1px); }
+  100% { top: 105%; opacity: 0; filter: blur(0px); }
+}
+@keyframes scanSweepUp {
+  0%   { top: 105%; opacity: 0; filter: blur(0px); }
+  15%  { opacity: 1; filter: blur(1px); }
+  85%  { opacity: 1; filter: blur(1px); }
+  100% { top: -5%; opacity: 0; filter: blur(0px); }
+}
+
+/* ====== Tech Cinematic: Container Pulse ====== */
+.street-eval-layout.layout-pulse {
+  box-shadow: 0 0 30px rgba(96,165,250,0.3), 0 0 60px rgba(139,92,246,0.15);
+  transition: box-shadow 0.9s ease;
+}
+
+/* ====== Tech Cinematic: Matrix Slide (FLIP assist) ====== */
+#street-matrix-card.matrix-sliding {
+  transition: transform 0.75s cubic-bezier(0.25, 0.8, 0.25, 1.2);
+  will-change: transform;
+}
+
+
+
+/* ====== Expand/Collapse ====== */
+.expand-section { margin-top: 20px; }
+.expand-header {
+  display: flex; align-items: center; gap: 8px; padding: 12px 16px;
+  background: var(--bg-card); border-radius: var(--radius-sm);
+  cursor: pointer; font-size: 15px; font-weight: 600;
+  border: 1px solid var(--border); transition: all var(--transition);
+}
+.expand-header:hover { border-color: #3b82f6; }
+.expand-body { display: none; padding: 16px; }
+.expand-body.open { display: block; }
+
+/* ====== Modal ====== */
+@keyframes modalFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes modalSlideUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.modal-overlay {
+  display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.6); z-index: 1000; justify-content: center; align-items: center;
+}
+.modal-overlay.show {
+  display: flex; animation: modalFadeIn 0.3s ease;
+}
+.modal-content {
+  background: var(--bg-secondary); border-radius: var(--radius); padding: 28px;
+  max-width: 640px; width: 90%; max-height: 70vh; overflow-y: auto;
+  border: 1px solid var(--border); box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+  animation: modalSlideUp 0.3s ease;
+}
+.modal-close {
+  float: right; cursor: pointer; font-size: 20px; color: var(--text-muted);
+  line-height: 1; padding: 4px;
+}
+.modal-close:hover { color: var(--text-primary); }
+.modal-title { font-size: 18px; font-weight: 700; margin-bottom: 16px; }
+.modal-text { font-size: 14px; color: var(--text-secondary); line-height: 1.8; }
+
+/* ====== Summary Card Row ====== */
+.summary-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; margin-bottom: 20px; }
+.summary-card { text-align: center; }
+.summary-card .s-label { font-size: 12px; color: var(--text-muted); margin-bottom: 4px; }
+.summary-card .s-value { font-size: 24px; font-weight: 800; }
+.summary-card .s-sub { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+
+/* ====== Detail Layout ====== */
+.detail-two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.detail-two-col-l { grid-template-columns: 3fr 2fr; }
+
+/* ====== Text Truncate ====== */
+.text-truncate-1 {
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.text-truncate-2 {
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+  overflow: hidden; text-overflow: ellipsis;
+}
+
+/* ====== Tooltip ====== */
+.custom-tooltip {
+  position: fixed; z-index: 9999; pointer-events: none;
+  background: #2C3E50; color: #fff; border-radius: 8px;
+  padding: 10px 14px; font-size: 13px; line-height: 1.6;
+  max-width: 400px; word-wrap: break-word;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+  opacity: 0; transform: translateY(4px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+.custom-tooltip.show { opacity: 1; transform: translateY(0); }
+
+/* ====== Collapse Animation ====== */
+.collapse-section { overflow: hidden; }
+.collapse-section .collapse-body {
+  max-height: 0; overflow: hidden;
+  transition: max-height 0.3s ease, padding 0.3s ease;
+  padding-top: 0; padding-bottom: 0;
+}
+.collapse-section.open .collapse-body {
+  max-height: 2000px; padding-top: 12px; padding-bottom: 12px;
+}
+.collapse-toggle { cursor: pointer; user-select: none; }
+.collapse-toggle .collapse-icon {
+  transition: transform 0.3s ease; display: inline-block;
+}
+.collapse-section.open .collapse-icon { transform: rotate(90deg); }
+
+/* ====== Problem Grouping ====== */
+.problem-group { margin-bottom: 8px; }
+.problem-group-header {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 14px; background: var(--bg-card);
+  border-radius: var(--radius-sm); cursor: pointer;
+  border: 1px solid var(--border); transition: all var(--transition);
+  font-weight: 600; font-size: 14px;
+}
+.problem-group-header:hover { border-color: #3b82f6; background: var(--bg-card-hover); }
+.problem-group-header .group-count { font-size: 12px; color: var(--text-muted); margin-left: 6px; }
+.problem-group-body { display: none; padding: 8px 0 8px 12px; }
+.problem-group.open .problem-group-body { display: block; }
+.problem-card {
+  padding: 12px 14px; background: var(--bg-secondary); border-radius: 6px;
+  margin-bottom: 8px; border-left: 3px solid var(--border);
+  transition: all var(--transition);
+}
+.problem-card:hover { border-left-color: #3b82f6; }
+.problem-card .prob-title { font-weight: 600; font-size: 14px; margin-bottom: 4px; }
+.problem-card .prob-meta { font-size: 12px; color: var(--text-muted); }
+.problem-card .prob-desc { font-size: 13px; color: var(--text-secondary); margin-top: 6px; text-truncate-2; }
+.problem-card .prob-tag {
+  display: inline-block; margin-top: 6px; padding: 1px 8px; border-radius: 10px;
+  font-size: 11px; background: rgba(52,152,219,0.15); color: var(--grade-b);
+}
+
+/* ====== View Toggle ====== */
+.view-toggle {
+  display: inline-flex; background: var(--bg-card); border-radius: 6px;
+  border: 1px solid var(--border); overflow: hidden;
+}
+.view-toggle .vt-btn {
+  padding: 5px 12px; font-size: 12px; cursor: pointer; border: none;
+  background: transparent; color: var(--text-muted); transition: all var(--transition);
+}
+.view-toggle .vt-btn:hover { color: var(--text-primary); }
+.view-toggle .vt-btn.active { background: #3b82f6; color: #fff; }
+
+/* ====== Misc ====== */
+.flex-between { display: flex; justify-content: space-between; align-items: center; }
+.gap-8 { gap: 8px; } .gap-12 { gap: 12px; } .gap-16 { gap: 16px; }
+.mt-12 { margin-top: 12px; } .mt-16 { margin-top: 16px; } .mt-20 { margin-top: 20px; }
+.mb-12 { margin-bottom: 12px; } .mb-16 { margin-bottom: 16px; }
+.text-muted { color: var(--text-muted); font-size: 13px; }
+.text-center { text-align: center; }
+.arrow-up { color: var(--grade-a); }
+.arrow-down { color: var(--grade-e); }
+.fw600 { font-weight: 600; }
+
+/* ====== Scrollbar ====== */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg-primary); }
+::-webkit-scrollbar-thumb { background: #3a3f50; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #4a5060; }
+
+/* ====== Responsive ====== */
+@media (max-width: 1600px) {
+  .home-middle { grid-template-columns: 1fr; }
+  .summary-row { grid-template-columns: repeat(5, 1fr); }
+}
+@media (max-width: 1366px) {
+  .home-top { grid-template-columns: repeat(2, 1fr); }
+  .detail-two-col { grid-template-columns: 1fr; }
+  .detail-two-col-l { grid-template-columns: 1fr; }
+}
+
+/* ====== Login Overlay ====== */
+#login-overlay {
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: var(--bg-primary); z-index: 10000;
+  display: flex; justify-content: center; align-items: center;
+}
+.login-card {
+  background: var(--bg-card); border-radius: var(--radius);
+  padding: 48px 40px; border: 1px solid var(--border);
+  box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+  text-align: center; width: 400px;
+}
+.login-card .login-icon { font-size: 48px; margin-bottom: 12px; }
+.login-card .login-title { font-size: 20px; font-weight: 700; margin-bottom: 6px; color: var(--text-primary); }
+.login-card .login-subtitle { font-size: 13px; color: var(--text-muted); margin-bottom: 24px; }
+.login-card .login-input {
+  width: 100%; padding: 12px 16px; border-radius: 6px;
+  border: 1px solid var(--border); background: var(--bg-secondary);
+  color: var(--text-primary); font-size: 15px; outline: none;
+  transition: border-color var(--transition); text-align: center;
+  letter-spacing: 2px;
+}
+.login-card .login-input:focus { border-color: rgba(96, 165, 250, 0.7); box-shadow: 0 0 12px rgba(96,165,250,0.15); }
+.login-card .login-error { color: var(--grade-e); font-size: 13px; margin-top: 10px; min-height: 20px; }
+.login-card .login-lock { color: var(--grade-d); font-size: 13px; margin-top: 10px; min-height: 20px; }
+.login-card .btn-login {
+  width: 100%; margin-top: 16px; padding: 12px 24px;
+  border: 1px solid rgba(96, 165, 250, 0.4);
+  border-radius: 6px; background: rgba(96, 165, 250, 0.08);
+  color: #93c5fd; font-size: 15px; font-weight: 500;
+  cursor: pointer; transition: all 0.3s ease;
+  user-select: none;
+}
+.login-card .btn-login:hover:not(:disabled) {
+  background: rgba(96, 165, 250, 0.16);
+  border-color: rgba(96, 165, 250, 0.7);
+  color: #bfdbfe;
+}
+.login-card .btn-login:disabled {
+  opacity: 0.5; cursor: not-allowed;
+}
+</style>
+</head>
+<body>
+
+<!-- ============================== LOGIN OVERLAY ============================== -->
+<div id="login-overlay">
+  <div class="login-card">
+    <div class="login-icon">🛡️</div>
+    <div class="login-title">885数据驾驶舱 · 八张报表</div>
+    <div class="login-subtitle">请输入访问密码以继续</div>
+    <input type="password" class="login-input" id="login-password" placeholder="请输入密码" autocomplete="off" maxlength="20" onkeydown="if(event.key==='Enter')doLogin()">
+    <div class="login-error" id="login-error"></div>
+    <div class="login-lock" id="login-lock"></div>
+    <button class="btn-login" id="btn-login" onclick="doLogin()">🔐 验证登录</button>
+  </div>
+</div>
+
+<!-- ============================== PAGE 1: HOME ============================== -->
+<div class="page active" id="page-home">
+  <!-- Top: Global Summary -->
+  <div class="home-top">
+    <div class="card metric-card clickable" onclick="navigate('report-overview')">
+      <div class="label">📈 八张报表综合</div>
+      <div class="value" id="home-report-summary"><span class="grade-A">A×2</span> <span class="grade-B">B×3</span></div>
+      <div class="sub" id="home-report-summary-sub">C/D/E档 3张 · 最高A2 · 最低D30</div>
+    </div>
+  </div>
+
+  <!-- Middle: Three Sections -->
+  <div class="home-middle">
+    <!-- Reports Matrix -->
+    <div class="card" style="padding:16px">
+      <div class="flex-between mb-12">
+        <span class="fw600" style="font-size:16px">📊 八张报表</span>
+        <span style="display:flex;gap:12px">
+          <span class="btn-link" onclick="navigate('street-eval')">街道评价 →</span>
+          <span class="btn-link" onclick="navigate('report-overview')">全部报表 →</span>
+        </span>
+      </div>
+      <div class="matrix-grid" id="home-report-matrix"></div>
+    </div>
+  </div>
+
+  <!-- Bottom: Alerts -->
+  <div class="home-bottom">
+    <div class="card">
+      <div class="section-title" style="margin-bottom:10px">⚠️ 重点关注（当期需关注事项）</div>
+      <ul class="alert-list">
+        <li class="alert-item high" onclick="navigate('report-detail',{report:'party'})">
+          <span class="severity high">高</span>
+          【党建报表】D档全市第30位，较上年度下降3档27位，为当期最低
+        </li>
+        <li class="alert-item mid" onclick="navigate('report-detail',{report:'safety'})">
+          <span class="severity mid">中</span>
+          【平安报表】特殊群体犯罪率C33，刑满释放人员重新犯罪率2.08%偏高
+        </li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ============================== PAGE 2: REPORT OVERVIEW ============================== -->
+<div class="page" id="page-report-overview">
+  <div class="breadcrumb">
+    <span class="crumb" onclick="navigate('home')">🏠 首页</span>
+    <span class="sep">›</span>
+    <span class="crumb current">八张报表总览</span>
+    <span class="quarter-badge">2026年第一季度</span>
+  </div>
+  <div class="section" style="padding-top:12px">
+    <div class="section-title">📊 八张报表总览 <span class="btn-link" style="font-size:14px;font-weight:400;margin-left:20px" onclick="navigate('street-eval')">🏘️ 街道综合评价 →</span></div>
+  </div>
+  <div class="filter-stats">
+    <span class="stat-chip" style="border-color:var(--text-muted);color:var(--text-secondary)">总报表 8张</span>
+    <span class="stat-chip count-A" onclick="filterMatrix('report-matrix', 'A')">A档 2张</span>
+    <span class="stat-chip count-B" onclick="filterMatrix('report-matrix', 'B')">B档 3张</span>
+    <span class="stat-chip count-C" style="border-color:var(--grade-c);color:var(--grade-c);cursor:pointer" onclick="filterMatrix('report-matrix', 'C')">C/D/E档 3张</span>
+    <select class="filter-select" id="report-filter" onchange="filterMatrix('report-matrix', this.value)">
+      <option value="all">档次筛选：全部</option>
+      <option value="A">A档</option><option value="B">B档</option>
+      <option value="C">C档</option><option value="D">D档</option><option value="E">E档</option>
+    </select>
+  </div>
+  <div class="section">
+    <div class="flex-between mb-12">
+      <span class="fw600" style="font-size:16px">📊 八张报表全景</span>
+      <select class="filter-select" onchange="sortReports(this.value)">
+        <option value="fixed">固定顺序</option>
+        <option value="rank">按排名排序</option>
+      </select>
+    </div>
+    <div class="matrix-grid" id="report-matrix">
+    </div>
+    <div class="mt-20">
+      <div class="section-subtitle">📋 各报表关键指标对比</div>
+      <table class="data-table" id="report-table">
+        <thead>
+          <tr>
+            <th>报表名</th><th>档次</th><th>排名</th>
+            <th>同比档位</th><th>同比位次</th>
+            <th>年化档位</th><th>年化位次</th>
+            <th>得分</th><th>牵头部门</th><th>操作</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ============================== PAGE 3: REPORT DETAIL ============================== -->
+<div class="page" id="page-report-detail">
+  <div class="breadcrumb">
+    <span class="crumb" onclick="navigate('home')">🏠 首页</span>
+    <span class="sep">›</span>
+    <span class="crumb" onclick="navigate('report-overview')">八张报表总览</span>
+    <span class="sep">›</span>
+    <span class="crumb current" id="report-detail-title">经济报表详情</span>
+    <span class="quarter-badge">2026年第一季度</span>
+  </div>
+  <div class="nav-switcher">
+    <span class="nav-arrow" onclick="prevReport()">◀</span>
+    <span class="nav-item" id="sw-report-0" onclick="switchReport(0)"></span>
+    <span class="nav-item" id="sw-report-1" onclick="switchReport(1)"></span>
+    <span class="nav-item" id="sw-report-2" onclick="switchReport(2)"></span>
+    <span class="nav-item" id="sw-report-3" onclick="switchReport(3)"></span>
+    <span class="nav-item" id="sw-report-4" onclick="switchReport(4)"></span>
+    <span class="nav-item" id="sw-report-5" onclick="switchReport(5)"></span>
+    <span class="nav-item" id="sw-report-6" onclick="switchReport(6)"></span>
+    <span class="nav-item" id="sw-report-7" onclick="switchReport(7)"></span>
+    <span class="nav-arrow" onclick="nextReport()">▶</span>
+  </div>
+  <div class="section">
+    <!-- Summary -->
+    <div class="summary-row" id="report-summary"></div>
+    <div class="text-muted mb-16" id="report-conclusion" style="font-size:14px;color:var(--text-secondary)"></div>
+
+    <!-- Detail Two Col -->
+    <div class="detail-two-col detail-two-col-l">
+      <div>
+        <div class="section-subtitle">📈 各指标评价结果</div>
+        <div class="indicator-grid" id="report-indicators"></div>
+        <div class="expand-section">
+          <div class="expand-header" onclick="toggleExpand('report-problems')">
+            📌 典型问题分析（来自文档） <span style="margin-left:auto;font-size:12px;color:var(--text-muted)">展开 ▼</span>
+          </div>
+          <div class="expand-body" id="report-problems"></div>
+        </div>
+      </div>
+      <div>
+        <div class="section-subtitle" style="display:flex;justify-content:space-between;align-items:center">
+          <span>🏢 区级部门/街道评价</span>
+          <select class="filter-select" style="font-size:12px" onchange="filterReportEval(this.value)">
+            <option value="all">全部类型</option>
+            <option value="部门">部门</option>
+            <option value="街道">街道</option>
+            <option value="管委会">管委会</option>
+            <option value="国企">国企</option>
+          </select>
+        </div>
+        <div class="text-muted mb-12" id="report-eval-stats"></div>
+        <table class="data-table" id="report-eval-table">
+          <thead><tr><th>单位</th><th>类型</th><th>档次</th><th>得分</th></tr></thead>
+          <tbody></tbody>
+        </table>
+        <div class="text-center mt-12">
+          <span class="btn-link" onclick="showAllEval()">查看全部评价 →</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================== PAGE 8: STREET EVAL ============================== -->
+<div class="page" id="page-street-eval">
+  <div class="breadcrumb">
+    <span class="crumb" onclick="navigate('home')">🏠 首页</span>
+    <span class="sep">›</span>
+    <span class="crumb" onclick="navigate('report-overview')">八张报表总览</span>
+    <span class="sep">›</span>
+    <span class="crumb current">街道综合评价</span>
+    <span class="quarter-badge">2026年第一季度</span>
+  </div>
+  <div class="section" style="padding-top:12px">
+    <div class="section-title">🏘️ 街道综合评价</div>
+  </div>
+  <div class="street-eval-layout">
+    <div class="card" style="padding:16px">
+      <div class="section-subtitle" style="display:flex;justify-content:space-between;align-items:center">
+        <span>📊 街道综合能力雷达图</span>
+        <span class="btn-tech" id="btn-toggle-radar" onclick="toggleStreetRadar()">⊞ 全部展开</span>
+      </div>
+      <div class="text-muted mb-12" style="font-size:12px" id="radar-subtitle">悬停表格行高亮曲线 | 最多同时显示3条 | 点击维度跳转报表</div>
+      <div class="street-radar-container" id="street-radar-chart"></div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px" id="street-legend"></div>
+    </div>
+    <div class="card" id="street-matrix-card" style="padding:16px">
+      <div class="section-subtitle" style="display:flex;justify-content:space-between;align-items:center">
+        <span>📋 街道得分矩阵（11街道+平均）</span>
+        <span class="text-muted" style="font-size:11px">分档: A≥90 B≥80 C≥70 D≥60 E&lt;60</span>
+      </div>
+      <div style="overflow-x:auto" id="street-matrix-container"></div>
+    </div>
+  </div>
+  <div class="street-detail-card" id="street-detail-card" style="display:none"></div>
+</div>
+
+<!-- ====== MODAL ====== -->
+<div class="modal-overlay" id="modal" onclick="closeModal(event)">
+  <div class="modal-content" onclick="event.stopPropagation()">
+    <span class="modal-close" onclick="closeModal()">✕</span>
+    <div class="modal-title" id="modal-title"></div>
+    <div class="modal-text" id="modal-text"></div>
+  </div>
+</div>
+
+<script>
+/* ========== MOCK DATA (V2: INT changes, paired core values, indicator-linked problems) ========== */
+var mockData = {
+  reports: [
+    {
+      code: 'economy', name: '经济报表', grade: 'A', rank: '2', icon: '📊',
+      lead: '区发展改革委', score: null,
+      vsQuarterGrad: 2, vsQuarterRank: 21,
+      vsYearGrad: 1, vsYearRank: 11,
+      conclusion: null,
+      indicators: [
+        { name: 'GDP增速', grade: 'A', rank: '2', isNew: false,
+          vsQuarterGrad: 2, vsQuarterRank: 13,
+          core1Label: 'GDP增速', coreValue1: '5.90%', core1Desc: '高于全市1.4%',
+          core2Label: '生产总值（亿元）', coreValue2: '457.57', core2Desc: null,
+          runSummary: 'A档全市第12位，比2025年一季度C档全市第33位，上升2个档次、21个位次；比2025年度C档全市第25位，上升2个档次、13个位次。2026一季度我区GDP增速为5.9%，高于全市（4.5%）1.4个百分点，与全市第一（沙坪坝区6.9%）相比有1个百分点的差距。', runDesc: '2026一季度全区完成地区生产总值457.57亿元，同比增长（下同）5.9%，超过全国（5.0%）0.9个百分点、全市（4.5%）1.4个百分点，三年内2次一季度“开门红”超过全市。固定资产投资总额增长10.9%，高于全国（1.7%）9.2个百分点、全市（1.5%）9.4个百分点，居中心城区第2；社会消费品零售总额增长7.2%（限上12.1%），高于全国（2.4%）4.8个百分点、全市（1.8%）5.4个百分点，近15年来首次位居全市第1，对全市贡献率约35.8%；核算用规上服务业营收增长36.2%、高于全市（10.1%）26.1个百分点，对全市贡献率37.6%、位列各区县首位。经济发展呈现出“作为经济大区增长速度较快、作为服务业强区支撑全市有力”的特点。'
+        },
+        { name: '政府性债务化解进度', grade: 'A', rank: '1', isNew: false,
+          vsQuarterGrad: 0, vsQuarterRank: 15,
+          core1Label: '政府性债务化解进度', coreValue1: '100.00%', core1Desc: '高于全市进度8.4%',
+          core2Label: '化解存量隐债（亿元）', coreValue2: '7.23', core2Desc: null,
+          runSummary: 'A档全市第1位，比2025年第一季度B档33位上升1个档次、32个位次；比2025年度A档全市第16位，上升15个位次。2026年一季度我区政府性债务化解进度为100%，高于全市进度（91.6%）8.4个百分点。', runDesc: '区财政局牵头攻坚隐债化解、债务风险防范等重点任务，建立健全“日对接、周调度、月盘点” 工作机制，制定方案、明确路径、细化任务，打表推进各项举措落地见效，政府性债务化解取得阶段性成效。一是隐债化解取得突破性进展。锚定隐债“清零”目标，抢抓“6+4+2”化债政策窗口期，向上争取隐债置换债券和统筹预算资金，化解存量隐债7.23亿元，于2月提前完成2028年及以前隐债“清零”任务，年均节省利息约900万元。二是融资平台实现“清零”。2024年9月更新公司退出融资平台名单，2025年3、4月康翔公司、国资公司分别退出融资平台名单，我区实现融资平台“清零”。三是法定债务本息按期足额偿还。2026年全年到期政府债务利息8亿元已全额纳入年初预算安排，一季度到期的政府债务本息1.26亿元已足额保障。'
+        },
+        { name: '金融主导产业增速', grade: 'A', rank: '1', isNew: false,
+          vsQuarterGrad: 2, vsQuarterRank: 22,
+          core1Label: '金融主导产业增速', coreValue1: '8.30%', core1Desc: '高于全市0.4%',
+          core2Label: null, coreValue2: null, core2Desc: null,
+          runSummary: 'A档全市第11名，比2025年一季度B档全市23位，上升1个档次、12个位次；比2025年度C档全市33位，上升2个档次、22个位次，为全市进位最大的三个区县之一。', runDesc: '一季度渝中区金融主导产业增速为8.3%，高于全市平均（7.9%）0.4个百分点，增速较2025年四季度提升3.41个百分点，为全市增速提升最大的三个区县之一。'
+        },
+        { name: '固定资产投资增速', grade: 'A', rank: '1', isNew: false,
+          vsQuarterGrad: 0, vsQuarterRank: 1,
+          core1Label: '固定资产投资增速', coreValue1: '10.90%', core1Desc: '高于全国9.2%',
+          core2Label: '固定资产投资完成（亿元）', coreValue2: '44.6', core2Desc: null,
+          runSummary: 'A档全市第7位，比2025年一季度B档全市第26位，上升1个档次、19个位次；比2025年度A档全市第8位，上升1个位次。', runDesc: '全年固定资产投资完成44.6亿元，同比增长10.9%，排名中心城区第二，高于全市平均（1.5%）9.4个百分点，与全市第一（奉节县16.9%）相比有6个百分点的差距。'
+        },
+        { name: '社会消费品零售总额增速', grade: 'A', rank: '2', isNew: false,
+          vsQuarterGrad: 0, vsQuarterRank: 3,
+          core1Label: '社会消费品零售总额增速', coreValue1: '7.20%', core1Desc: '高于全国4.8%，高于全市5.4%',
+          core2Label: '社会消费品零售总额（亿元）', coreValue2: '403.0', core2Desc: null,
+          runSummary: 'A档全市第1位，比2025年一季度C档全市第30位，上升2个档次、29个位次；比2025年度A档全市第4位，上升3个位次。一季度，全区社会消费品零售总额实现403亿元，同比增长7.2%，分别较全国（2.4%）、全市（1.8%）高4.8个百分点、5.4个百分点。', runDesc: '一是全力稳定消费基本盘。支持重药集团加快推进“两药融合”，加快发展DTP专业药房、智慧中药房，限上中西药品零售同比增长34.2%。扩容实施消费品以旧换新，拉动销售11.7亿元，带动限上智能手机、新能源汽车同比增长26.6%、145%。加快发展连锁餐饮，前十大重点企业实现营业额10.95亿元，同比增长12.7%，拉动限上餐饮增长10个百分点。二是倾力招育消费新动能。去年以来，围绕国际消费中心城市核心区建设，聚焦美丽经济、情绪消费、数智消费、新兴餐饮等新消费企业招商引资工作，\n累计招引落地8个亿元级、20个千万元级消费项目，1-3月贡献消费增量3.4亿元，拉动全区限上零售额增长3.2个百分点。2025年，全区新增、特增规上商贸企业147家，贡献零售额增量4.1亿元，拉动限上零售额增长3.9个百分点。三是着力激发消费新活力。深挖掘国际消费潜力，全区入境过夜游客增长98.7%，外卡交易和境外移动支付实现交易额约1.5亿元，同比增长128%，其中，实现离境退税销售额2141万元、同比增长约一倍。加快特色消费场景建设，11个传统风貌街区有机植入125个高端非标商业，108个“云端之城+上下半城+地下城”8D场景融合互促。营造浓厚消费氛围，围绕2026渝中迎新消费季，策划举办重庆国际咖啡节等重点节会活动，联动开展重百春季化妆品节、2026山城巷天灯节等百余场主题促销。'
+        },
+        { name: '进出口总额增速', grade: 'A', rank: '0', isNew: false,
+          vsQuarterGrad: 0, vsQuarterRank: 3,
+          core1Label: '进出口总额增速', coreValue1: '77.50%', core1Desc: '高于全市43.2%',
+          core2Label: '外贸进出口总额（亿元）', coreValue2: '38.2', core2Desc: null,
+          runSummary: 'A档全市第7位，比2025年一季度A档全市第23位，上升16个位次；比2025年度A档全市第10位，上升3个位次。全区完成外贸进出口总额38.2亿元，同比增长77.5%，高于全市平均增速（34.3%）43.2个百分点，与全市第一（城口县274.5%）相比有197个百分点的差距。', runDesc: '一是发挥国际消费中心城市核心区优势，支持国展实业、市农产品进出口等龙头企业拓宽进口渠道、丰富进口品类，加快建设国际消费品进口分销高地，全区实现进口 27.6 亿元、增长 75.1%。二是融入全市“33618”现代制造业集群体系，支持中冶赛迪等企业开展首（台）套重大技术装备出口，鼓励安迈特等企业创新研发自主品牌，稳步提升机电产品出口份额。三是服务全市打造世界级智能网联新能源汽车产业集群，加快推动“渝车出海”，支持对外贸易等企业争取主机厂授权，扩大整车出口业务，拓展中亚、南美、非洲等新兴市场，全区实现出口 10.6 亿元、增长 84.3%。'
+        },
+      ],
+      problems: [
+        { title: '区住房城市建委牵头的建筑和房地产业回升受限', unit: '典型问题', indicatorName: 'GDP增速', desc: '商品房销售面积（-69.8%）、规上房地产服务业营收（8.4%）、建筑业在地产值（0.3%）均未达成预期目标（分别低于预期目标74.8、3.6、8.7个百分点）；商品房销售面积受存量住房去化难、新增供给接续难等因素制约，增速较去年一季度下滑80.3个百分点。', type: '典型问题'
+        },
+        { title: '区经济信息委牵头的互联网服务业下滑幅度加深', unit: '典型问题', indicatorName: 'GDP增速', desc: '受百度代理模式调整影响，互联网服务业重点企业网润集团营收持续下滑（行业占比12%，增速-86.4%），导致一季度规上互联网服务业营收（-15.5%，与目标5%差距20.5个百分点）。', type: '典型问题'
+        },
+        { title: '区文化旅游委牵头的居民服务业和文体娱乐业部分企业下行延续', unit: '典型问题', indicatorName: 'GDP增速', desc: '受年轻群体消费习惯改变影响，传统影楼业务被个人工作室分流，居民服务业重点企业儿童天堂经营欠佳（2.2%）。家政板块下行延续，龙头企业大田小家营收下降超36%；在哪吒等爆款电影推动下，去年一季度电影市场呈现较快增势、垫高文体娱乐业基数，占文体娱乐业比重超15%的电影板块重点企业保利万和电影院（-51.8%）、电影发行放映公司（-60.9%）等营收普遍下滑。', type: '典型问题'
+        },
+        { title: '政府性债务化解进度典型问题', unit: '典型问题', indicatorName: '政府性债务化解进度', desc: '我区2028年及以前到期隐债已“清零”、融资平台已“清零”、一季度法定债务本息按期足额化解，需加强预算资金调度，确保二季度到期本息按期足额化解。', type: '典型问题'
+        },
+        { title: '金融主导产业增速典型问题', unit: '典型问题', indicatorName: '金融主导产业增速', desc: '金融主导产业即银行业总资产，主要包含贷款、票据贴现、同业存款等10余个子项，其中贷款余额权重最大。一季度存款余额同比增长11.17%，近五年来首次实现两位数增长，但贷款余额仅增长1.8%，增速相对较低。下一步，聚焦重点领域加大信贷投放力度，强化政银企对接破解融资堵点难点，全力以赴做大贷款规模和增速，争取稳定保持在A档。', type: '典型问题'
+        },
+        { title: '部分建设项目存在卡点难点', unit: '典型问题', indicatorName: '固定资产投资增速', desc: '区城市发展集团、区经济信息委、区城市管理局牵头的排水管网更新改造、燃气设施更新改造、道路安全隐患整治等基础设施类项目因涉及范围广、跨度大，与多个项目施工交叉，存在工作面受限、轨道保护、居民商户阻工、管线迁改、行道树迁移等客观情况，整体推进较慢。', type: '典型问题'
+        },
+        { title: '部分重点项目推进未达预期', unit: '典型问题', indicatorName: '固定资产投资增速', desc: '区住房城市建委、区规划自然资源局牵头的重庆中心、协和城等“两久”项目因司法处置、资产处置、融资贷款等工作周期较长，暂未复工建设。区土储中心牵头的八县办、交通大学等地块项目因房地产市场回暖不及预期、房企拿地意愿不强，暂未挂牌出让。区文旅发展集团牵头的燕子岩—飞机码头、邹容支路等地块因前期工作、手续要件未完成影响开工建设。', type: '典型问题'
+        },
+        { title: '消费增长整体仍然承压', unit: '典型共性问题', indicatorName: '社会消费品零售总额增速', desc: '一季度，全区有73家零售企业呈现负增长态势，占比达到46%，零售额净减少约4.5亿元。有82家餐饮企业负增长，占比达到48%，较上年同期扩大10个百分点。', type: '典型问题'
+        },
+        { title: '境消费转化相对不足', unit: '典型共性问题', indicatorName: '社会消费品零售总额增速', desc: '目前，渝中区离境退税商品平均只有1.05万元/单，不足成都2.26万元/单的一半，在入境游客偏好的高端定制、文化体验、特色伴手礼等方面的精准供给明显不足。', type: '典型问题'
+        },
+        { title: '牛肉进口配额政策形成刚性约束', unit: '典型问题', indicatorName: '进出口总额增速', desc: '2026年全国牛肉进口总配额为268.8万吨，1-3月累计进口量已超90万吨，约占全年总额35%，预估总配额将在9月前消耗完毕，将对我区龙头企业进口规模造成挤压，预计三季度起影响逐步凸显。', type: '典型问题'
+        },
+        { title: '缺乏高附加值产品支撑', unit: '典型问题', indicatorName: '进出口总额增速', desc: '受全球局势影响，内存、芯片等相关产品价格持续攀高，带动全市外贸总额增速达34.3%，但我区尚无此类高附加值产品出口，难以借力全球产业链价格上涨带来的外贸增长机遇，下半年形势较严峻。', type: '典型问题'
+        },
+      ],
+      evals: [
+        {unit: '区财政局', type: '部门', grade: 'A', score: 100},
+        {unit: '区城市管理局', type: '部门', grade: 'A', score: 100},
+        {unit: '区国资委', type: '部门', grade: 'A', score: 98.33},
+        {unit: '区交通运输委', type: '部门', grade: 'A', score: 97.17},
+        {unit: '区发展改革委', type: '部门', grade: 'A', score: 92.74},
+        {unit: '区国动办', type: '部门', grade: 'A', score: 91.67},
+        {unit: '区产业发展促进局', type: '部门', grade: 'B', score: 89.6},
+        {unit: '菜园坝指挥部', type: '部门', grade: 'B', score: 89},
+        {unit: '区人力社保局', type: '部门', grade: 'B', score: 86.67},
+        {unit: '区司法局', type: '部门', grade: 'B', score: 83.33},
+        {unit: '区商务委', type: '部门', grade: 'B', score: 81.22},
+        {unit: '区文化旅游委', type: '部门', grade: 'B', score: 80},
+        {unit: '区住房城市建委', type: '部门', grade: 'C', score: 79.78},
+        {unit: '区卫生健康委', type: '部门', grade: 'C', score: 75.56},
+        {unit: '区经济信息委', type: '部门', grade: 'C', score: 74.44},
+        {unit: '区教委', type: '部门', grade: 'D', score: 66.67},
+        {unit: '区科技局', type: '部门', grade: 'D', score: 66.67},
+        {unit: '区民政局', type: '部门', grade: 'E', score: 33.33},
+        {unit: '历史文化街区管委会', type: '管委会', grade: 'A', score: 90},
+        {unit: '大石化新区管委会', type: '管委会', grade: 'A', score: 85},
+        {unit: '解放碑CBD管委会', type: '管委会', grade: 'B', score: 83.33},
+        {unit: '数字经济产业园管委会', type: '管委会', grade: 'B', score: 81.67},
+        {unit: '化龙桥国际商务区', type: '管委会', grade: 'C', score: 76.67},
+        {unit: '大坪街道', type: '街道', grade: 'A', score: 96},
+        {unit: '石油路街道', type: '街道', grade: 'B', score: 89.89},
+        {unit: '上清寺街道', type: '街道', grade: 'B', score: 87},
+        {unit: '南纪门街道', type: '街道', grade: 'B', score: 86.89},
+        {unit: '化龙桥街道', type: '街道', grade: 'B', score: 85.89},
+        {unit: '菜园坝街道', type: '街道', grade: 'B', score: 82.89},
+        {unit: '大溪沟街道', type: '街道', grade: 'C', score: 79.78},
+        {unit: '解放碑街道', type: '街道', grade: 'C', score: 76.78},
+        {unit: '七星岗街道', type: '街道', grade: 'C', score: 76.78},
+        {unit: '两路口街道', type: '街道', grade: 'D', score: 65.67},
+        {unit: '朝天门街道', type: '街道', grade: 'E', score: 57.56},
+        {unit: '区产业发展集团', type: '国企', grade: 'A', score: 100},
+        {unit: '区城市发展集团', type: '国企', grade: 'A', score: 92.83},
+        {unit: '区文旅发展集团', type: '国企', grade: 'B', score: 81.67}
+      ],
+    },
+    {
+      code: 'safety', name: '平安报表', grade: 'B', rank: '16', icon: '🛡️',
+      lead: '区委政法委', score: null,
+      vsQuarterGrad: 2, vsQuarterRank: 10,
+      vsYearGrad: -1, vsYearRank: -8,
+      conclusion: '共晾晒8项指标，成绩为5A2B1C，其中到市进京聚集发生率A33、事故灾害下降率A7、欠薪案件发生率A12、网络安全事件发生率A25、外溢上行矛盾纠纷下降率A13，八类案件发生率B24、涉未成年人犯罪率B16，特殊群体犯罪率C33。',
+      indicators: [
+        { name: '到市进京聚集发生率', grade: 'A', rank: '1', isNew: false,
+          vsQuarterGrad: 1, vsQuarterRank: 0,
+          core1Label: null, coreValue1: null, core1Desc: null,
+          core2Label: '5人以上到市聚集起数', coreValue2: '1.0', core2Desc: null,
+          runSummary: 'A档全市第33位，比2025年一季度B档全市第26位，上升1个档次、下降7个位次；比2025年度B档全市第33位，上升1个档次。', runDesc: '一季度市委政法委、市信访办认定我区发生1起5人以上到市聚集，具体为：国浩18T部分外省市购房者反映民宿不允许开办，导致经济利益受损，要求重新开办民宿。'
+        },
+        { name: '八类案件发案率', grade: 'B', rank: '-', isNew: false,
+          vsQuarterGrad: 0, vsQuarterRank: -1,
+          core1Label: '立案数与常住人口比', coreValue1: '0.05%', core1Desc: null,
+          core2Label: '八类刑事案件立案起数', coreValue2: '3.0', core2Desc: null,
+          runSummary: 'B档全市第24位，比2025年度B档全市第23位，下降1个位次。', runDesc: '一季度八类刑事案件立案3件，立案数与常住人口57.77万人比为0.0519。1月26日，解放碑街道邹容路社区发生1件强奸案；2月16日，朝天门街道巴县衙门社区发生1件故意杀人案；3月16日，大坪街道大坪正街社区发生1件强奸案。'
+        },
+        { name: '涉未成年人违法犯罪率', grade: 'B', rank: '2', isNew: false,
+          vsQuarterGrad: -1, vsQuarterRank: -13,
+          core1Label: '涉未成年人违法犯罪人口比', coreValue1: '0.16%', core1Desc: null,
+          core2Label: '涉未成年人违法犯罪人数', coreValue2: '9.0', core2Desc: null,
+          runSummary: 'B档全市第16位，比2025年一季度D档全市第37位，上升2个档次、21个位次；比2025年度A档全市第3位，下降1个档次、13个位次。', runDesc: '一季度，涉嫌违法犯罪的未成年人数及受到犯罪侵害的未成年人数之和为9人，与常住人口57.77万人比为0.1558。未成年人违法犯罪人数方面，一季度涉嫌违法犯罪的未成年人数为7人（刑事4人+行政3人），涉诈骗案3人、介绍卖淫案1人、盗窃案2人、卖淫嫖娼1人。未成年人被侵害人数方面，一季度受到犯罪侵害的未成年人数为2人，涉未成年人被诈骗1人，被盗窃1人。'
+        },
+        { name: '特殊群体犯罪率', grade: 'C', rank: '-', isNew: false,
+          vsQuarterGrad: -1, vsQuarterRank: -13,
+          core1Label: '特殊群体犯罪率', coreValue1: '0.39%', core1Desc: null,
+          core2Label: '“四类人员”涉嫌犯罪人数', coreValue2: '36.0', core2Desc: null,
+          runSummary: 'C档全市第33位，比2025年度B档全市第20位，下降1个档次、13个位次。', runDesc: '一季度“四类人员”涉嫌犯罪人数共36人，特殊群体犯罪率为0.39%。其中，刑满释放人员涉嫌犯罪人数为33人（在库人数为1636人），从作案区域看，8人作案地在渝中区，25人在外区；从作案类别看，23人涉毒品案件、9人涉盗窃案、1人涉强制猥亵案；从犯罪人数所属街道看，南纪门街道6人、朝天门街道5人、解放碑街道4人、菜园坝街道4人、七星岗街道3人、化龙桥街道3人、两路口街道3人、上清寺街道3人、大溪沟街道2人。吸毒人员涉嫌犯罪人数为3人（在库人数为5468人），犯罪率为0.55%。从作案区域看，2人作案地在外区，1人在本区；从犯罪人数所属街道看，七星岗街道1人（盗窃案）、化龙桥街道1人（危险驾驶案），大溪沟街道1人（诈骗案）。严重精神障碍患者涉嫌犯罪人数为0人（在库人数为2105人）。社区矫正对象涉嫌犯罪人数为0人（在库人数为209人）。'
+        },
+        { name: '事故灾害下降率', grade: 'A', rank: '0', isNew: false,
+          vsQuarterGrad: 0, vsQuarterRank: 0,
+          core1Label: '事故灾害风险防范下降率综治值', coreValue1: '31.00%', core1Desc: null,
+          core2Label: '事故灾害综合起数', coreValue2: '56.0', core2Desc: null,
+          runSummary: 'A档全市第7位，比2025年一季度A档全市第10位，上升3个位次；比2025年度档次、位次均不变。', runDesc: '一季度事故灾害风险防范下降率综治值为31%。一是“三类”事故【生产安全、道路交通和自然灾害】亡人数2人，一季度，我区发生生产安全事故（不含道路交通事故）1起、亡1人，前三年同期平均数1人；发生道路交通事故1起、亡1人，前三年同期平均数2.33人，未发生自然灾害亡人事故，同比前三年同期平均数下降40.0%。二是火灾起数，发生火灾54起，火灾起数同比下降37.9%。'
+        },
+        { name: '欠薪案件发生率', grade: 'A', rank: '0', isNew: false,
+          vsQuarterGrad: 0, vsQuarterRank: 6,
+          core1Label: '接收全国根治欠薪平台线索同比', coreValue1: '-9.74%', core1Desc: null,
+          core2Label: '接收全国根治欠薪平台线索条数', coreValue2: '491.0', core2Desc: null,
+          runSummary: 'A档全市第12位，比2025年一季度A档全市第19位，上升7个位次；比2025年度A档全市第18位，上升6个位次。', runDesc: '一季度全区接收全国根治欠薪平台线索491条，较去年同期（544条）下降9.74%。其中建筑工程领域174条，非建领域310条，其他7条。降幅靠前的街道为菜园坝街道（-76.47%）、朝天门街道（-65.63%）、化龙桥街道（-54.17%）。'
+        },
+        { name: '网络安全事件发生率', grade: 'A', rank: '0', isNew: false,
+          vsQuarterGrad: 0, vsQuarterRank: -6,
+          core1Label: '网络安全事件发生率综合值', coreValue1: '3.00%', core1Desc: null,
+          core2Label: null, coreValue2: null, core2Desc: null,
+          runSummary: '网络安全事件发生率A档全市第25位，比2025年一季度A档全市第7位，下降18个位次；比2025年度A档全市第19位，下降6个位次。', runDesc: '一季度网络安全事件发生率综合值为3%。①信息系统网络安全发生率。全区信息系统数量10320套、网络安全事件3件，发生率2.9%，折算值1.7%。②终端网络安全事件发生率。全区办公终端数9673台、山城侠隐患未整改数315起，发生率3.3%，折算值1.3%。'
+        },
+        { name: '外溢上行矛盾纠纷下降率', grade: 'A', rank: '-', isNew: false,
+          vsQuarterGrad: 0, vsQuarterRank: -10,
+          core1Label: '外溢上行矛盾纠纷下降率', coreValue1: '11.10%', core1Desc: null,
+          core2Label: null, coreValue2: null, core2Desc: null,
+          runSummary: 'A档全市第13位，比2025年度A档全市第3位，下降10个位次。', runDesc: '一季度外溢上行矛盾纠纷下降率为11.10%。未化解矛盾纠纷闭环管控率为100%。综治中心登记受理率为39.46%。'
+        },
+      ],
+      problems: [
+        { title: '矛盾摸排化解力度还有欠缺', unit: '典型问题', indicatorName: '到市进京聚集发生率', desc: '虽然本季度市委政法委、市信访办只认定我区发生1起5人以上到市聚集，但另有5人到市集访8批次、40人次，特别是初次到市集访占七成，说明各责任单位在矛盾初始阶段存在化解不及时、不到位情况。', type: '典型问题'
+        },
+        { title: '群众以访施压态势明显', unit: '典型问题', indicatorName: '到市进京聚集发生率', desc: '部分信访群众“唯上”心态突出，寄希望于通过进京越级上访向责任单位施压，以解决其诉求。如曹某明在去年安置房屋已解决情况下，又以其父亲死亡要求赔偿的无理诉求进京访、邹某惠要求对其约160m2拆迁房屋给予数千万补偿。', type: '典型问题'
+        },
+        { title: '“三跨三分离”人员管控难度较大', unit: '典型问题', indicatorName: '到市进京聚集发生率', desc: '今年进京访人员张某、彭某霞（属事责任为区法院，属地责任为辽宁省和两江新区），以及到市聚集的外省市国浩18T购房者，均不属于我区常住人员，责任单位对其动态难以完全掌握，管控存在一定难度。', type: '典型问题'
+        },
+        { title: '八类案件发案率典型问题', unit: '典型问题', indicatorName: '八类案件发案率', desc: '因渝中区常住人口数低于全市77.816（万）平均数，导致万人发案率数值变大。一季度八类刑事案件立案3件，立案数与常住人口57.77万人比为0.0519，案件同比去年6件下降50%。', type: '典型问题'
+        },
+        { title: '未成年人犯罪典型问题', unit: '典型问题', indicatorName: '涉未成年人违法犯罪率', desc: '未成年人犯罪案件中，盗窃案和诈骗案仍为突出，占比达44.45%。主要原因是我区老旧小区较多、停车配套设施不足、群众自我防范意识不强、两轮车乱停乱放多发，给了犯罪分子可乘之机；同时我区外来人口较多，日均人口流量大，外区或外省的未成年人流窜至我区进行作案随即离开情况较为突出。', type: '典型问题'
+        },
+        { title: '侵害未成年人犯罪方面典型问题', unit: '典型问题', indicatorName: '涉未成年人违法犯罪率', desc: '侵害未成年人犯罪方面，由于社交媒体、短视频平台、网络游戏等成为未成年人主要活动空间，网络交友、直播打赏、电信网络诈骗手段层出不穷等增加了未成年人被诱骗、性侵、勒索的风险。', type: '典型问题'
+        },
+        { title: '责任压实传导不够', unit: '典型问题', indicatorName: '特殊群体犯罪率', desc: '多数街道对司法所工作重视不足、领导研究部署少、跟踪督办弱，基层落实缺位，管控措施流于形式。', type: '典型问题'
+        },
+        { title: '日常帮教履职不力', unit: '典型问题', indicatorName: '特殊群体犯罪率', desc: '我区一季度安置帮教人员重新犯罪率为2.08%，远高于全市1.08%的平均数，反映出日常帮教工作未形成闭环，管控质效偏低。', type: '典型问题'
+        },
+        { title: '风险排查研判不实', unit: '典型问题', indicatorName: '特殊群体犯罪率', desc: '一季度涉案人员涉及9个街道（大坪、石油路街道“零发生”），相关风险均未提示预警，排查针对性、研判分析不足。', type: '典型问题'
+        },
+        { title: '教育帮扶精准度不足', unit: '典型问题', indicatorName: '特殊群体犯罪率', desc: '帮扶仍以基本生活救助为主，就业、助学帮扶为零，方式单一、实效不强。', type: '典型问题'
+        },
+        { title: '文旅和交通安全风险突出', unit: '典型问题', indicatorName: '事故灾害下降率', desc: '作为旅游大区，网红景点众多，特别是洪崖洞等景区游客激增，空间狭窄、设施承载量大，易引发疏散、踩踏等风险；假期自驾游及过境车辆增多，受路面湿滑、路况复杂、停车紧张等影响，交通违规行为导致道路风险偏高。', type: '典型问题'
+        },
+        { title: '春季火灾形势严峻', unit: '典型问题', indicatorName: '事故灾害下降率', desc: '居民用电不规范、老旧小区线路老化易引发电气火灾；绿地可燃物堆积，户外活动增多使人为火源管控难度加大；文旅场所及“夜经济”消防安全风险上升。', type: '典型问题'
+        },
+        { title: '建设施工安全问题突出', unit: '典型问题', indicatorName: '事故灾害下降率', desc: '重庆站综合交通枢纽等项目作业密集、危大工程集中，易引发安全与自然灾害耦合风险；老旧小区改造及小散工程点多面广，违规作业等隐蔽风险需重点警惕。', type: '典型问题'
+        },
+        { title: '政府项目工程款拨付存隐患', unit: '典型问题', indicatorName: '欠薪案件发生率', desc: '因包债问题引发多起政府项目工程款拨付风险，虽经建设单位与财政部门沟通已保障工资发放，但源头隐患仍需持续关注。', type: '典型问题'
+        },
+        { title: '非建领域治理难度突出', unit: '典型问题', indicatorName: '欠薪案件发生率', desc: '我区第三产业占比高，大量用人主体为轻资产企业，此类企业欠薪隐患具有隐蔽性强、突发性高特点，商贸、餐饮、文旅、教培等行业日常排查还需持续加力，矛盾集中爆发风险不容忽视。', type: '典型问题'
+        },
+        { title: '建筑领域制度落实有短板', unit: '典型问题', indicatorName: '欠薪案件发生率', desc: '部分建筑项目“三制”落实不到位，未严格执行工资支付保障相关规范，监管仍需强化。', type: '典型问题'
+        },
+        { title: '社会层面网络防护能力有待加强', unit: '典型问题', indicatorName: '网络安全事件发生率', desc: '一季度上级通报网络安全事件中，有78%来自于社会企业，对网络安全风险处置意识及能力不足，防范网页篡改、数据泄露的能力相对较低。', type: '典型问题'
+        },
+        { title: '网络防护软件安装率有所下降', unit: '典型问题', indicatorName: '网络安全事件发生率', desc: '各单位山城侠安装数较2025年二季度下降约2千台，存在办公终端山城侠软件私自卸载、电脑变动未更新注册信息等情况。', type: '典型问题'
+        },
+        { title: '企业主体责任落实还有差距', unit: '典型问题', indicatorName: '网络安全事件发生率', desc: '办公终端隐患监测发现后，各单位未及时整改和反馈区委网信办，第一时间处置率还不够高、不够好。', type: '典型问题'
+        },
+        { title: '婚恋家庭类矛盾纠纷占比较高', unit: '典型问题', indicatorName: '外溢上行矛盾纠纷下降率', desc: '已引发1起命案，社会影响恶劣，充分暴露出属地、属事单位源头管控薄弱、预警预判不足，矛盾纠纷前端防范、多元化解及属地属事责任仍需进一步压紧压实、落地落细。', type: '典型问题'
+        },
+        { title: '基层排查还有待加强', unit: '典型问题', indicatorName: '外溢上行矛盾纠纷下降率', desc: '目前街道、社区、网格在矛调应用上的矛盾纠纷上报存在明显“被动化”倾向，绝大多数信息来自公安、法院、信访等部门共享推送，基层自身主动深入群众排查发现并上报矛盾纠纷占比极低，未能充分发挥前沿触角作用。', type: '典型问题'
+        },
+        { title: '业务水平还需提高', unit: '典型问题', indicatorName: '外溢上行矛盾纠纷下降率', desc: '基层工作人员能力水平参差不齐，基层调解方式多以撮合为主，对矛盾纠纷专业划分掌握不准，主要表现于其他类矛盾纠纷在综治中心现场登记中占比53.35%、在基层排查中占比65.60%，导致综合分析研判真实性、针对性不够强。', type: '典型问题'
+        },
+      ],
+      evals: [
+        {unit: '区委办公室', type: '部门', grade: 'A', score: 100},
+        {unit: '区纪委监委机关', type: '部门', grade: 'A', score: 100},
+        {unit: '区委网信办', type: '部门', grade: 'A', score: 100},
+        {unit: '区信访办', type: '部门', grade: 'A', score: 100},
+        {unit: '区退役军人事务局', type: '部门', grade: 'A', score: 100},
+        {unit: '区人力社保局', type: '部门', grade: 'A', score: 100},
+        {unit: '区国资委', type: '部门', grade: 'A', score: 100},
+        {unit: '区应急管理局', type: '部门', grade: 'A', score: 100},
+        {unit: '区住房城市建委', type: '部门', grade: 'B', score: 97.22},
+        {unit: '区商务委', type: '部门', grade: 'B', score: 96.67},
+        {unit: '区交通运输委', type: '部门', grade: 'B', score: 96.67},
+        {unit: '区消防救援局', type: '部门', grade: 'B', score: 95.83},
+        {unit: '区规划自然资源局', type: '部门', grade: 'B', score: 95.83},
+        {unit: '区教委', type: '部门', grade: 'B', score: 95.24},
+        {unit: '区市场监管局', type: '部门', grade: 'B', score: 94.44},
+        {unit: '区生态环境局', type: '部门', grade: 'B', score: 94.44},
+        {unit: '区城市管理局', type: '部门', grade: 'B', score: 94.44},
+        {unit: '区经济信息委', type: '部门', grade: 'B', score: 93.33},
+        {unit: '区产业发展促进局', type: '部门', grade: 'B', score: 93.33},
+        {unit: '区公安分局', type: '部门', grade: 'B', score: 92.86},
+        {unit: '区政府办公室', type: '部门', grade: 'B', score: 91.67},
+        {unit: '区税务局', type: '部门', grade: 'B', score: 91.67},
+        {unit: '区卫生健康委', type: '部门', grade: 'B', score: 91.67},
+        {unit: '区文化旅游委', type: '部门', grade: 'B', score: 90.48},
+        {unit: '区检察院', type: '部门', grade: 'B', score: 90},
+        {unit: '区医保局', type: '部门', grade: 'B', score: 88.89},
+        {unit: '区法院', type: '部门', grade: 'C', score: 86.67},
+        {unit: '区司法局', type: '部门', grade: 'C', score: 83.33},
+        {unit: '区侨联', type: '部门', grade: 'C', score: 83.33},
+        {unit: '区科协', type: '部门', grade: 'C', score: 83.33},
+        {unit: '区房屋征收中心', type: '部门', grade: 'D', score: 66.67},
+        {unit: '菜园坝街道', type: '街道', grade: 'A', score: 95.03},
+        {unit: '上清寺街道', type: '街道', grade: 'A', score: 94.44},
+        {unit: '化龙桥街道', type: '街道', grade: 'A', score: 94.03},
+        {unit: '朝天门街道', type: '街道', grade: 'B', score: 93.79},
+        {unit: '两路口街道', type: '街道', grade: 'B', score: 92.77},
+        {unit: '七星岗街道', type: '街道', grade: 'B', score: 92.42},
+        {unit: '大溪沟街道', type: '街道', grade: 'B', score: 92.39},
+        {unit: '大坪街道', type: '街道', grade: 'B', score: 92},
+        {unit: '解放碑街道', type: '街道', grade: 'C', score: 91.28},
+        {unit: '石油路街道', type: '街道', grade: 'C', score: 90.27},
+        {unit: '南纪门街道', type: '街道', grade: 'D', score: 88.94},
+        {unit: '解放碑CBD管委会', type: '管委会', grade: 'A', score: 100},
+        {unit: '数字经济产业园管委会', type: '管委会', grade: 'A', score: 100},
+        {unit: '大石化新区管委会', type: '管委会', grade: 'A', score: 100},
+        {unit: '历史文化街区管委会', type: '管委会', grade: 'A', score: 100},
+        {unit: '区文旅发展集团', type: '国企', grade: 'A', score: 100},
+        {unit: '区产业发展集团', type: '国企', grade: 'A', score: 100},
+        {unit: '区商业发展集团', type: '国企', grade: 'B', score: 94.44},
+        {unit: '区城市发展集团', type: '国企', grade: 'B', score: 94.44}
+      ],
+    },
+    {
+      code: 'reform', name: '改革报表', grade: 'C', rank: '19', icon: '🔄',
+      lead: '区委改革办', score: null,
+      vsQuarterGrad: -2, vsQuarterRank: -14,
+      vsYearGrad: -2, vsYearRank: -18,
+      conclusion: '共晾晒5项指标，其中“信用+执法”涉企行政检查规范率、国有企业防范化解利息本金化风险完成率、国有资产盘活回收资金完成指数3项指标A档，超大城市“城市病”问题有效处置率B档，数字经济核心产业发展质效C档。',
+      indicators: [
+        { name: '数字经济核心产业发展质效', grade: 'C', rank: '-', isNew: true,
+          vsQuarterGrad: null, vsQuarterRank: null,
+          core1Label: '数字经济核心产业营收增速', coreValue1: '-10.80%', core1Desc: '低于全市17.1%',
+          core2Label: null, coreValue2: null, core2Desc: null,
+          runSummary: 'C档全市第31位，为一季度新增指标。', runDesc: '一季度我区数字经济核心产业营收增速为-10.8%（全市第39位），低于全市（6.3%）17.1个百分点，与全市第一（忠县70.3%）相比有81.1个百分点的差距【两江新区、巴南区、重庆高新区、沙坪坝区、南岸区、九龙坡区、永川区、璧山区、渝中区、大足区数字经济核心产业增加值排名全市前10，按照规则升档】。'
+        },
+        { name: '超大城市“城市病”问题有效处置率', grade: 'B', rank: '-1', isNew: false,
+          vsQuarterGrad: -1, vsQuarterRank: -21,
+          core1Label: '超大城市“城市病”问题有效处置率', coreValue1: '96.65%', core1Desc: null,
+          core2Label: '采集“城市病”问题件数', coreValue2: '64324.0', core2Desc: null,
+          runSummary: 'B档全市第24位，比2025年一季度A档全市第6位，下降1个档次、18个位次；比2025年度A档全市第3位，下降1个档次、21个位次。', runDesc: '一季度，全区超大城市“城市病”问题有效处置率为96.65%。其中，采集“城市病”问题64324件，有效处置率为97.75%；处置“12319”市民诉求问题案件243件，有效处置率为100%，回访满意率为100%；办理市级发现典型、日常“城市病”问题289件，有效处置率为100%。'
+        },
+        { name: '“信用+执法”涉企行政检查规范率', grade: 'A', rank: '-', isNew: false,
+          vsQuarterGrad: 0, vsQuarterRank: 0,
+          core1Label: '“信用+执法”实施率', coreValue1: '100.00%', core1Desc: null,
+          core2Label: '开展行政检查次数', coreValue2: '5147.0', core2Desc: null,
+          runSummary: 'A档全市第1位，较2025年度档次、位次均不变，2025年一季度未评价该指标。', runDesc: '2026年一季度，区级各执法部门依托“执法+监督”数字应用开展检查1273次，市场监管领域推送检查数据3874次，共计开展行政检查5147次。调用信用模型开展行政检查625次，“信用+执法”实施率100%。开展“扫码入企”1014次，行政检查规范率100%。开展联合检查225次，联合检查率33%。'
+        },
+        { name: '国有企业防范化解利息本金化风险完成率', grade: 'A', rank: '-', isNew: true,
+          vsQuarterGrad: null, vsQuarterRank: null,
+          core1Label: '国有企业防范化解利息本金化风险完成率', coreValue1: null, core1Desc: null,
+          core2Label: null, coreValue2: null, core2Desc: null,
+          runSummary: 'A档全市第1位，为一季度新增指标。', runDesc: '渝中区不存在利息本金化问题，各集团均未发生利息本金化。加强债务风险防控，优化融资结构，持续压降融资成本，保持利息本金化清零。'
+        },
+        { name: '国有资产盘活回收资金完成指数', grade: 'A', rank: '-', isNew: true,
+          vsQuarterGrad: null, vsQuarterRank: null,
+          core1Label: '国有资产盘活回收资金全年完成进度', coreValue1: '31.97%', core1Desc: null,
+          core2Label: '国有资产盘活回收资金（亿元）', coreValue2: '4.16', core2Desc: null,
+          runSummary: 'A档全市第1位，为一季度新增指标。', runDesc: '一季度全区国有资产盘活回收资金达到回收资金序时进度，累计回收资金4.16亿元，完成全年进度31.97%，超序时进度6.97个百分点，全区外部资源参与回收资金1.66亿元、占比39.85%。'
+        },
+      ],
+      problems: [
+        { title: '区经济信息委牵头的数字技术应用业龙头增长乏力', unit: '典型问题', indicatorName: '数字经济核心产业发展质效', desc: '珩郁达、珩丰溢、中电智安、网润集团增长均不及预期，4家企业去年一季度占全行业比重55.1%。今年一季度，珩郁达、珩丰溢受合作方续约减少影响增长7%，远低于去年同期水准；中电智安受承接政府项目回款慢影响、下滑8.5%；网润集团受百度业务模式改革影响、下滑86.4%。', type: '典型问题'
+        },
+        { title: '区文化旅游委牵头的数字要素驱动业受高基数影响下滑', unit: '典型问题', indicatorName: '数字经济核心产业发展质效', desc: '在哪吒等爆款电影推动下，去年一季度电影市场呈现较快增势、垫高文体娱乐业基数，占文体娱乐业比重超15%的电影板块重点企业保利万和电影院（-51.8%）、电影发行放映公司（-60.9%）等营收普遍下滑。', type: '典型问题'
+        },
+        { title: '案件超时处置仍有发生', unit: '典型问题', indicatorName: '超大城市“城市病”问题有效处置率', desc: '两路口街道在1月份仍发生超时处置“城市病”问题案件。', type: '典型问题'
+        },
+        { title: '案件处置不规范', unit: '典型问题', indicatorName: '超大城市“城市病”问题有效处置率', desc: '绝大多数处置单位在办理市级下派案件时，回复图片拍摄角度不一致，水印不完善，上传情况说明缺少施工合同等佐证材料，造成多次返工，延误结案时间。', type: '典型问题'
+        },
+        { title: '“执法+监督”数字应用需要持续迭代优化', unit: '典型问题', indicatorName: '“信用+执法”涉企行政检查规范率', desc: '执法事项动态调整较为频繁，市场主体数据库更新不及时，影响基层执法工作质效。', type: '典型问题'
+        },
+        { title: '执法人员数字能力有待进一步提升', unit: '典型问题', indicatorName: '“信用+执法”涉企行政检查规范率', desc: '部分执法人员对日常任务归并、“综合查一次”等联合检查相关操作不熟练，“扫码入企”未达到100%。', type: '典型问题'
+        },
+        { title: '无', unit: '典型问题', indicatorName: '国有企业防范化解利息本金化风险完成率', desc: '无', type: '典型问题'
+        },
+        { title: '回收资金金额典型方面', unit: '典型问题', indicatorName: '国有资产盘活回收资金完成指数', desc: '随着资产盘活的集中攻坚，可盘活优质项目不断减少，剩余项目盘活难度加大，回收资金存在放缓可能性。', type: '典型问题'
+        },
+        { title: '引入外部资源方面', unit: '典型问题', indicatorName: '国有资产盘活回收资金完成指数', desc: '当前市场投资信心匮乏，大宗资产市场疲软现状未改变，后期盘活储备项目以内部资源为主，引入外部资源难度较大。', type: '典型问题'
+        },
+      ],
+      evals: [
+        {unit: '区政府办公室', type: '部门', grade: 'A', score: 100},
+        {unit: '区司法局', type: '部门', grade: 'A', score: 100},
+        {unit: '区财政局', type: '部门', grade: 'A', score: 100},
+        {unit: '区人力社保局', type: '部门', grade: 'A', score: 100},
+        {unit: '区应急管理局', type: '部门', grade: 'A', score: 100},
+        {unit: '区医保局', type: '部门', grade: 'A', score: 100},
+        {unit: '区规划自然资源局', type: '部门', grade: 'A', score: 100},
+        {unit: '区教委', type: '部门', grade: 'A', score: 91.67},
+        {unit: '区民政局', type: '部门', grade: 'A', score: 91.67},
+        {unit: '区生态环境局', type: '部门', grade: 'A', score: 91.67},
+        {unit: '区城市管理局', type: '部门', grade: 'A', score: 91.67},
+        {unit: '区交通运输委', type: '部门', grade: 'A', score: 91.67},
+        {unit: '区卫生健康委', type: '部门', grade: 'A', score: 91.67},
+        {unit: '区市场监管局', type: '部门', grade: 'A', score: 91.67},
+        {unit: '区国资委', type: '部门', grade: 'A', score: 91.67},
+        {unit: '区住房城市建委', type: '部门', grade: 'B', score: 88.89},
+        {unit: '区商务委', type: '部门', grade: 'B', score: 83.33},
+        {unit: '区公安分局', type: '部门', grade: 'B', score: 83.33},
+        {unit: '区国防动员办', type: '部门', grade: 'B', score: 83.33},
+        {unit: '区房屋征收中心', type: '部门', grade: 'B', score: 83.33},
+        {unit: '区经济信息委', type: '部门', grade: 'C', score: 77.78},
+        {unit: '区文化旅游委', type: '部门', grade: 'C', score: 77.78},
+        {unit: '区发展改革委', type: '部门', grade: 'D', score: 66.67},
+        {unit: '区科技局', type: '部门', grade: 'D', score: 66.67},
+        {unit: '朝天门街道', type: '街道', grade: 'B', score: 83.33},
+        {unit: '菜园坝街道', type: '街道', grade: 'B', score: 83.33},
+        {unit: '大溪沟街道', type: '街道', grade: 'B', score: 83.33},
+        {unit: '大坪街道', type: '街道', grade: 'B', score: 83.33},
+        {unit: '化龙桥街道', type: '街道', grade: 'B', score: 83.33},
+        {unit: '七星岗街道', type: '街道', grade: 'C', score: 75},
+        {unit: '南纪门街道', type: '街道', grade: 'C', score: 75},
+        {unit: '石油路街道', type: '街道', grade: 'C', score: 75},
+        {unit: '解放碑街道', type: '街道', grade: 'D', score: 66.67},
+        {unit: '两路口街道', type: '街道', grade: 'D', score: 66.67},
+        {unit: '上清寺街道', type: '街道', grade: 'D', score: 66.67},
+        {unit: '化龙桥国际开发区管委会', type: '管委会', grade: 'B', score: 83.33},
+        {unit: '解放碑CBD管委会', type: '管委会', grade: 'C', score: 75},
+        {unit: '历史文化街区管委会', type: '管委会', grade: 'E', score: 50},
+        {unit: '数字经济产业园管委会', type: '管委会', grade: 'E', score: 50},
+        {unit: '大石化新区管委会', type: '管委会', grade: 'E', score: 50},
+        {unit: '区商业发展集团', type: '国企', grade: 'A', score: 100},
+        {unit: '区文旅发展集团', type: '国企', grade: 'A', score: 94.44},
+        {unit: '区产业发展集团', type: '国企', grade: 'A', score: 94.44},
+        {unit: '区城市发展集团', type: '国企', grade: 'A', score: 94.44}
+      ],
+    },
+    {
+      code: 'innovation', name: '创新报表', grade: 'B', rank: '11', icon: '💡',
+      lead: '区科技局', score: null,
+      vsQuarterGrad: 1, vsQuarterRank: 7,
+      vsYearGrad: -1, vsYearRank: -2,
+      conclusion: '共晾晒3项指标，其中科技型企业“双倍增”目标完成率、技术合同成交额完成率、高技术投资增速3项指标均为A档。',
+      indicators: [
+        { name: '科技型企业“双倍增”目标完成率', grade: 'A', rank: '0', isNew: false,
+          vsQuarterGrad: 0, vsQuarterRank: 0,
+          core1Label: '“双倍增”年度目标完成率', coreValue1: '30.38%', core1Desc: null,
+          core2Label: '新增科技型企业入库数', coreValue2: '106.0', core2Desc: null,
+          runSummary: 'A档全市第1位（完成时序任务排名即为A1），比2025年一季度A档全市第33位（得满分），上升32个位次；比2025年度档次、位次均不变。', runDesc: '2026年渝中区科技型企业入库全年目标任务数为新增349家，一季度，我区新增科技型企业入库106家，年度目标完成率30.38%。科企目标任务整体完成情况良好，数智科技、专业服务等新兴产业新增量较多，企业创新活力持续释放。'
+        },
+        { name: '技术合同成交额完成率', grade: 'A', rank: '2', isNew: false,
+          vsQuarterGrad: 0, vsQuarterRank: 3,
+          core1Label: '技术合同成交额年度目标完成率', coreValue1: '17.45%', core1Desc: null,
+          core2Label: '技术合同成交额（亿元）', coreValue2: '14.8', core2Desc: null,
+          runSummary: 'A档全市第1位（完成时序任务排名即为A1），比2025年一季度C档全市第28位，上升2个档次、27个位次；比2025年度A档全市第4位，上升3个位次。', runDesc: '2026年渝中区技术合同成交额全年目标任务为85亿元，一季度，我区完成技术合同成交额14.8亿元，年度目标完成率17.45%。'
+        },
+        { name: '高技术产业投资增速', grade: 'A', rank: '-', isNew: true,
+          vsQuarterGrad: null, vsQuarterRank: null,
+          core1Label: '高技术产业投资增速', coreValue1: '-5.40%', core1Desc: '高于全市1.7%',
+          core2Label: '高技术服务业信息服务领域投资（万元）', coreValue2: '87.0', core2Desc: null,
+          runSummary: 'A档全市第25位，为2026年新增指标。', runDesc: '一季度，高技术服务业信息服务领域的人工智能手术方案自动化设计系统项目完成投资87万元，高技术产业投资增速为-5.4%，高于全市平均（-7.1%）1.7个百分点，与全市第一（北碚区309.8%）相比有315.2个百分点的差距。'
+        },
+      ],
+      problems: [
+        { title: '资源禀赋不占优', unit: '典型问题', indicatorName: '科技型企业“双倍增”目标完成率', desc: '我区服务业占比90%以上，主要集中在商贸、餐饮、旅游、文化、金融等行业领域，符合科技型企业入库条件较少。同时，经过近几年挖潜和培育，我区科技型企业数量已进入相对稳定的低速增长期，很难出现新的高速增长。', type: '典型问题'
+        },
+        { title: '推进力度待加强', unit: '典型问题', indicatorName: '科技型企业“双倍增”目标完成率', desc: '区大数据发展局、朝天门街道、大石化新区管委会等11家责任单位对科技型企业发掘和培育力度不够，一季度科企入库完成0家，部分企业服务工作人员对市科技局新启用的“科企智服”平台操作不熟练、宣传不到位，符合申报条件的企业政策知晓率、申报积极性待进一步提升。', type: '典型问题'
+        },
+        { title: '优质创新主体较少', unit: '典型问题', indicatorName: '科技型企业“双倍增”目标完成率', desc: '受市场供需不足等因素影响，部分企业经营效益下降、成长性不足，已入库科企较往年知识产权数量偏少、质量偏低，存在培育后劲不足、增长乏力等困难。', type: '典型问题'
+        },
+        { title: '集中度过高，存量面临枯竭', unit: '典型问题', indicatorName: '技术合同成交额完成率', desc: '我区符合技术合同登记的企业主要集中在仅占全区增加值5%的科研服务业，其中与建筑相关的企业占比超过90%。截至目前，中冶赛迪股份有限公司一家企业技术合同登记额超12亿元，占比90%以上，加上前期存量合同已经充分挖掘，技术合同增长潜力受限。', type: '典型问题'
+        },
+        { title: '登记意识薄弱，新增拓展受限', unit: '典型问题', indicatorName: '技术合同成交额完成率', desc: '我区中小型企业高价值技术合同储备不足、签订的技术合同不够规范，加之对政策红利认知不深、申报流程不熟，主动登记意识不强，增量拓展难度较大。', type: '典型问题'
+        },
+        { title: '重视程度不够，合同归集不充分', unit: '典型问题', indicatorName: '技术合同成交额完成率', desc: '除区住房城市建委和区经济信息委以外，区发展改革委等8个责任部门一季度技术合同成交额为0，反映出相关单位对技术合同登记工作重视程度不够，经办人对技术合同界定标准理解不透彻、认定标准把握不够精准、挖掘能力有待加强，存在“应登未登”现象，部分技术交易合同未能及时纳入统计范围。', type: '典型问题'
+        },
+        { title: '产业结构不占优势', unit: '典型问题', indicatorName: '高技术产业投资增速', desc: '高技术产业投资由高技术服务业投资和高技术制造业投资构成，从全市该项指标构成来看，以高技术制造业投资为主，然而渝中区无制造业，在该项指标完成上存在短板。', type: '典型问题'
+        },
+        { title: '入库纳统存在困难', unit: '典型问题', indicatorName: '高技术产业投资增速', desc: '我区中小型企业高价值技术合同储备不足、签订的技术合同不够规范，加之对政策红利认知不深、申报流程不熟，主动登记意识不强，增量拓展难度较大。', type: '典型问题'
+        },
+      ],
+      evals: [
+        {unit: '区人力社保局', type: '部门', grade: 'A', score: 100},
+        {unit: '区经济信息委', type: '部门', grade: 'B', score: 66.67},
+        {unit: '区文化旅游委', type: '部门', grade: 'B', score: 66.67},
+        {unit: '区住房城市建委', type: '部门', grade: 'B', score: 66.67},
+        {unit: '区卫生健康委', type: '部门', grade: 'B', score: 65},
+        {unit: '区发展改革委', type: '部门', grade: 'B', score: 56.33},
+        {unit: '区商务委', type: '部门', grade: 'C', score: 50},
+        {unit: '区大数据发展局', type: '部门', grade: 'D', score: 33.33},
+        {unit: '区产业发展促进局', type: '部门', grade: 'D', score: 33.33},
+        {unit: '区交通运输委', type: '部门', grade: 'D', score: 33.33},
+        {unit: '区城市管理局', type: '部门', grade: 'D', score: 33.33},
+        {unit: '区国资委', type: '部门', grade: 'D', score: 33.33},
+        {unit: '大坪街道', type: '街道', grade: 'A', score: 100},
+        {unit: '两路口街道', type: '街道', grade: 'A', score: 97},
+        {unit: '石油路街道', type: '街道', grade: 'A', score: 94},
+        {unit: '南纪门街道', type: '街道', grade: 'A', score: 94},
+        {unit: '化龙桥街道', type: '街道', grade: 'B', score: 88},
+        {unit: '上清寺街道', type: '街道', grade: 'B', score: 88},
+        {unit: '大溪沟街道', type: '街道', grade: 'C', score: 33.33},
+        {unit: '七星岗街道', type: '街道', grade: 'C', score: 33.33},
+        {unit: '解放碑街道', type: '街道', grade: 'C', score: 33.33},
+        {unit: '菜园坝街道', type: '街道', grade: 'C', score: 33.33},
+        {unit: '朝天门街道', type: '街道', grade: 'C', score: 33.33},
+        {unit: '数字经济产业园管委会', type: '管委会', grade: 'A', score: 66.67},
+        {unit: '解放碑CBD管委会', type: '管委会', grade: 'A', score: 66.67},
+        {unit: '历史文化街区管委会', type: '管委会', grade: 'A', score: 66.67},
+        {unit: '大石化新区管委会', type: '管委会', grade: 'C', score: 33.33}
+      ],
+    },
+    {
+      code: 'eco', name: '生态报表', grade: 'C', rank: '20', icon: '🌿',
+      lead: '区生态环境局', score: null,
+      vsQuarterGrad: -2, vsQuarterRank: -15,
+      vsYearGrad: 0, vsYearRank: 1,
+      conclusion: '共晾晒5项指标，其中地表水水质达标率、空气质量达标率、生产废物综合回收利用率、实体经济绿色贷款4项指标A档，生活废物综合回收利用率B档。',
+      indicators: [
+        { name: '地表水水质达标率', grade: 'A', rank: '0', isNew: false,
+          vsQuarterGrad: 0, vsQuarterRank: 0,
+          core1Label: '嘉陵江大溪沟断面水质达标率', coreValue1: '100.00%', core1Desc: null,
+          core2Label: null, coreValue2: null, core2Desc: null,
+          runSummary: 'A档全市第1位，比2025年一季度、2025年度（均为A档全市第1位）档次、排位保持不变。', runDesc: '我区无河流国控断面，分值调整到地表水市控断面指标，该项分值占比100%。一季度我区嘉陵江大溪沟断面水质达标率100%。全域无黑臭水体，嘉陵江大溪沟断面1-3月均达标，河长制考核抽检河流水质预计达标，未发生重大涉水舆情。'
+        },
+        { name: '空气质量达标率', grade: 'A', rank: '1', isNew: false,
+          vsQuarterGrad: 1, vsQuarterRank: 11,
+          core1Label: '细颗粒物（PM2.5）平均浓度改善', coreValue1: '5.50%', core1Desc: null,
+          core2Label: '细颗粒物（PM2.5）平均浓度（μg/m³）', coreValue2: '47.8', core2Desc: null,
+          runSummary: 'A档全市第20位，比2025年一季度B档全市第24位，上升1个档次、4个位次；比2025年度B档全市第31位，上升1个档次、11个位次。', runDesc: '印发《渝中区2026年一季度治气攻坚工作方案》，制定27项攻坚措施，坚持以细颗粒物（PM2.5）污染防治为核心，抓实“四源防控”，全面完成市下达一季度国四柴油车淘汰任务，开展非道路移动机械抽检30余台，指导重庆站、黄花园产业园项目完善施工环保方案，督促辖区学校、医院等公共机构食堂完成一轮次油烟净化设施清洗，辖区春节期间实现全域烟花爆竹“零燃放”。一季度，上清寺国控点优良天数75天、同比增加7天，细颗粒物（PM2.5）平均浓度47.8μg/m³、同比改善5.5%。'
+        },
+        { name: '生活废物综合回收利用率', grade: 'B', rank: '-1', isNew: false,
+          vsQuarterGrad: -1, vsQuarterRank: -10,
+          core1Label: '城市生活垃圾回收利用率', coreValue1: '45.12%', core1Desc: null,
+          core2Label: null, coreValue2: null, core2Desc: null,
+          runSummary: 'B档全市第19位，比2025年一季度A档全市第4位，下降1个档次、15个位次；比2025年度A档全市第9位，下降1个档次、10个位次。', runDesc: '①区城市管理局牵头“城市生活垃圾回收利用率”，权重占60%。一季度渝中区“城市生活垃圾回收利用率”为45.12%，排名全市第1。一是按照“周、月、季”开展垃圾分类宣传900余次，生活垃圾分类居民知晓率达100%。二是开展生活垃圾分类全链条攻坚行动，将桶边值守、执法监管纳入“141”基层智治平台，助推生活垃圾分类提质增效。三是更新升级老旧片区生活垃圾分类投放设施、安装“厨余垃圾自动破袋AI识别寻桶投放”设施、推广“渝爱分”等数字化智慧平台，引导居民养成家庭源头分类习惯。\n②区住房城市建委牵头污水集中收集率，权重占40%。统筹推进5个续建排水项目和7个计划新开工项目，逐步启动半岛规划合流制区域污水治理工程，一季度新改建排水管网2.5公里。'
+        },
+        { name: '生产废物综合回收利用率', grade: 'A', rank: '0', isNew: false,
+          vsQuarterGrad: 1, vsQuarterRank: 20,
+          core1Label: '危险废物安全填埋处置率', coreValue1: '100.00%', core1Desc: null,
+          core2Label: null, coreValue2: null, core2Desc: null,
+          runSummary: 'A档全市并列第1位，比2025年一季度档次、位次均不变；比2025年度B档全市第21位，上升1个档次、20个位次。', runDesc: '该项指标评价一般工业固体废物管控率、危险废物安全填埋处置量占比、农业固体废物综合利用量与产生量（收集量）的比值3项内容。其中一般工业固体废物、农业固废我区不涉及，由市生态环境局赋分；我区无危险废物填埋场和废物处置单位，危险废物安全填埋处置量占比由市生态环境局统一核算。一是按照生态环境部建设的全国危险废物全过程环境管理信息系统要求，开展涉及我区危险废物“五即”规范化建设和“一码贯通”环境监管试点的医疗机构物联网设备更新安装，已顺利接入国家系统并实现数字化管理。二是争取到位市级“以奖促治”资金35万元，完成渝中区检测机构实验室危险废物环境管理规范化管理调查及建设，摸清产废单位基本情况、固废危废产生情况和管理情况，建立“五个清单”，实现“一企一档”，形成行业固体废物环境管理现状调查报告，指导产废单位开展规范化建设，并建设危废管理标杆企业。'
+        },
+        { name: '绿色转型贷款余额增速', grade: 'A', rank: '0', isNew: false,
+          vsQuarterGrad: 0, vsQuarterRank: 5,
+          core1Label: '绿色金融规模同比增长', coreValue1: '10.50%', core1Desc: null,
+          core2Label: '绿色贷款余额（亿元）', coreValue2: '2008.0', core2Desc: null,
+          runSummary: 'A档全市第27位，比2025年一季度A档全市第10位，下降17个位次；比2025年度A档全市第32位，上升5个位次。', runDesc: '区产业发展促进局不断深化绿色金融改革创新试验区核心区建设。一是绿色金融规模持续增长。目前全区绿色贷款余额2008亿元、同比增长10.5%。绿色债券余额128亿元，全市排名第1。二是区内金融机构绿色化发展。绿色机构加速聚集，全区绿色金融机构8家，全市占比1/4，数量排全市第一。三是打造绿色标杆项目。建行重庆市分行以转型金融与科技金融深度融合模式，为某化工科技有限公司提供1.4亿元技术改造转型贷款，以绿色金融为区域经济高质量发展注入新动能。中国银行重庆市分行成功落地行内首笔“节水贷”业务，为某污水再利用项目投放贷款6000万元；为某“节能型变压器”产业链龙头企业，量身打造“信贷+租赁+国际结算”综合金融服务方案，赋能企业绿色转型。'
+        },
+      ],
+      problems: [
+        { title: '地表水水质达标率问题', unit: '典型问题', indicatorName: '地表水水质达标率', desc: '地表水水质达标率考核细则新增河长制落实情况，目前暂定的考核方式为市河长办委托第三方监测机构对各区河流水质情况开展抽测，抽测结果作为考核排名依据。因河流水质存在波动，特别是汛期水质波动较大，第三方监测机构抽测水质可能存在超标情况。', type: '典型问题'
+        },
+        { title: '移动源污染贡献仍占主导', unit: '典型问题', indicatorName: '空气质量达标率', desc: '全区公交和巡游出租车纯电动化占比68.7%（区交通运输委牵头），低于全市平均水平73.9%，工地运输车辆、施工机具纯电动化率偏低（区住房城市建委牵头），施工尾气污染问题较突出。', type: '典型问题'
+        },
+        { title: '扬尘污染问题冒头', unit: '典型问题', indicatorName: '空气质量达标率', desc: '今年以来，市、区重大项目施工强度明显增加，施工扬尘污染防控措施落实有差距，春节前大量的小微工地（天然气管网改造、装修项目、路面整治等市政项目）短时施工污染明显，2月我区PM10浓度长期处于高位。三是朝天门、大溪沟2个街道细颗粒物（PM2.5）平均浓度同比变差。', type: '典型问题'
+        },
+        { title: '在建工地垃圾分类宣传氛围不浓厚，设施脏污破损', unit: '典型问题', indicatorName: '生活废物综合回收利用率', desc: '区住房城市建委在建工地垃圾分类宣传氛围不浓厚，设施脏污破损，未及时清洗更换。解放碑街道、大溪沟街道辖区部分物业企业履行管理责任有差距，宣传引导主动性不强，投放点、收集点等重建设、轻管理，存在分类设施脏污破损乱摆放、生活垃圾混装冒装落地等问题。', type: '典型问题'
+        },
+        { title: '生活污水收集率与中心城区保持一致', unit: '典型问题', indicatorName: '生活废物综合回收利用率', desc: '我区无污水处理厂，生活污水收集率与中心城区保持一致，由市住房城市建委统一计算，无激励加分，排名中游。', type: '典型问题'
+        },
+        { title: '需加强对医疗机构的专项培训', unit: '典型问题', indicatorName: '生产废物综合回收利用率', desc: '我区医疗机构数量多，生态环境部新建设的全国危险废物全过程环境管理信息系统操作变化较大，还需加强对医疗机构的专项培训。', type: '典型问题'
+        },
+        { title: '用单一增速指标评价，对金融大区非常不利', unit: '典型问题', indicatorName: '绿色转型贷款余额增速', desc: '我区绿色贷款余额基数较大，虽处于高速增长态势，但仍低于全市整体增速。经多次争取，才将占比纳入档位调节指标。', type: '典型问题'
+        },
+        { title: '2025年以来绿色贷款评价内涵发生变化', unit: '典型问题', indicatorName: '绿色转型贷款余额增速', desc: '除传统绿色贷款，还纳入了转型贷款、绿色消费、绿色贸易等信贷数据，导致基数更大，渝中区高基数效应更加明显，增速有所降低。', type: '典型问题'
+        },
+        { title: '绿色项目内生储备不足、外部拓展受限', unit: '典型问题', indicatorName: '绿色转型贷款余额增速', desc: '根据《绿色低碳转型产业指导目录（2024年版）》，绿色制造、绿色基建、生态农业等是绿色金融重点支持领域，受制于产业结构，我区绿色项目内生储备不足、外部拓展受限。', type: '典型问题'
+        },
+      ],
+      evals: [
+        {unit: '区城市管理局', type: '部门', grade: 'A', score: 100},
+        {unit: '区公安分局', type: '部门', grade: 'A', score: 100},
+        {unit: '区商务委', type: '部门', grade: 'A', score: 100},
+        {unit: '区市场监管局', type: '部门', grade: 'A', score: 100},
+        {unit: '区发展改革委', type: '部门', grade: 'A', score: 100},
+        {unit: '区教委', type: '部门', grade: 'A', score: 97.67},
+        {unit: '区生态环境局', type: '部门', grade: 'B', score: 94.44},
+        {unit: '区卫生健康委', type: '部门', grade: 'B', score: 92.11},
+        {unit: '区政府办公室 （区机关事务中心）', type: '部门', grade: 'B', score: 90.5},
+        {unit: '区交通运输委', type: '部门', grade: 'B', score: 90.47},
+        {unit: '区文化旅游委', type: '部门', grade: 'B', score: 90.33},
+        {unit: '区住房城市建委', type: '部门', grade: 'C', score: 83.33},
+        {unit: '区产业发展促进局', type: '部门', grade: 'D', score: 73.67},
+        {unit: '南纪门街道', type: '街道', grade: 'A', score: 96.11},
+        {unit: '化龙桥街道', type: '街道', grade: 'A', score: 96},
+        {unit: '菜园坝街道', type: '街道', grade: 'B', score: 93.56},
+        {unit: '上清寺街道', type: '街道', grade: 'B', score: 91.33},
+        {unit: '解放碑街道', type: '街道', grade: 'B', score: 89.56},
+        {unit: '石油路街道', type: '街道', grade: 'B', score: 86.5},
+        {unit: '七星岗街道', type: '街道', grade: 'C', score: 84.67},
+        {unit: '大坪街道', type: '街道', grade: 'C', score: 83.83},
+        {unit: '两路口街道', type: '街道', grade: 'C', score: 81},
+        {unit: '大溪沟街道', type: '街道', grade: 'C', score: 80.56},
+        {unit: '朝天门街道', type: '街道', grade: 'D', score: 77.78},
+        {unit: '解放碑CBD管委会', type: '管委会', grade: 'A', score: 91.67}
+      ],
+    },
+    {
+      code: 'culture', name: '文化报表', grade: 'A', rank: '4', icon: '🎭',
+      lead: '区委宣传部', score: null,
+      vsQuarterGrad: 0, vsQuarterRank: -1,
+      vsYearGrad: 0, vsYearRank: -3,
+      conclusion: '共晾晒5项指标，均为A档。一季度，全区宣传思想文化系统紧扣新时代文化强区建设目标，深入推进意识形态、新闻舆论、文明建设、文化事业、文旅产业等各领域工作，有力支撑渝中高质量发展。开展“开局奋进话渝中”“奋力冲刺一季度‘开门红’”等主题宣传28期，央媒市媒区媒刊发渝中重点报道1.1万条；制作《遇见渝中》国际宣传片全球曝光达1.35亿，吸引入境过夜游客增长1倍，在全市区县委书记和部门一把手例会上得到市委主要领导肯定；培育选树10类先进典型共28个，成功开展“感动渝中十大人物”颁奖典礼，树立标杆示范，凝聚奋进力量；举办“渝见好风尚”城市文明建设主题活动暨2026年“渝中行业文明之星—文旅行业”发布仪式，“小案小事”专项治理行动工作成效显著；精心举办“今·朝天籁”朝天门音乐汇，开展化龙桥湖畔“悦视生活汇”，大力丰富群众文化生活。',
+      indicators: [
+        { name: '新闻舆论传播力', grade: 'A', rank: '0', isNew: false,
+          vsQuarterGrad: 0, vsQuarterRank: 0,
+          core1Label: null, coreValue1: null, core1Desc: null,
+          core2Label: null, coreValue2: null, core2Desc: null,
+          runSummary: 'A档全市第1位，比2025年一季度、2025年度档次、位次均不变。', runDesc: '主流舆论强劲有力。一是主题宣传成效显著。紧扣“十五五”开局、重点民生实事、重大节点等，深化“五媒联动”策划机制，开展“开局奋进话渝中”“奋力冲刺一季度‘开门红’”等主题宣传，推出“渝中融媒会客厅”十五五开局系列政策解读访谈报道、“母城新消费·渝中潮生活”等系列报道，聚焦就业创业、生态环境等主题举办新闻发布活动，央媒市媒区媒刊发渝中重点报道1.1万条。制作《遇见渝中》国际宣传片全球曝光达1.35亿，吸引入境过夜游客增长1倍，在全市区县委书记和部门一把手例会上得到市委主要领导肯定。二是区级媒体变革纵深发力。深入推进“两微一抖”重点平台建设，深化“重庆渝中”APP迭代升级。5件作品获评市委宣传部“三好”作品，实现“好评论”“好作品”“好创意”类别全覆盖。'
+        },
+        { name: '舆情管控引导力', grade: 'A', rank: '0', isNew: false,
+          vsQuarterGrad: 0, vsQuarterRank: 0,
+          core1Label: null, coreValue1: null, core1Desc: null,
+          core2Label: null, coreValue2: null, core2Desc: null,
+          runSummary: 'A档全市第1位，比2025年一季度、2025年度档次、位次均不变。', runDesc: '舆论态势平稳向好。各单位积极主动报送突发热点敏感事件或可能引发炒作的高风险事件，常态加强涉渝中舆情巡查监测、分析研判和联动处置，涉渝中舆情风险管控有力有效。一季度累计通过“文化·三情联动”上报处置涉渝中突发敏感事件及负面媒情182起。稳妥处置“某中学家委会收费”等社会关注度较高的热点舆情，确保涉渝中舆情总体平稳。'
+        },
+        { name: '文明建设成效', grade: 'A', rank: '-', isNew: true,
+          vsQuarterGrad: null, vsQuarterRank: null,
+          core1Label: null, coreValue1: null, core1Desc: null,
+          core2Label: null, coreValue2: null, core2Desc: null,
+          runSummary: 'A档全市第1位，为一季度新增指标。', runDesc: '典型培育成效显著。一是强化统筹协调，组织先进典型培育选树工作推进会，制定印发《先进典型培育选树工作情况通报》《渝中区“榜样工作室”建设方案》等文件，健全典型培育选树、宣传学习工作体系，组织开展“感动渝中十大人物”颁奖典礼。二是典型培育有效，2026年第一季度纳入“文化报表”赋分项目共12项，其中，我区获评9项：全国三八红旗手、全国巾帼文明岗2个，全国岗位学雷锋标兵1个，中国好人1个，新重庆贡献奖3个，感动重庆十大人物2个，重庆市见义勇为先进集体1个，重庆市最美家庭3个，重庆志愿服务之星2个，重庆好人3个。文明治理成效突出。一是强化统筹部署，压实治理责任。下发2号调度令，就文明城区建设、“渝见好风尚”城市文明促进行动、“小案小事”治理专项行动等四方面工作进行专题部署。下发《“渝见好风尚”城市文明建设促进行动工作方案》，实施文明餐桌、文明交通、文明旅游建设等八项文明促进行动，举办渝中区“渝见好风尚”城市文明建设主题活动暨2026年“渝中行业文明之星—文旅行业”发布仪式。召开“小案小事”专项治理推进会，针对解放碑街道高空抛物事件复盘分析，部署下阶段治理工作。二是加强测评调度，夯实工作基础。顺利迎接“小案小事”治理一季度市级抽查，文明创建相关指标未失分。采用“四不两直”的方法，在全区开展实地抽样测评，涵盖农贸市场、社区、小区、背街小巷、公共文化设施、公园和景区景点、校外未成年人心理健康辅导中心等7类61个点位，整理形成模拟测评报告及问题清单，在区委常委会上做专题汇报，并将问题清单呈报包干包片区领导，有效推动问题整改，目前整改率为98%。三是举一反三，突出工作实效。一季度，区城市管理局围绕社区环境，累计清理“牛皮癣”1000余处，更换破损垃圾容器200余个，整治卫生死角1000余处，推动居民垃圾分类知晓率达100%、准确率超70%。区公安分局聚焦不规范停车、不礼让行人治理、不文明养犬等，查处违法停车6万起、机动车未礼让行人1400余起，在新华路、长滨路等完善优化人行横道设施20余处，采集养犬信息665条，办理养犬登记证208个，对涉犬警情中的违规养犬行为行政处罚236起。大溪沟街道在全区率先开展小巷茶评会·评事明礼高空抛物警示宣传教育活动，石油路街道召开物业企业集中约谈会压实责物业责任，有效提升居民文明素养。'
+        },
+        { name: '文化事业发展', grade: 'A', rank: '-', isNew: true,
+          vsQuarterGrad: null, vsQuarterRank: null,
+          core1Label: null, coreValue1: null, core1Desc: null,
+          core2Label: null, coreValue2: null, core2Desc: null,
+          runSummary: 'A档全市第13位，为一季度新增指标。', runDesc: '文艺创作成果丰硕。2026年度纳入“文化报表”赋分项目共3项，对接协调市委宣传部、重庆出版社有限责任公司，积极争取到第六届中国出版政府加分。文娱市场安全有序。2026年第一季度扫黄打非挂牌备案案件成绩，依据2025年第二、三季度挂牌案件成绩予以加分。由于我区2025年第二、三季度无相关案件，因此本季度无对应加分。'
+        },
+        { name: '文化产业增速', grade: 'A', rank: '-', isNew: false,
+          vsQuarterGrad: 0, vsQuarterRank: 4,
+          core1Label: '文化产业经济增速', coreValue1: '4.70%', core1Desc: null,
+          core2Label: '文化产业经济数据合计', coreValue2: '23.18', core2Desc: null,
+          runSummary: 'A档全市第16位，2025年一季度未评价，比2025年度A档全市第20位，上升4个位次。', runDesc: '文化产业整体略有增长。一季度文化产业经济数据合计23.18亿元，增速为4.7%。一是文化服务业方面，一季度累计营业收入为13.41亿元，同比增速为13.77%，增速排名前三的单位依次为数字经济产业园管委会（1761.92%）、朝天门街道（590.31%）、历史文化街区管委会（57.66%）；二是文化批发零售业方面，一季度累计营业额为9.77亿元，同比增速为-2.5%，增速排名前三的单位依次为历史文化街区管委会（28.71%）、上清寺街道（12.12%）、石油路街道（10.04%）。'
+        },
+      ],
+      problems: [
+        { title: '部分单位宣传主动性有待增强', unit: '典型问题', indicatorName: '新闻舆论传播力', desc: '区级媒体重点平台账号传播力仍有差距', type: '典型问题'
+        },
+        { title: '区级媒体重点平台账号传播力仍有差距', unit: '典型问题', indicatorName: '新闻舆论传播力', desc: '区级媒体重点平台账号传播力和“三好”作品综合位列全市第8名，今日头条号连续3个月未进入全市前20名。融媒产品创新能力有待提升。', type: '典型问题'
+        },
+        { title: '无', unit: null, indicatorName: '舆情管控引导力', desc: '无', type: '典型问题'
+        },
+        { title: '典型培育方面问题', unit: '典型问题', indicatorName: '文明建设成效', desc: '部分项目获评名额较少，“全国守法普法示范区”“重庆市乡村阅读榜样”全市仅12组获评，我区未获评。', type: '典型问题'
+        },
+        { title: '基础设施与环境秩序存在短板', unit: '典型问题', indicatorName: '文明建设成效', desc: '部分社区、小区、背街小巷环境卫生脏乱差现象较为普遍，车辆乱停乱放问题频发，不文明养宠行时有发生，消防安全隐患未能彻底消除，高空抛物偶有发生。', type: '典型问题'
+        },
+        { title: '文明劝导与交通秩序管控乏力', unit: '典型问题', indicatorName: '文明建设成效', desc: '主要交通路口、主次干道等重点点位在早晚高峰时段存在文明劝导员缺位现象，部分点位存在行人和摩托车闯红灯、摩托车不礼让行人、快递外卖车辆违规停放等问题。', type: '典型问题'
+        },
+        { title: '部分全国项目获评难度较大', unit: '典型问题', indicatorName: '文化事业发展', desc: '在2026年第一季度公布的第六届中国出版政府奖中，重庆出版社有限责任公司、重庆课堂内外杂志社出版有限公司、重庆理工大学期刊社、重庆大学出版社有限公司等单位获奖。我区多次主动向市委宣传部争取，并反复协调沟通重庆出版社有限责任公司，最终获得2.5分加分。但对比来看，沙坪坝区依托辖区内重庆大学出版社有限公司、巴南区依托辖区内重庆理工大学期刊社，凭借其得天独厚的高校资源优势，分别获得5分加分。受制于辖区内缺乏高校出版机构等客观条件，我区在加分上与之形成了2.5分的差距。', type: '典型问题'
+        },
+        { title: '大案要案查获难度大', unit: '典型问题', indicatorName: '文化事业发展', desc: '近期公布的2025年二、三季度全市挂牌督办、备案案件，均为涉及查获“全能神”等邪教出版物案件，我区相较于其他区县，执法部门在聚焦查获涉邪教、涉政治类有害出版物、新型涉黄物品等方面，主动发现能力、深度打击能力还缺乏力度，跨部门协作机制还不完善。当前查办的案件绝大多数仍停留在行政处罚层面，案件线索的刑事转化率低。对于涉黄涉政类案件，往往就案办案，未能深挖扩线、追根溯源，导致难以突破并形成大案要案。', type: '典型问题'
+        },
+        { title: '文化服务业中部分细分行业市场萎缩', unit: '典型问题', indicatorName: '文化产业增速', desc: '文化产业仍以增速作为主要考核依据，一季度我区增速离全市正增长区县平均差0.1个百分点，影响到A档排名。电影市场热度持续下滑，爆款产品大幅减少，区文化旅游委负责的保利万和、电影发行、希界维等企业一季度营收下降超过50%；网络短剧市场更迭加快，传统真人网络短剧受AI转型影响较大，触摸文化、渠添科技等头部企业均呈下降趋势。重点国企改革后存有变数。日报集团一季度营收下降超35%。区经济信息委负责的网润集团因与百度终止合作营收下降超86%。', type: '典型问题'
+        },
+        { title: '文化批发零售业贡献不及预期', unit: '典型问题', indicatorName: '文化产业增速', desc: '区商务委负责的赛玛特科技因业务调整导致营业额下降超50%，解放碑CBD管委会负责的福金珠宝受金价上涨及国家政策收紧营业额下降近30%。', type: '典型问题'
+        },
+      ],
+      evals: [
+        {unit: '区人力社保局（区社保中心）', type: '部门', grade: 'A', score: 99.2},
+        {unit: '区委社会工作部', type: '部门', grade: 'A', score: 97.93},
+        {unit: '区妇联', type: '部门', grade: 'A', score: 97.73},
+        {unit: '区文化旅游委', type: '部门', grade: 'A', score: 97.25},
+        {unit: '区大数据发展局', type: '部门', grade: 'A', score: 92.87},
+        {unit: '区生态环境局', type: '部门', grade: 'A', score: 92.87},
+        {unit: '区工商联', type: '部门', grade: 'A', score: 92.87},
+        {unit: '区教委', type: '部门', grade: 'A', score: 92.61},
+        {unit: '区交通运输委', type: '部门', grade: 'A', score: 92.39},
+        {unit: '区发展改革委', type: '部门', grade: 'A', score: 91.93},
+        {unit: '团区委', type: '部门', grade: 'A', score: 91.78},
+        {unit: '区委政法委（区法学会）', type: '部门', grade: 'A', score: 91.67},
+        {unit: '区公安分局', type: '部门', grade: 'A', score: 91.67},
+        {unit: '区委统战部', type: '部门', grade: 'A', score: 91.67},
+        {unit: '区委网信办', type: '部门', grade: 'A', score: 91.67},
+        {unit: '区应急管理局', type: '部门', grade: 'A', score: 91.67},
+        {unit: '区委办公室（区委改革办、区委国安办）', type: '部门', grade: 'A', score: 91.67},
+        {unit: '区财政局', type: '部门', grade: 'A', score: 91.67},
+        {unit: '区政府办公室', type: '部门', grade: 'A', score: 91.67},
+        {unit: '区纪委监委机关（区委巡察办）', type: '部门', grade: 'A', score: 91.67},
+        {unit: '区委组织部', type: '部门', grade: 'A', score: 91.67},
+        {unit: '区信访办', type: '部门', grade: 'A', score: 91.67},
+        {unit: '区人大常委会机关', type: '部门', grade: 'A', score: 91.67},
+        {unit: '区政协机关', type: '部门', grade: 'A', score: 91.67},
+        {unit: '区委编办', type: '部门', grade: 'A', score: 91.67},
+        {unit: '区委老干局', type: '部门', grade: 'A', score: 91.67},
+        {unit: '区委党史研究室', type: '部门', grade: 'A', score: 91.67},
+        {unit: '区委党校', type: '部门', grade: 'A', score: 91.67},
+        {unit: '区退役军人事务局（区军休中心）', type: '部门', grade: 'A', score: 91.67},
+        {unit: '区统计局', type: '部门', grade: 'A', score: 91.67},
+        {unit: '区医保局（区医保中心）', type: '部门', grade: 'A', score: 91.67},
+        {unit: '区国防动员办', type: '部门', grade: 'A', score: 91.67},
+        {unit: '区科协', type: '部门', grade: 'A', score: 91.67},
+        {unit: '区侨联', type: '部门', grade: 'A', score: 91.67},
+        {unit: '区残联', type: '部门', grade: 'A', score: 91.67},
+        {unit: '区审计局', type: '部门', grade: 'A', score: 91.67},
+        {unit: '区人武部机关', type: '部门', grade: 'A', score: 91.67},
+        {unit: '区税务局', type: '部门', grade: 'A', score: 91.67},
+        {unit: '区规划自然资源局', type: '部门', grade: 'A', score: 91.67},
+        {unit: '区消防救援局', type: '部门', grade: 'A', score: 91.67},
+        {unit: '区卫生健康委（区红十字会）', type: '部门', grade: 'A', score: 91.47},
+        {unit: '区商务委', type: '部门', grade: 'B', score: 88.89},
+        {unit: '区城市管理局', type: '部门', grade: 'B', score: 88.72},
+        {unit: '区国资委', type: '部门', grade: 'B', score: 86.67},
+        {unit: '区产业发展促进局', type: '部门', grade: 'B', score: 86.67},
+        {unit: '区民政局', type: '部门', grade: 'B', score: 86.67},
+        {unit: '区司法局', type: '部门', grade: 'B', score: 86.67},
+        {unit: '区政府外办', type: '部门', grade: 'B', score: 86.67},
+        {unit: '区法院', type: '部门', grade: 'B', score: 86.67},
+        {unit: '区检察院', type: '部门', grade: 'B', score: 86.67},
+        {unit: '区文联', type: '部门', grade: 'B', score: 86.67},
+        {unit: '区融媒体中心', type: '部门', grade: 'B', score: 86.67},
+        {unit: '区科技局', type: '部门', grade: 'B', score: 86.11},
+        {unit: '区住房城市建委', type: '部门', grade: 'B', score: 85.05},
+        {unit: '区经济信息委', type: '部门', grade: 'B', score: 84.19},
+        {unit: '区市场监管局', type: '部门', grade: 'B', score: 83.33},
+        {unit: '区总工会', type: '部门', grade: 'B', score: 80},
+        {unit: '朝天门街道', type: '街道', grade: 'A', score: 93.95},
+        {unit: '菜园坝街道', type: '街道', grade: 'A', score: 92.94},
+        {unit: '南纪门街道', type: '街道', grade: 'A', score: 91.94},
+        {unit: '石油路街道', type: '街道', grade: 'A', score: 90.81},
+        {unit: '上清寺街道', type: '街道', grade: 'A', score: 88.77},
+        {unit: '大溪沟街道', type: '街道', grade: 'A', score: 87.93},
+        {unit: '大坪街道', type: '街道', grade: 'A', score: 87.67},
+        {unit: '化龙桥街道', type: '街道', grade: 'A', score: 87.67},
+        {unit: '两路口街道', type: '街道', grade: 'B', score: 86.29},
+        {unit: '七星岗街道', type: '街道', grade: 'B', score: 80.95},
+        {unit: '解放碑街道', type: '街道', grade: 'B', score: 74.48},
+        {unit: '数字经济产业园管委会', type: '管委会', grade: 'A', score: 86.67},
+        {unit: '解放碑CBD管委会', type: '管委会', grade: 'A', score: 85.71},
+        {unit: '历史文化街区管委会', type: '管委会', grade: 'A', score: 85.33},
+        {unit: '化龙桥国际商务开发区管委会', type: '管委会', grade: 'B', score: 83.33},
+        {unit: '大石化新区管委会', type: '管委会', grade: 'B', score: 80}
+      ],
+    },
+    {
+      code: 'livelihood', name: '民生报表', grade: 'N', rank: '-', icon: '🏠',
+      lead: '区发展改革委', score: null,
+      vsQuarterGrad: null, vsQuarterRank: null,
+      vsYearGrad: null, vsYearRank: null,
+      conclusion: '共晾晒5项指标，其中数字医学影像检查结果互认率、公共体育设施免费开放率2项指标A档，全体居民人均可支配收入增速、城镇调查失业率、强企富民服务质效3项指标仅晾晒未分档。',
+      indicators: [
+        { name: '全体居民人均可支配收入增速', grade: 'N', rank: '-', isNew: false,
+          vsQuarterGrad: null, vsQuarterRank: 4,
+          core1Label: '全区全体居民人均可支配收入增速', coreValue1: '4.60%', core1Desc: '高于全市0.5%',
+          core2Label: '全区城镇居民人均可支配收入（元）', coreValue2: '17970.0', core2Desc: null,
+          runSummary: '全市第11位（仅晾晒未分档）。', runDesc: '一季度，全区全体居民人均可支配收入增速4.6%，首次达到全市平均水平（4.6%）。全区城镇居民人均可支配收入17970元，总量全市第一，增速4.6%，高于全市城镇居民人均可支配收入增速（4.1%）0.5个百分点。'
+        },
+        { name: '城镇调查失业率', grade: 'N', rank: '0', isNew: false,
+          vsQuarterGrad: 0, vsQuarterRank: 2,
+          core1Label: '城镇调查失业率', coreValue1: '5.30%', core1Desc: '低于全市0.1%',
+          core2Label: '发放社保补贴等补贴（万元）', coreValue2: '400.0', core2Desc: null,
+          runSummary: '全市并列第1位（仅晾晒未分档）。', runDesc: '一季度，城镇调查失业率5.3%，低于全市0.1个百分点。就业工作稳步推进，发放社保补贴等补贴资金近400万元；举办招聘会18场，发布岗位2.69万个，依托“渝职聘”平台发布岗位信息1099条，达成初步就业意向6396个；全区9家创业孵化基地共提供600个创业工位。全区各类职业培训机构共培训6846人次，实施“智能+技能”高新技能人才新职业培训475人次，帮扶高校毕业生等重点群体就业848人次，提升就业竞争力和岗位适应性。'
+        },
+        { name: '数字医学影像检查结果互认率', grade: 'A', rank: '0', isNew: false,
+          vsQuarterGrad: 0, vsQuarterRank: 0,
+          core1Label: '互认率', coreValue1: '43.63%', core1Desc: null,
+          core2Label: '累计上传数字医学影像检查报告份数', coreValue2: '45042.0', core2Desc: null,
+          runSummary: 'A档全市第1位，比2025年一季度A档全市第27位（得满分），上升26个位次；比2025年度档次、位次均不变。', runDesc: '一季度，渝中区4家委属公立医院、3家企事业单位职工医院、11家社区卫生服务中心累计上传数字医学影像检查报告45042份，调阅医学影像检查结果45334次，系统总提醒量1264次，提醒后调阅量1203次，调阅后互认量608次，提醒后互认量580次，经市卫生健康委清洗1、2、3月份无效数据29条（大坪社区卫生服务中心15条、重庆市中医骨科医院13条、渝中区精神卫生中心1条）后，2026年一季度互认率43.63%。'
+        },
+        { name: '公共体育设施免费开放率', grade: 'A', rank: '-', isNew: false,
+          vsQuarterGrad: 2, vsQuarterRank: 3,
+          core1Label: '公共体育设施免费开放率', coreValue1: '73.96%', core1Desc: null,
+          core2Label: null, coreValue2: null, core2Desc: null,
+          runSummary: 'A档全市第33位，比2025年度C档全市第36位，上升2个档次、3个位次。', runDesc: '一季度，我区公共体育设施免费开放率为73.96%。'
+        },
+        { name: '强企富民服务质效', grade: 'N', rank: '-', isNew: true,
+          vsQuarterGrad: null, vsQuarterRank: null,
+          core1Label: null, coreValue1: null, core1Desc: null,
+          core2Label: null, coreValue2: null, core2Desc: null,
+          runSummary: '全市第34位（仅晾晒未分档）、主城核心区第2位，为一季度新增指标。', runDesc: '由“民呼我为”“AI+企业码上服务”“巴渝同心”3个一级指标构成。一是“民呼我为”包括3个二级指标，“民呼我为”诉求解决率（得分项，百分制）、“民呼我为”群众满意率（扣分项）和“民呼我为”快速响应率（扣分项）。一季度“民呼我为”诉求解决率80.58分，“民呼我为”群众满意率和“民呼我为”快速响应率均未扣分。二是“AI+企业码上服务”包括2个二级指标，“AI+企业码上服务”应用诉求办结率和办理满意率（扣分项）。一季度，“AI+企业码上服务”受理企业诉求事项数量为26件，诉求事项办理超期数量为0，诉求事项按时办结率为100%，诉求事项企业满意率为100%，一季度该指标未扣分。三是“巴渝同心”仅评价“巴渝同心”诉求办结率，为扣分项。一季度，“巴渝同心”（渝商e服务）录入诉求116条，诉求办结率100%、满意度100%，一季度该指标未扣分。'
+        },
+      ],
+      problems: [
+        { title: '全市呈现城镇居民收入增幅收窄、农村居民收入增速显著提升的分化态势', unit: '典型共性问题', indicatorName: '全体居民人均可支配收入增速', desc: '重庆市统计调查总队调整城乡数据结构，全体居民人均可支配收入增速由城镇居民收入增速与农村居民收入增速构成，全市呈现城镇居民收入增幅收窄、农村居民收入增速显著提升的分化态势。由于我区作为核心城区已实现100%城镇化率，缺乏农村经济的增速补偿，导致我区在该项指标中处于结构性弱势地位。', type: '典型问题'
+        },
+        { title: '增速空间相对有限，增速提升难度高', unit: '典型共性问题', indicatorName: '全体居民人均可支配收入增速', desc: '我区城镇居民人均可支配收入基数大，一季度渝中区城镇居民人均可支配收入达到17970元，总量全市排名第一，同比增长4.6%，增速高于全市城镇居民人均可支配收入增速0.5个百分点，但增速空间相对有限，增速提升难度高。', type: '典型问题'
+        },
+        { title: '数据质量与统计覆盖不足', unit: '典型共性问题', indicatorName: '城镇调查失业率', desc: '样本代表性偏差，调查样本未能充分覆盖灵活就业、零工经济及新业态从业人员。', type: '典型问题'
+        },
+        { title: '结构性矛盾突出', unit: '典型共性问题', indicatorName: '城镇调查失业率', desc: '青年就业压力持续加大，高校毕业生就业匹配度低，新兴产业岗位供给不足。传统商贸、餐饮等行业受数字化转型冲击，中高龄低技能群体再就业难度攀升。', type: '典型问题'
+        },
+        { title: '产业转型与岗位创造不匹配', unit: '典型共性问题', indicatorName: '城镇调查失业率', desc: '高端服务业岗位增长乏力，金融、专业服务等支柱产业吸纳就业能力趋缓，而新兴数字经济产业尚未形成规模效应。零售、文旅等行业复苏不及预期，部分小微企业用工需求收缩。', type: '典型问题'
+        },
+        { title: '业务培训有待加强', unit: '典型共性问题', indicatorName: '数字医学影像检查结果互认率', desc: '一线医务人员系统使用培训不足，一线医务人员对“开单—提醒—调阅—互认”的流程不熟悉，存在重复检查弹窗直接关掉的情况。', type: '典型问题'
+        },
+        { title: '数据监测有难度', unit: '典型共性问题', indicatorName: '数字医学影像检查结果互认率', desc: '由于重庆市医学影像云中心系统不能识别与过滤重复数据（即一次提醒多次互认或一名患者同一机构多名医生反复互认的数据），导致系统显示互认率达30%以上，但该数据在季度末上级部门进行数据清洗后降至30%以下，数据有效和精准调度有难度。', type: '典型问题'
+        },
+        { title: '少数单位安保人员业务还不熟悉', unit: '典型共性问题', indicatorName: '公共体育设施免费开放率', desc: '在市级暗访检查中，少数单位安保人员业务还不熟悉，对“体育场地是否免费开放”不置可否，导致开放率被核减，影响了全区公共体育设施开放整体考核成效。', type: '典型问题'
+        },
+        { title: '办件量越大，群众未评价概率越高', unit: '典型共性问题', indicatorName: '强企富民服务质效', desc: '“民呼我为”诉求解决率排名靠后、得分偏低，主要是因为渝中区办件量极大，呈断崖式领先态势。根据市政府办公室公厅公布的“民呼我为”解决率得分计算规则和工作规律，办件量越大，群众未评价概率越高，得分落在75分—80分之间的比例也越高，实现进位目标难度较大。', type: '典型问题'
+        },
+      ],
+      evals: [
+      ],
+    },
+    {
+      code: 'party', name: '党建报表', grade: 'D', rank: '30', icon: '📋',
+      lead: '区委办公室', score: null,
+      vsQuarterGrad: -1, vsQuarterRank: -6,
+      vsYearGrad: -3, vsYearRank: -27,
+      conclusion: '2026年一季度共晾晒4项指标，政令畅通度、社会工作质效、基层党建质效3项指标均为A档第1，清廉重庆建设1项指标为C档。',
+      indicators: [
+        { name: '政令畅通度', grade: 'A', rank: '0', isNew: false,
+          vsQuarterGrad: 0, vsQuarterRank: 0,
+          core1Label: null, coreValue1: null, core1Desc: null,
+          core2Label: null, coreValue2: null, core2Desc: null,
+          runSummary: 'A档全市第1位，比2025年一季度A档全市第3位，上升2个位次；比2025年度档次、位次均不变。', runDesc: '全区政令畅通度整体运行较好，重大事项、紧急信息、重要风险、重要任务、重要文稿均按时报送。2026年一季度，向市委报告13次、请示2次，上报值班信息26条，上报重大风险隐患情况报告2份（一氧化碳中毒致2人死亡事件、解放西路放火烧车事件），报送重要文稿、综合调研、资政信息、工作模块等方面文稿12篇，党建统领“885”综合管控平台各项任务均按期完成，市委市政府日常督办工作均顺利完成，持续整治形式主义为基层减负，出台《〈重庆市整治形式主义为基层减负负面清单〉任务分工方案》，“六个纠治”工作扎实推进。'
+        },
+        { name: '社会工作质效', grade: 'A', rank: '-', isNew: false,
+          vsQuarterGrad: 0, vsQuarterRank: 30,
+          core1Label: null, coreValue1: null, core1Desc: null,
+          core2Label: null, coreValue2: null, core2Desc: null,
+          runSummary: 'A档全市第1位，比2025年度A档全市第31位，上升30个位次。', runDesc: '一季度，新兴领域“两个覆盖”、行业协会商会等社会组织乱象整顿、社区工作者配备等重点任务扎实推进，无扣分情形。一是友好阵地建设全域推进。全区加强党群服务中心（站）、工会驿站、劳动者港湾、暖心驿站等新就业群体友好阵地分类分级打造，一季度新增5个、累计达145个。二是新兴领域“两个覆盖”扩面提质。全区非公企业、社会组织党组织覆盖率分别达90.2%、91.6%，所属党员全部纳入组织覆盖和有效管理。三是行业协会商会乱象整顿有力有序。对全区70家商协会开展“拉网式”摸排，汇总逾期未换届、负责人超龄超期任职等问题19个，建立台账、照单整改，稳妥有序推进落地。四是社区工作者配备达标率保持稳定。全区共配备1296人，每万城市常住人口拥有社区工作者22.8人，签订劳动合同、缴纳“五险一金”率均维持100%。'
+        },
+        { name: '基层党建质效', grade: 'A', rank: '-', isNew: false,
+          vsQuarterGrad: 0, vsQuarterRank: 0,
+          core1Label: null, coreValue1: null, core1Desc: null,
+          core2Label: null, coreValue2: null, core2Desc: null,
+          runSummary: 'A档全市第1位，比2025年度档次、位次均不变。', runDesc: '持续将基层智治平台任务事件按期办理完成率、重点人员关注任务纳入五星晾晒，每日督促提醒、每月晾晒比拼、适时培训指导，基层党建工作成绩突出、质效明显，“141”基层智治平台高效运转，重点人员常态走访实现全覆盖。今年以来，办理基层智治平台任务事件199906件、按期办理完成率100%，完成重点人员关注45161人次、关注覆盖率100%。'
+        },
+        { name: '清廉重庆建设', grade: 'C', rank: '-1', isNew: false,
+          vsQuarterGrad: -2, vsQuarterRank: -23,
+          core1Label: null, coreValue1: null, core1Desc: null,
+          core2Label: null, coreValue2: null, core2Desc: null,
+          runSummary: 'C档全市第32位，比2025年一季度B档全市第35位，下降1个档次、上升3个位次；比2025年度A档全市第9位，下降2个档次、23个位次。', runDesc: '全区上下持续打造具有渝中辨识度、重庆影响力的清廉案例，以清廉单元建设为引领，带动清廉建设更高质量地向各行业、各领域、各部门、各基层站所延伸，促进清廉建设水平整体提升。一是在2025年四季度清廉建设案例评选中，我区获评2个优秀实践案例（清廉学校：人和街小学；清廉医院：区精卫中心），加0.5分。二是2026年一季度我区1名市管干部受到处分，市对区评价结果扣3分；1名区管干部受到处分，区级指标评价结果扣3分。'
+        },
+      ],
+      problems: [
+        { title: '紧急信息报送还有差距', unit: '典型问题', indicatorName: '政令畅通度', desc: '部分单位对突发事件【如解放西路放火烧车事件】综合研判不足，上报信息内容不够全面准确，针对易造成网络舆情、次生风险等情况敏锐性不强、续报不及时。各级各部门要强化突发事件风险评估意识和应急处突能力，严格按照“30分钟内电话报告、1小时内书面报告”要求，精准高效做好情况首报、续报等工作，确保值班信息畅通。', type: '典型问题'
+        },
+        { title: '“885”综合管控平台维护责任还需强化', unit: '典型问题', indicatorName: '政令畅通度', desc: '部分下派事件责任单位对平台任务未及时关注，任务办理工作需临期督促提醒，存在超时办理风险。各下派事件责任单位要压实工作责任，安排专人维护受理平台任务，确保工作不超期、不断档。', type: '典型问题'
+        },
+        { title: '友好阵地建设功能较为单一', unit: '典型问题', indicatorName: '社会工作质效', desc: '现有阵地多依托党群服务中心、工会驿站等既有载体打造，功能配置同质化现象突出，针对新就业群体法律援助、心理疏解等多元需求服务供给不多。', type: '典型问题'
+        },
+        { title: '党组织作用发挥不够充分', unit: '典型问题', indicatorName: '社会工作质效', desc: '部分非公企业和社会组织因经营不稳定、党员流动性强，存在组织生活不规范、党员教育管理缺乏连贯性等问题，党组织政治功能和组织功能有待进一步强化。', type: '典型问题'
+        },
+        { title: '仍有长江治渔、法治·信访解民难等应用事件存在逾期风险', unit: '典型问题', indicatorName: '基层党建质效', desc: '基层智治平台任务事件虽全部按期办理，但仍有长江治渔、法治·信访解民难等应用事件存在逾期风险，需进一步完善流转事件常态化督办机制，督促提醒各街道及时办理。', type: '典型问题'
+        },
+        { title: '部分单位清廉建设推进还不够有力', unit: '典型问题', indicatorName: '清廉重庆建设', desc: '部分单位清廉建设推进还不够有力，在实践创新、成效提炼、品牌塑造方面的潜力有待进一步挖掘和激活。', type: '典型问题'
+        },
+        { title: '部分单位案例培育力度还需加强、成效还需提升', unit: '典型问题', indicatorName: '清廉重庆建设', desc: '部分单位案例培育力度还需加强、成效还需提升，清廉国企单元至今仍无案例获评。', type: '典型问题'
+        },
+      ],
+      evals: [
+        {unit: '区教委', type: '部门', grade: 'A', score: 94.44},
+        {unit: '区卫生健康委', type: '部门', grade: 'A', score: 94.44},
+        {unit: '区委党校', type: '部门', grade: 'A', score: 91.67},
+        {unit: '区法院', type: '部门', grade: 'A', score: 91.67},
+        {unit: '区委组织部', type: '部门', grade: 'B', score: 88.89},
+        {unit: '区委社会工作部', type: '部门', grade: 'B', score: 88.89},
+        {unit: '区民政局', type: '部门', grade: 'B', score: 88.89},
+        {unit: '区司法局', type: '部门', grade: 'B', score: 88.89},
+        {unit: '区人力社保局', type: '部门', grade: 'B', score: 88.89},
+        {unit: '区住房城市建委', type: '部门', grade: 'B', score: 88.89},
+        {unit: '区交通运输委', type: '部门', grade: 'B', score: 88.89},
+        {unit: '区商务委', type: '部门', grade: 'B', score: 88.89},
+        {unit: '区文化旅游委', type: '部门', grade: 'B', score: 88.89},
+        {unit: '区工商联', type: '部门', grade: 'B', score: 88.89},
+        {unit: '区委办公室', type: '部门', grade: 'B', score: 83.33},
+        {unit: '区人大常委会机关', type: '部门', grade: 'B', score: 83.33},
+        {unit: '区政府办公室', type: '部门', grade: 'B', score: 83.33},
+        {unit: '区政协机关', type: '部门', grade: 'B', score: 83.33},
+        {unit: '区纪委监委机关', type: '部门', grade: 'B', score: 83.33},
+        {unit: '区委宣传部', type: '部门', grade: 'B', score: 83.33},
+        {unit: '区委统战部', type: '部门', grade: 'B', score: 83.33},
+        {unit: '区委政法委', type: '部门', grade: 'B', score: 83.33},
+        {unit: '区委网信办', type: '部门', grade: 'B', score: 83.33},
+        {unit: '区委编办', type: '部门', grade: 'B', score: 83.33},
+        {unit: '区委老干部局', type: '部门', grade: 'B', score: 83.33},
+        {unit: '区委党史研究室', type: '部门', grade: 'B', score: 83.33},
+        {unit: '区发展改革委', type: '部门', grade: 'B', score: 83.33},
+        {unit: '区科技局', type: '部门', grade: 'B', score: 83.33},
+        {unit: '区经济信息委', type: '部门', grade: 'B', score: 83.33},
+        {unit: '区公安分局', type: '部门', grade: 'B', score: 83.33},
+        {unit: '区财政局', type: '部门', grade: 'B', score: 83.33},
+        {unit: '区规划自然资源局', type: '部门', grade: 'B', score: 83.33},
+        {unit: '区生态环境局', type: '部门', grade: 'B', score: 83.33},
+        {unit: '区城市管理局', type: '部门', grade: 'B', score: 83.33},
+        {unit: '区退役军人事务局', type: '部门', grade: 'B', score: 83.33},
+        {unit: '区应急管理局', type: '部门', grade: 'B', score: 83.33},
+        {unit: '区审计局', type: '部门', grade: 'B', score: 83.33},
+        {unit: '区政府外办', type: '部门', grade: 'B', score: 83.33},
+        {unit: '区国资委', type: '部门', grade: 'B', score: 83.33},
+        {unit: '区产业发展促进局', type: '部门', grade: 'B', score: 83.33},
+        {unit: '区市场监管局', type: '部门', grade: 'B', score: 83.33},
+        {unit: '区统计局', type: '部门', grade: 'B', score: 83.33},
+        {unit: '区医保局', type: '部门', grade: 'B', score: 83.33},
+        {unit: '区信访办', type: '部门', grade: 'B', score: 83.33},
+        {unit: '区大数据发展局', type: '部门', grade: 'B', score: 83.33},
+        {unit: '区国动办', type: '部门', grade: 'B', score: 83.33},
+        {unit: '区消防救援局', type: '部门', grade: 'B', score: 83.33},
+        {unit: '区检察院', type: '部门', grade: 'B', score: 83.33},
+        {unit: '区税务局', type: '部门', grade: 'B', score: 83.33},
+        {unit: '区总工会', type: '部门', grade: 'B', score: 83.33},
+        {unit: '团区委', type: '部门', grade: 'B', score: 83.33},
+        {unit: '区妇联', type: '部门', grade: 'B', score: 83.33},
+        {unit: '区科协', type: '部门', grade: 'B', score: 83.33},
+        {unit: '区文联', type: '部门', grade: 'B', score: 83.33},
+        {unit: '区侨联', type: '部门', grade: 'B', score: 83.33},
+        {unit: '区残联', type: '部门', grade: 'B', score: 83.33},
+        {unit: '区人武部机关', type: '部门', grade: 'B', score: 83.33},
+        {unit: '上清寺街道', type: '街道', grade: 'A', score: 95.83},
+        {unit: '大坪街道', type: '街道', grade: 'A', score: 95.83},
+        {unit: '石油路街道', type: '街道', grade: 'A', score: 95.83},
+        {unit: '解放碑街道', type: '街道', grade: 'A', score: 91.67},
+        {unit: '朝天门街道', type: '街道', grade: 'A', score: 91.67},
+        {unit: '七星岗街道', type: '街道', grade: 'A', score: 91.67},
+        {unit: '南纪门街道', type: '街道', grade: 'A', score: 91.67},
+        {unit: '菜园坝街道', type: '街道', grade: 'A', score: 91.67},
+        {unit: '大溪沟街道', type: '街道', grade: 'A', score: 91.67},
+        {unit: '两路口街道', type: '街道', grade: 'A', score: 91.67},
+        {unit: '化龙桥街道', type: '街道', grade: 'A', score: 91.67},
+        {unit: '解放碑CBD管委会', type: '管委会', grade: 'B', score: 88.89},
+        {unit: '历史文化街区管委会', type: '管委会', grade: 'B', score: 83.33},
+        {unit: '数字经济产业园管委会', type: '管委会', grade: 'B', score: 83.33},
+        {unit: '大石化新区管委会', type: '管委会', grade: 'C', score: 75}
+      ],
+    },
+  ],
+  streetEval: [
+    { name: '解放碑街道',
+      economy: 76.78, safety: 91.28, reform: 66.67,
+      innovation: 33.33, eco: 89.56, culture: 74.48, party: 91.67
+    },
+    { name: '朝天门街道',
+      economy: 57.56, safety: 93.79, reform: 83.33,
+      innovation: 33.33, eco: 77.78, culture: 93.95, party: 91.67
+    },
+    { name: '七星岗街道',
+      economy: 76.78, safety: 92.42, reform: 75.0,
+      innovation: 33.33, eco: 84.67, culture: 80.95, party: 91.67
+    },
+    { name: '南纪门街道',
+      economy: 86.89, safety: 88.94, reform: 75.0,
+      innovation: 94.0, eco: 96.11, culture: 91.94, party: 91.67
+    },
+    { name: '菜园坝街道',
+      economy: 82.89, safety: 95.03, reform: 83.33,
+      innovation: 33.33, eco: 93.56, culture: 92.94, party: 91.67
+    },
+    { name: '大溪沟街道',
+      economy: 79.78, safety: 92.39, reform: 83.33,
+      innovation: 33.33, eco: 80.56, culture: 87.93, party: 91.67
+    },
+    { name: '两路口街道',
+      economy: 65.67, safety: 92.77, reform: 66.67,
+      innovation: 97.0, eco: 81.0, culture: 86.29, party: 91.67
+    },
+    { name: '上清寺街道',
+      economy: 87.0, safety: 94.44, reform: 66.67,
+      innovation: 88.0, eco: 91.33, culture: 88.77, party: 95.83
+    },
+    { name: '大坪街道',
+      economy: 96.0, safety: 92.0, reform: 83.33,
+      innovation: 100.0, eco: 83.83, culture: 87.67, party: 95.83
+    },
+    { name: '石油路街道',
+      economy: 89.89, safety: 90.27, reform: 75.0,
+      innovation: 94.0, eco: 86.5, culture: 90.81, party: 95.83
+    },
+    { name: '化龙桥街道',
+      economy: 85.89, safety: 94.03, reform: 83.33,
+      innovation: 88.0, eco: 96.0, culture: 87.67, party: 91.67
+    },
+  ],
+  reportCodes: ['economy','safety','reform','innovation','eco','culture','livelihood','party'],
+  reportOrder: ['经济','平安','改革','创新','生态','文化','民生','党建']
+};
+// ========== GLOBAL STATE ==========
+let currentReportIdx = 0;
+let radarChart = null;
+let streetRadarChart = null;
+let selectedStreet = null;
+let streetRadarStreets = []; // currently displayed street names on radar
+let streetRadarExpanded = false; // true = grid-expanded, false = single big radar
+let streetMiniCharts = []; // ECharts instances in expanded grid mode
+let problemViewMode = localStorage.getItem('problem_view_mode') || 'card'; // 'card' | 'list'
+
+// ========== HELPERS ==========
+function gradeClass(g) { return 'grade-' + g; }
+function gradeBadge(g) { return '<span class="badge badge-' + g + '">' + g + '档</span>'; }
+function starsHtml(n) { let s=''; for(let i=0;i<5;i++) s+=i<n?'<span class="star">★</span>':'<span class="star star-empty">☆</span>'; return s; }
+function starText(n) { return starsHtml(n); }
+// V2: INT-based change formatting (grad change + rank change)
+function formatChange(gradChange, rankChange) {
+  var parts = [];
+  if (gradChange > 0) parts.push('↑' + gradChange + '档');
+  else if (gradChange < 0) parts.push('↓' + Math.abs(gradChange) + '档');
+  if (rankChange > 0) parts.push('↑' + rankChange + '位');
+  else if (rankChange < 0) parts.push('↓' + Math.abs(rankChange) + '位');
+  if (parts.length === 0) return '<span style="color:var(--text-muted)">—</span>';
+  var isUp = (gradChange > 0 && rankChange >= 0) || (gradChange >= 0 && rankChange > 0) ||
+    (parts.length === 1 && parts[0].indexOf('↑') !== -1);
+  var cls = isUp ? 'arrow-up' : 'arrow-down';
+  return '<span class="' + cls + '">' + parts.join(' ') + '</span>';
+}
+// V2: individual change direction for table columns
+function formatChangeDir(val, isGrad) {
+  if (val === 0 || val === null || val === undefined) return '<span style="color:var(--text-muted)">—</span>';
+  var unit = isGrad ? '档' : '位';
+  var absVal = Math.abs(val);
+  if (val > 0) return '<span class="arrow-up">↑' + absVal + unit + '</span>';
+  return '<span class="arrow-down">↓' + absVal + unit + '</span>';
+}
+function rateBadge(rate) {
+  var r = parseFloat(rate);
+  var cls = r >= 95 ? 'high' : (r >= 80 ? 'mid' : 'low');
+  return '<div style="display:flex;align-items:center;gap:8px"><span>' + rate + '</span><div class="progress-bar"><div class="progress-fill ' + cls + '" style="width:' + r + '%"></div></div></div>';
+}
+// Tooltip helper
+var tooltipEl = null;
+function showTooltip(e, text) {
+  if (!tooltipEl) { tooltipEl = document.createElement('div'); tooltipEl.className = 'custom-tooltip'; document.body.appendChild(tooltipEl); }
+  tooltipEl.textContent = text;
+  tooltipEl.classList.add('show');
+  var x = e.clientX + 12, y = e.clientY - 10;
+  if (x + 400 > window.innerWidth) x = e.clientX - 410;
+  if (y + tooltipEl.offsetHeight > window.innerHeight) y = e.clientY - tooltipEl.offsetHeight - 10;
+  tooltipEl.style.left = x + 'px'; tooltipEl.style.top = y + 'px';
+}
+function hideTooltip() { if (tooltipEl) tooltipEl.classList.remove('show'); }
+
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+function navigate(target, params) {
+  if (target === 'home') { showPage('home'); return; }
+  if (target === 'report-overview') { showPage('report-overview'); renderReportOverview(); return; }
+  if (target === 'report-detail') {
+    var rpt = params.report || 'economy';
+    currentReportIdx = mockData.reports.findIndex(r => r.code === rpt);
+    if (currentReportIdx < 0) currentReportIdx = 0;
+    showPage('report-detail');
+    renderReportDetail();
+    return;
+  }
+
+  if (target === 'street-eval') {
+    showPage('street-eval');
+    selectedStreet = null;
+    streetRadarStreets = [];
+    if (streetRadarExpanded) {
+      teardownMiniCharts();
+      streetRadarExpanded = false;
+      var btn = document.getElementById('btn-toggle-radar');
+      if (btn) btn.innerHTML = '⊞ 全部展开';
+      var sub = document.getElementById('radar-subtitle');
+      if (sub) sub.textContent = '悬停表格行高亮曲线 | 最多同时显示3条 | 点击维度跳转报表';
+      var radarDom = document.getElementById('street-radar-chart');
+      if (radarDom) { radarDom.style.display = ''; radarDom.style.height = '420px'; }
+      var legendEl = document.getElementById('street-legend');
+      if (legendEl) legendEl.style.display = '';
+    }
+    renderStreetEval();
+    return;
+  }
+}
+
+// ========== PAGE 2: REPORT OVERVIEW ==========
+function renderReportOverview() {
+  var reports = mockData.reports;
+  renderMatrix('report-matrix', reports, 'report-detail', 'report');
+  renderReportTable(reports);
+}
+function renderMatrix(containerId, items, navTarget, type) {
+  var container = document.getElementById(containerId);
+  container.innerHTML = items.map(function(item, i) {
+    var g = item.grade;
+    var chgHtml = '';
+    if (g === 'N') {
+      chgHtml = '<div class="cell-change" style="color:var(--text-muted)">仅晾晒</div>';
+    } else {
+      var chg = formatChange(item.vsQuarterGrad, item.vsQuarterRank);
+      chgHtml = '<div class="cell-change">' + chg + '</div>';
+    }
+    return '<div class="matrix-cell ' + g + '" onclick="navigate(\'' + navTarget + '\',{' + type + ':\'' + item.code + '\'})">'
+      + '<div class="cell-name">' + item.name + '</div>'
+      + '<div class="cell-grade ' + gradeClass(g) + '">' + (g === 'N' ? '仅晾晒' : g + item.rank) + '</div>'
+      + chgHtml + '</div>';
+  }).join('');
+}
+function renderReportTable(reports) {
+  var tbody = document.querySelector('#report-table tbody');
+  // Score column visibility
+  var hasScore = reports.some(function(r) { return r.score !== null && r.score !== undefined && r.score !== '-'; });
+  var thead = document.querySelector('#report-table thead tr');
+  if (thead) {
+    var scoreTh = thead.querySelector('th:nth-child(7)');
+    if (scoreTh) scoreTh.style.display = hasScore ? '' : 'none';
+  }
+  tbody.innerHTML = reports.map(function(r) {
+    var scoreHtml = hasScore
+      ? '<td>' + ((r.score !== null && r.score !== undefined) ? r.score : '<span class="text-muted">—</span>') + '</td>'
+      : '';
+    return '<tr onclick="navigate(\'report-detail\',{report:\'' + r.code + '\'})">'
+      + '<td><span class="badge badge-' + r.grade + '" style="margin-right:6px">' + r.grade + '</span>' + r.name + '</td>'
+      + '<td><span class="' + gradeClass(r.grade) + ' fw600">' + r.grade + (r.grade === 'N' ? '' : '档') + '</span></td>'
+      + '<td>' + (r.grade === 'N' ? '仅晾晒' : r.rank) + '</td>'
+      + '<td>' + formatChangeDir(r.vsQuarterGrad, true) + '</td>'
+      + '<td>' + formatChangeDir(r.vsQuarterRank, false) + '</td>'
+      + '<td>' + formatChangeDir(r.vsYearGrad, true) + '</td>'
+      + '<td>' + formatChangeDir(r.vsYearRank, false) + '</td>'
+      + scoreHtml
+      + '<td>' + r.lead + '</td>'
+      + '<td><span class="btn-link" onclick="event.stopPropagation();navigate(\'report-detail\',{report:\'' + r.code + '\'})">查看详情</span></td>'
+      + '</tr>';
+  }).join('');
+}
+function filterMatrix(containerId, grade) {
+  var el = document.getElementById(containerId);
+  var cells = el.querySelectorAll('.matrix-cell');
+  cells.forEach(function(c) {
+    if (grade === 'all') { c.style.display = ''; return; }
+    if (grade === 'C' && (c.classList.contains('C') || c.classList.contains('D') || c.classList.contains('E'))) {
+      c.style.display = '';
+    } else {
+      c.style.display = c.classList.contains(grade) ? '' : 'none';
+    }
+  });
+  document.getElementById('report-filter').value = grade;
+}
+function sortReports(mode) {
+  var reports = [...mockData.reports];
+  if (mode === 'rank') {
+    reports.sort(function(a, b) {
+      if (a.grade === 'N') return 1; if (b.grade === 'N') return -1;
+      var ga = 'ABCDE'.indexOf(a.grade), gb = 'ABCDE'.indexOf(b.grade);
+      if (ga !== gb) return ga - gb;
+      return a.rank - b.rank;
+    });
+  }
+  renderMatrix('report-matrix', reports, 'report-detail', 'report');
+  renderReportTable(reports);
+}
+
+// ========== PAGE 3: REPORT DETAIL (V2: 7-zone indicator cards + problem grouping + dual view) ==========
+function renderReportDetail() {
+  var r = mockData.reports[currentReportIdx];
+  document.getElementById('report-detail-title').textContent = r.name + '详情';
+  // Nav switcher
+  for (var i = 0; i < 8; i++) {
+    var sw = document.getElementById('sw-report-' + i);
+    if (sw) {
+      sw.textContent = mockData.reports[i].name;
+      sw.className = 'nav-item' + (i === currentReportIdx ? ' active' : '');
+    }
+  }
+  // Summary
+  var scoreHtml = (r.score !== null && r.score !== undefined) ? r.score : '<span class="text-muted">—</span>';
+  document.getElementById('report-summary').innerHTML =
+    '<div class="summary-card"><div class="s-label">' + r.icon + ' ' + r.name + '</div><div class="s-value" style="font-size:18px">牵头：' + r.lead + '</div></div>'
+    + '<div class="summary-card"><div class="s-label">全市排名/档次</div><div class="s-value ' + gradeClass(r.grade) + '">' + r.grade + (r.grade === 'N' ? '' : r.rank) + '</div></div>'
+    + '<div class="summary-card"><div class="s-label">较上季度</div><div class="s-value" style="font-size:18px">' + formatChange(r.vsQuarterGrad, r.vsQuarterRank) + '</div></div>'
+    + '<div class="summary-card"><div class="s-label">较上年度</div><div class="s-value" style="font-size:18px">' + formatChange(r.vsYearGrad, r.vsYearRank) + '</div></div>'
+    + '<div class="summary-card"><div class="s-label">区级得分</div><div class="s-value" style="font-size:22px;color:var(--text-primary)">' + scoreHtml + '</div></div>';
+  document.getElementById('report-conclusion').textContent = r.conclusion || '—';
+
+  // V2: 7-zone indicator cards
+  var icSize = r.indicators.length;
+  var gridEl = document.getElementById('report-indicators');
+  var gridClass = 'indicator-grid';
+  if (icSize >= 8) gridClass += ' cols4';
+  else if (icSize <= 3) gridClass += ' cols2';
+  else if (icSize === 4) gridClass += ' cols4';
+  else if (icSize >= 5) gridClass += ' cols5';
+  else gridClass += ' cols3';
+  gridEl.className = gridClass;
+  gridEl.innerHTML = r.indicators.map(function(ind) {
+    var g = ind.grade;
+    var gradeBgClass = 'grade-' + g + '-bg';
+    var newBadge = ind.isNew ? '<span class="ind-new-badge">新</span>' : '';
+    return '<div class="indicator-card ' + g + '" onclick="showModal(\'' + ind.name + '\',\'' + (ind.runDesc || ind.runSummary || '暂无详细描述').replace(/'/g, "\\'") + '\')"'
+      + ' onmouseenter="showTooltip(event,\'' + (ind.runSummary || '暂无描述').replace(/'/g, "\\'") + '\')" onmouseleave="hideTooltip()">'
+      // Zone 1: indicator name + new badge
+      + '<div class="ind-card-header"><span class="ind-name text-truncate-1">' + ind.name + '</span>' + newBadge + '</div>'
+      // Zone 2+3: grade badge row + change
+      + '<div class="ind-card-grade-row">'
+      + '<span class="ind-card-grade-badge ' + gradeBgClass + '">' + (g === 'N' ? '仅晾晒' : g + ind.rank) + '</span>'
+      + '<span class="ind-card-change">' + formatChange(ind.vsQuarterGrad, ind.vsQuarterRank) + '</span>'
+      + '</div>'
+      // Divider
+      + '<div class="ind-card-divider"></div>'
+      // Zone 4+5: core value 1 (only if label exists)
+      + (ind.core1Label ? '<div class="ind-card-core1-label">' + ind.core1Label + '</div>' : '')
+      + (ind.coreValue1 ? '<div class="ind-card-core1-value">' + ind.coreValue1 + '</div>' : '')
+      + (ind.core1Desc ? '<div class="ind-card-core1-desc">' + ind.core1Desc + '</div>' : '')
+      // Zone 6: core value 2 (if exists)
+      + (ind.coreValue2 ? '<div class="ind-card-core2-label">' + ind.core2Label + '</div><div class="ind-card-core2-value">' + ind.coreValue2 + '</div>' : '')
+      // Zone 7: run summary (truncated)
+      + '<div class="ind-card-summary text-truncate-2">' + (ind.runSummary || '') + '</div>'
+      + '</div>';
+  }).join('');
+
+  // V2: Problems grouped by indicator name with card/list dual view
+  var probContainer = document.getElementById('report-problems');
+  var problems = r.problems || [];
+  if (problems.length === 0) {
+    probContainer.innerHTML = '<div class="text-muted">本期无典型问题分析</div>';
+  } else {
+    // Build view toggle + all expand/collapse
+    var cardActive = problemViewMode === 'card' ? ' active' : '';
+    var listActive = problemViewMode === 'list' ? ' active' : '';
+    var html = '<div class="flex-between mb-12">'
+      + '<span class="text-muted">共' + problems.length + '条</span>'
+      + '<div style="display:flex;gap:12px">'
+      + '<span class="btn-link" onclick="toggleAllProblemGroups(true)">全部展开</span>'
+      + '<span class="btn-link" onclick="toggleAllProblemGroups(false)">全部收起</span>'
+      + '<div class="view-toggle">'
+      + '<button class="vt-btn' + cardActive + '" onclick="switchProblemView(\'card\')">卡片视图</button>'
+      + '<button class="vt-btn' + listActive + '" onclick="switchProblemView(\'list\')">列表视图</button>'
+      + '</div></div></div>';
+
+    // Group by indicatorName
+    var groups = {};
+    problems.forEach(function(p) {
+      var key = p.indicatorName || '其他指标';
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(p);
+    });
+    html += '<div id="problem-groups-container">';
+    Object.keys(groups).forEach(function(grpKey) {
+      var grpProblems = groups[grpKey];
+      html += '<div class="problem-group" data-group="' + grpKey + '">'
+        + '<div class="problem-group-header" onclick="toggleProblemGroup(this.parentElement)">'
+        + '<span class="collapse-icon">▶</span>'
+        + '<span>' + grpKey + '</span>'
+        + '<span class="group-count">（' + grpProblems.length + '条）</span>'
+        + '</div>'
+        + '<div class="problem-group-body">';
+      grpProblems.forEach(function(p, pi) {
+        if (problemViewMode === 'card') {
+          html += '<div class="problem-card">'
+            + '<div class="prob-title">' + p.title + '</div>'
+            + '<div class="prob-meta">' + p.unit + '</div>'
+            + '<div class="prob-desc text-truncate-2">' + p.desc + '</div>'
+            + '<span class="prob-tag">典型问题</span>'
+            + '</div>';
+        } else {
+          html += '<div style="padding:8px 12px;border-bottom:1px solid var(--border);font-size:13px">'
+            + '<span style="font-weight:600">' + p.title + '</span>'
+            + '<span style="color:var(--text-muted);margin:0 8px">|</span>'
+            + '<span style="color:var(--text-muted)">' + p.unit + '</span>'
+            + '<span class="prob-tag" style="margin-left:8px">典型问题</span>'
+            + '<div style="color:var(--text-secondary);margin-top:4px;font-size:12px">' + p.desc.substring(0, 80) + (p.desc.length > 80 ? '...' : '') + '</div>'
+            + '</div>';
+        }
+      });
+      html += '</div></div>';
+    });
+    html += '</div>';
+    probContainer.innerHTML = html;
+  }
+
+  // Eval Table
+  document.getElementById('report-eval-stats').textContent = '共' + r.evals.length + '个单位';
+  renderEvalTable(r.evals);
+  window.scrollTo(0, 0);
+}
+function renderEvalTable(evals) {
+  var tbody = document.querySelector('#report-eval-table tbody');
+  tbody.innerHTML = evals.map(function(e) {
+    return '<tr><td>' + e.unit + '</td><td>' + e.type + '</td>'
+      + '<td><span class="' + gradeClass(e.grade) + ' fw600">' + e.grade + '</span></td>'
+      + '<td>' + e.score + '</td></tr>';
+  }).join('');
+}
+function filterReportEval(type) {
+  var evals = mockData.reports[currentReportIdx].evals;
+  if (type !== 'all') evals = evals.filter(function(e) { return e.type === type; });
+  renderEvalTable(evals);
+}
+function showAllEval() {
+  renderEvalTable(mockData.reports[currentReportIdx].evals);
+}
+function prevReport() { currentReportIdx = (currentReportIdx - 1 + 8) % 8; renderReportDetail(); }
+function nextReport() { currentReportIdx = (currentReportIdx + 1) % 8; renderReportDetail(); }
+function switchReport(idx) { currentReportIdx = idx; renderReportDetail(); }
+
+// ========== PAGE 8: STREET EVAL ==========
+function renderStreetEval() {
+  // Reset expanded state when entering page
+  if (streetRadarExpanded) {
+    teardownMiniCharts();
+    streetRadarExpanded = false;
+    var btn = document.getElementById('btn-toggle-radar');
+    if (btn) btn.innerHTML = '⊞ 全部展开';
+    var sub = document.getElementById('radar-subtitle');
+    if (sub) sub.textContent = '悬停表格行高亮曲线 | 最多同时显示3条 | 点击维度跳转报表';
+    var radarDom = document.getElementById('street-radar-chart');
+    if (radarDom) { radarDom.style.display = ''; radarDom.style.height = '420px'; }
+    var legendEl = document.getElementById('street-legend');
+    if (legendEl) legendEl.style.display = '';
+  }
+  renderStreetMatrix();
+  renderStreetRadar();
+}
+function calcStreetAvg() {
+  var fields = ['economy','safety','reform','innovation','eco','culture','party'];
+  var avg = { name: '平均', economy: 0, safety: 0, reform: 0, innovation: 0, eco: 0, culture: 0, party: 0 };
+  var n = mockData.streetEval.length;
+  fields.forEach(function(f) {
+    var sum = 0;
+    mockData.streetEval.forEach(function(s) { sum += s[f]; });
+    avg[f] = Math.round(sum / n * 100) / 100;
+  });
+  return avg;
+}
+function streetGrade(score) {
+  if (score >= 90) return 'A';
+  if (score >= 80) return 'B';
+  if (score >= 70) return 'C';
+  if (score >= 60) return 'D';
+  return 'E';
+}
+function renderStreetMatrix() {
+  var container = document.getElementById('street-matrix-container');
+  var streets = mockData.streetEval;
+  var avg = calcStreetAvg();
+  var fields = ['economy','safety','reform','innovation','eco','culture','party'];
+  var fieldLabels = ['经济','平安','改革','创新','生态','文化','党建'];
+  var html = '<table class="street-matrix-table"><thead><tr><th class="sticky-col">街道</th>';
+  fields.forEach(function(f, i) {
+    html += '<th onclick="sortStreetMatrix(\'' + f + '\')" title="点击排序">' + fieldLabels[i] + '</th>';
+  });
+  html += '</tr></thead><tbody>';
+  streets.forEach(function(s) {
+    var sel = selectedStreet === s.name ? ' selected' : '';
+    html += '<tr class="street-row' + sel + '" data-street="' + s.name + '"'
+      + ' onmouseenter="highlightStreet(\'' + s.name + '\')" onmouseleave="unhighlightStreet()"'
+      + ' onclick="selectStreet(\'' + s.name + '\')">'
+      + '<td class="sticky-col">' + s.name + '</td>';
+    fields.forEach(function(f) {
+      var g = streetGrade(s[f]);
+      html += '<td>' + s[f].toFixed(2) + '<span class="score-badge score-badge-' + g + '">' + g + '</span></td>';
+    });
+    html += '</tr>';
+  });
+  // Average row
+  html += '<tr class="avg-row"><td class="sticky-col">平 均</td>';
+  fields.forEach(function(f) {
+    html += '<td>' + avg[f].toFixed(2) + '</td>';
+  });
+  html += '</tr></tbody></table>';
+  container.innerHTML = html;
+}
+
+function sortStreetMatrix(field) {
+  mockData.streetEval.sort(function(a, b) { return b[field] - a[field]; });
+  renderStreetMatrix();
+}
+
+function selectStreet(name) {
+  if (selectedStreet === name) {
+    selectedStreet = null;
+    streetRadarStreets = [];
+  } else {
+    selectedStreet = name;
+    // Ensure selected + avg are on radar
+    streetRadarStreets = ['平均', name];
+  }
+  // Remove other selections beyond 3
+  if (streetRadarStreets.length > 3) streetRadarStreets = streetRadarStreets.slice(0, 3);
+  renderStreetMatrix();
+  renderStreetRadar();
+  renderStreetDetail();
+}
+
+function highlightStreet(name) {
+  if (streetRadarExpanded) return; // No hover highlight in expanded grid mode
+  if (streetRadarChart) {
+    // Highlight the hovered street on radar by dimming others
+    var currentOption = streetRadarChart.getOption();
+    if (currentOption && currentOption.series) {
+      // Simple approach: re-render with the hovered street highlighted
+      var tempStreets = ['平均', name];
+      renderStreetRadar(tempStreets);
+    }
+  }
+}
+
+function unhighlightStreet() {
+  if (streetRadarExpanded) return; // No hover highlight in expanded grid mode
+  renderStreetRadar(streetRadarStreets);
+}
+
+function renderStreetDetail() {
+  var card = document.getElementById('street-detail-card');
+  if (!selectedStreet) { card.style.display = 'none'; return; }
+  card.style.display = 'block';
+  var street = mockData.streetEval.find(function(s) { return s.name === selectedStreet; });
+  if (!street) { card.style.display = 'none'; return; }
+  var fields = ['economy','safety','reform','innovation','eco','culture','party'];
+  var fieldLabels = ['经济','平安','改革','创新','生态','文化','党建'];
+  var html = '<div class="sd-title">' + street.name + ' — 7报表得分明细</div><div class="sd-grid">';
+  fields.forEach(function(f, i) {
+    var g = streetGrade(street[f]);
+    html += '<div class="sd-item"><div class="sd-item-label">' + fieldLabels[i] + '</div>'
+      + '<div class="sd-item-value ' + gradeClass(g) + '">' + street[f].toFixed(2)
+      + '<span class="score-badge score-badge-' + g + '" style="margin-left:6px">' + g + '</span></div></div>';
+  });
+  html += '</div>';
+  card.innerHTML = html;
+}
+
+function renderStreetRadar(specificStreets) {
+  var dom = document.getElementById('street-radar-chart');
+  if (!dom) return;
+  dom.style.width = '100%';
+  dom.style.height = '420px';
+  var useStreets = specificStreets || streetRadarStreets;
+  if (useStreets.length === 0) useStreets = ['平均'];
+
+  var avg = calcStreetAvg();
+  var fields = ['economy','safety','reform','innovation','eco','culture','party'];
+  var fieldLabels = ['经济','平安','改革','创新','生态','文化','党建'];
+  var colors = ['#3498DB','#2ECC71','#E67E22','#E74C3C'];
+
+  var seriesData = useStreets.map(function(sName, idx) {
+    var values;
+    if (sName === '平均') {
+      values = fields.map(function(f) { return avg[f]; });
+    } else {
+      var st = mockData.streetEval.find(function(s) { return s.name === sName; });
+      values = st ? fields.map(function(f) { return st[f]; }) : fields.map(function() { return 0; });
+    }
+    var isAvg = sName === '平均';
+    return {
+      value: values,
+      name: sName,
+      lineStyle: { color: isAvg ? '#95A5A6' : colors[idx % colors.length], width: isAvg ? 1 : 2, type: isAvg ? 'dashed' : 'solid' },
+      itemStyle: { color: isAvg ? '#95A5A6' : colors[idx % colors.length] },
+      areaStyle: { color: isAvg ? 'transparent' : colors[idx % colors.length], opacity: isAvg ? 0 : 0.1 },
+      symbol: isAvg ? 'none' : 'circle',
+      symbolSize: isAvg ? 0 : 5
+    };
+  });
+
+  if (streetRadarChart) streetRadarChart.dispose();
+  streetRadarChart = echarts.init(dom);
+
+  streetRadarChart.setOption({
+    tooltip: { trigger: 'item' },
+    legend: { bottom: 5, textStyle: { color: '#94a3b8', fontSize: 12 } },
+    radar: {
+      center: ['50%', '45%'],
+      radius: '65%',
+      indicator: fields.map(function(f, i) {
+        // Axis label shows "dimension\nscore / avg" for each displayed street
+        var avgVal = avg[f];
+        var labelLines = [fieldLabels[i]];
+        var nonAvgStreets = useStreets.filter(function(s) { return s !== '平均'; });
+        if (nonAvgStreets.length > 0) {
+          nonAvgStreets.forEach(function(sName) {
+            var st = mockData.streetEval.find(function(s) { return s.name === sName; });
+            if (st) {
+              labelLines.push(st[f].toFixed(2) + ' / ' + avgVal.toFixed(2));
+            }
+          });
+        } else {
+          labelLines.push('— / ' + avgVal.toFixed(2));
+        }
+        return { name: labelLines.join('\n'), max: 100 };
+      }),
+      axisName: { color: '#94a3b8', fontSize: 12 },
+      splitArea: { areaStyle: { color: ['rgba(255,255,255,0.02)','rgba(255,255,255,0.02)'] } },
+      splitLine: { lineStyle: { color: '#2a2f3f' } },
+      axisLine: { lineStyle: { color: '#2a2f3f' } }
+    },
+    series: [{ type: 'radar', data: seriesData, symbol: 'circle' }]
+  });
+
+  // Click on axis label to navigate
+  streetRadarChart.off('click');
+  streetRadarChart.on('click', function(params) {
+    if (params.componentType === 'radar') {
+      var fIdx = fields.indexOf(fields[params.targetType === 'axisName' ? 0 : 0]);
+      var reportCodes = ['economy','safety','reform','innovation','eco','culture','party'];
+      if (fIdx >= 0) {
+        currentReportIdx = mockData.reports.findIndex(function(r) { return r.code === reportCodes[fIdx]; });
+        navigate('report-detail', { report: reportCodes[fIdx] });
+      }
+    }
+  });
+
+  // Update legend
+  var legendEl = document.getElementById('street-legend');
+  if (legendEl) {
+    legendEl.innerHTML = useStreets.map(function(s, i) {
+      var isAvg = s === '平均';
+      return '<span style="font-size:12px;padding:4px 8px;border-radius:4px;border:1px solid ' + (isAvg ? '#95A5A6' : colors[i % colors.length]) + ';color:' + (isAvg ? '#95A5A6' : colors[i % colors.length]) + '">'
+        + (isAvg ? '— ' : '● ') + s + '</span>';
+    }).join('');
+  }
+}
+
+// ========== STREET RADAR EXPAND/COLLAPSE ==========
+var _flipCache = null;
+
+function teardownMiniCharts(skipLayoutReset) {
+  // Animate mini radars out before tearing down
+  var grid = document.querySelector('.street-radar-grid');
+  if (grid) {
+    var minis = grid.querySelectorAll('.mini-radar');
+    minis.forEach(function(el, i) {
+      el.style.animation = 'radarScaleOut 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) both';
+      el.style.animationDelay = (i * 0.045) + 's';
+    });
+  }
+  // Dispose charts and remove grid after fade-out
+  setTimeout(function() {
+    streetMiniCharts.forEach(function(chart) {
+      if (chart && !chart.isDisposed()) chart.dispose();
+    });
+    streetMiniCharts = [];
+    var g = document.querySelector('.street-radar-grid');
+    if (g) g.remove();
+    if (!skipLayoutReset) {
+      var layout = document.querySelector('.street-eval-layout');
+      if (layout) layout.classList.remove('layout-expanded', 'layout-pulse');
+    }
+  }, 525);
+}
+
+function flipMatrixCard(captureCoordsFn) {
+  var matrixCard = document.getElementById('street-matrix-card');
+  var layout = document.querySelector('.street-eval-layout');
+  if (!matrixCard || !layout) return;
+
+  // FLIP Step 1: Capture source coordinates
+  var from = captureCoordsFn();
+  var srcRect = matrixCard.getBoundingClientRect();
+
+  // FLIP Step 2: Trigger layout change
+  layout.classList.toggle('layout-expanded');
+  layout.classList.add('layout-pulse');
+  setTimeout(function() { if (layout) layout.classList.remove('layout-pulse'); }, 900);
+
+  // FLIP Step 3: Capture destination coordinates & compute delta
+  var dstRect = matrixCard.getBoundingClientRect();
+  var dx = srcRect.left - dstRect.left;
+  var dy = srcRect.top - dstRect.top;
+
+  // FLIP Step 4: Invert — visually place card back at source
+  if (Math.abs(dx) > 0.5 || Math.abs(dy) > 0.5) {
+    matrixCard.classList.add('matrix-sliding');
+    matrixCard.style.transform = 'translate(' + dx + 'px, ' + dy + 'px)';
+    matrixCard.style.transition = 'none';
+    // Force reflow
+    matrixCard.offsetHeight;
+
+    // FLIP Step 5: Play — remove transform, let transition take over
+    requestAnimationFrame(function() {
+      requestAnimationFrame(function() {
+        matrixCard.style.transition = 'transform 0.75s cubic-bezier(0.25, 0.8, 0.25, 1.2)';
+        matrixCard.style.transform = 'translate(0, 0)';
+      });
+    });
+
+    // Cleanup
+    setTimeout(function() {
+      matrixCard.classList.remove('matrix-sliding');
+      matrixCard.style.transform = '';
+      matrixCard.style.transition = '';
+    }, 780);
+  }
+}
+
+function toggleStreetRadar() {
+  var btn = document.getElementById('btn-toggle-radar');
+  var subtitle = document.getElementById('radar-subtitle');
+  var radarDom = document.getElementById('street-radar-chart');
+  var legendEl = document.getElementById('street-legend');
+  var layout = document.querySelector('.street-eval-layout');
+
+  if (streetRadarExpanded) {
+    // === COLLAPSE: reverse cinematic ===
+    // Phase 1: Teardown mini charts with fade-out (keeps layout expanded briefly)
+    teardownMiniCharts(true);
+    streetRadarExpanded = false;
+    if (btn) {
+      btn.classList.add('glow-active');
+      btn.innerHTML = '⊞ 全部展开';
+      setTimeout(function() { btn.classList.remove('glow-active'); }, 1800);
+    }
+    if (subtitle) subtitle.textContent = '悬停表格行高亮曲线 | 最多同时显示3条 | 点击维度跳转报表';
+
+    // Phase 2: Scan line sweep + pop layout restored early for FLIP capture
+    if (layout) {
+      layout.classList.add('scan-reverse');
+      setTimeout(function() { if (layout) layout.classList.remove('scan-reverse'); }, 600);
+    }
+
+    // Phase 3: Flip matrix back to right (delay to sync with mini radar fade-out)
+    setTimeout(function() {
+      flipMatrixCard(function() { return null; });
+      // Restore big radar after FLIP completes
+      setTimeout(function() {
+        if (radarDom) {
+          radarDom.style.display = '';
+          radarDom.style.height = '420px';
+        }
+        if (legendEl) legendEl.style.display = '';
+        renderStreetRadar(streetRadarStreets);
+      }, 450);
+    }, 150);
+
+  } else {
+    // === EXPAND: cinematic three-phase ===
+    if (streetRadarChart) { streetRadarChart.dispose(); streetRadarChart = null; }
+    streetRadarExpanded = true;
+    if (btn) {
+      btn.classList.add('glow-active');
+      btn.innerHTML = '⊟ 全部收起';
+      setTimeout(function() { btn.classList.remove('glow-active'); }, 1800);
+    }
+    if (subtitle) subtitle.textContent = '3行×4列网格布局 | 11个街道独立雷达图 | 点击维度跳转报表';
+    if (legendEl) legendEl.style.display = 'none';
+
+    // Phase 1: Scan line sweep
+    if (layout) {
+      layout.classList.add('scan-forward');
+      setTimeout(function() { if (layout) layout.classList.remove('scan-forward'); }, 675);
+    }
+
+    // Phase 2: Flip matrix to bottom
+    flipMatrixCard(function() { return null; });
+
+    // Phase 3: Render expanded radars (delay to sync with layout transition)
+    setTimeout(function() {
+      renderExpandedRadars();
+    }, 375);
+  }
+}
+
+function renderExpandedRadars() {
+  var radarDom = document.getElementById('street-radar-chart');
+  if (!radarDom) return;
+  radarDom.style.display = 'none';
+  radarDom.style.height = '0px';
+
+  var card = radarDom.parentElement;
+  // Remove any existing grid
+  var existingGrid = card.querySelector('.street-radar-grid');
+  if (existingGrid) existingGrid.remove();
+
+  var grid = document.createElement('div');
+  grid.className = 'street-radar-grid';
+  card.appendChild(grid);
+
+  var avg = calcStreetAvg();
+  var fields = ['economy','safety','reform','innovation','eco','culture','party'];
+  var fieldLabels = ['经济','平安','改革','创新','生态','文化','党建'];
+  var streetColor = '#3498DB';
+
+  streetMiniCharts = [];
+
+  mockData.streetEval.forEach(function(street, idx) {
+    var miniDiv = document.createElement('div');
+    miniDiv.className = 'mini-radar mini-radar-entering';
+    miniDiv.style.animationDelay = (idx * 0.075) + 's';
+
+    grid.appendChild(miniDiv);
+
+    var chart = echarts.init(miniDiv);
+    streetMiniCharts.push(chart);
+
+    var values = fields.map(function(f) { return street[f]; });
+    var avgValues = fields.map(function(f) { return avg[f]; });
+
+    chart.setOption({
+      title: {
+        text: street.name.replace('街道', ''),
+        bottom: 6,
+        left: 'center',
+        textStyle: { color: '#e2e8f0', fontSize: 13, fontWeight: 600 }
+      },
+      tooltip: { trigger: 'item' },
+      radar: {
+        center: ['50%', '44%'],
+        radius: '54%',
+        indicator: fields.map(function(f, i) {
+          return {
+            name: fieldLabels[i] + '\n' + street[f].toFixed(2) + ' / ' + avg[f].toFixed(2),
+            max: 100
+          };
+        }),
+        axisName: { color: '#94a3b8', fontSize: 11 },
+        splitArea: { areaStyle: { color: ['rgba(255,255,255,0.02)','rgba(255,255,255,0.02)'] } },
+        splitLine: { lineStyle: { color: '#2a2f3f' } },
+        axisLine: { lineStyle: { color: '#2a2f3f' } }
+      },
+      series: [{
+        type: 'radar',
+        data: [
+          {
+            value: values,
+            name: street.name,
+            lineStyle: { color: streetColor, width: 2 },
+            itemStyle: { color: streetColor },
+            areaStyle: { color: streetColor, opacity: 0.12 },
+            symbol: 'circle', symbolSize: 4
+          },
+          {
+            value: avgValues,
+            name: '平均',
+            lineStyle: { color: '#FDE68A', width: 2, type: 'dashed' },
+            itemStyle: { color: '#FDE68A' },
+            areaStyle: { opacity: 0 },
+            symbol: 'none', symbolSize: 0
+          }
+        ]
+      }]
+    });
+  });
+}
+
+// ========== PROBLEM GROUP TOGGLE ==========
+function toggleProblemGroup(groupEl) {
+  groupEl.classList.toggle('open');
+}
+function toggleAllProblemGroups(open) {
+  var groups = document.querySelectorAll('.problem-group');
+  groups.forEach(function(g) {
+    if (open) g.classList.add('open');
+    else g.classList.remove('open');
+  });
+}
+function switchProblemView(mode) {
+  problemViewMode = mode;
+  localStorage.setItem('problem_view_mode', mode);
+  renderReportDetail();
+}
+
+// ========== MODAL (V2: ESC key + animation) ==========
+function showModal(title, text) {
+  document.getElementById('modal-title').textContent = title;
+  document.getElementById('modal-text').textContent = text;
+  document.getElementById('modal').classList.add('show');
+}
+function closeModal(e) {
+  document.getElementById('modal').classList.remove('show');
+}
+
+// ========== EXPAND ==========
+function toggleExpand(id) {
+  var body = document.getElementById(id);
+  body.classList.toggle('open');
+}
+
+// ========== HOME PAGE DYNAMIC MATRICES ==========
+function renderHomeMatrices() {
+  // Report matrix
+  var reportContainer = document.getElementById('home-report-matrix');
+  if (reportContainer) {
+    reportContainer.innerHTML = mockData.reports.map(function(r) {
+      var g = r.grade;
+      var chgHtml = '';
+      if (g === 'N') {
+        chgHtml = '<div class="cell-change" style="color:var(--text-muted)">仅晾晒</div>';
+      } else {
+        chgHtml = '<div class="cell-change">' + formatChange(r.vsQuarterGrad, r.vsQuarterRank) + '</div>';
+      }
+      return '<div class="matrix-cell ' + g + '" onclick="navigate(\'report-detail\',{report:\'' + r.code + '\'})">'
+        + '<div class="cell-name">' + r.name + '</div>'
+        + '<div class="cell-grade ' + gradeClass(g) + '">' + (g === 'N' ? '仅晾晒' : g + r.rank) + '</div>'
+        + chgHtml + '</div>';
+    }).join('');
+  }
+  // Update global summary card
+  var summaryEl = document.getElementById('home-report-summary');
+  if (summaryEl) {
+    var counts = { A: 0, B: 0, C: 0, D: 0, E: 0, N: 0 };
+    // 用首条有效记录（非N档）初始化最高/最低，避免N档indexOf(-1)导致的比较Bug
+    var highest = null, lowest = null;
+    mockData.reports.forEach(function(r) {
+      counts[r.grade] = (counts[r.grade] || 0) + 1;
+      if (r.grade !== 'N') {
+        if (!highest) {
+          highest = { grade: r.grade, rank: r.rank };
+          lowest  = { grade: r.grade, rank: r.rank };
+        } else {
+          var gv = 'ABCDE'.indexOf(r.grade), hgv = 'ABCDE'.indexOf(highest.grade);
+          if (gv < hgv || (gv === hgv && r.rank < highest.rank)) highest = { grade: r.grade, rank: r.rank };
+          var lgv = 'ABCDE'.indexOf(r.grade), llgv = 'ABCDE'.indexOf(lowest.grade);
+          if (lgv > llgv || (lgv === llgv && r.rank > lowest.rank)) lowest = { grade: r.grade, rank: r.rank };
+        }
+      }
+    });
+    var cdeCount = counts.C + counts.D + counts.E;
+    summaryEl.innerHTML = '<span class="grade-A">A×' + counts.A + '</span> <span class="grade-B">B×' + counts.B + '</span>';
+    var subEl = document.getElementById('home-report-summary-sub');
+    if (subEl) {
+      subEl.textContent = highest ? ('C/D/E档 ' + cdeCount + '张 · 最高' + highest.grade + highest.rank + ' · 最低' + lowest.grade + lowest.rank) : 'C/D/E档 ' + cdeCount + '张';
+    }
+  }
+}
+
+
+// ========== LOGIN AUTH ==========
+var _loginFailCount = 0;
+var _loginLocked = false;
+var _loginTimer = null;
+
+(function checkAuth() {
+  if (sessionStorage.getItem('auth') === 'true') {
+    var overlay = document.getElementById('login-overlay');
+    if (overlay) overlay.style.display = 'none';
+  }
+})();
+
+function doLogin() {
+  if (_loginLocked) return;
+  var pw = document.getElementById('login-password').value;
+  var errEl = document.getElementById('login-error');
+  var lockEl = document.getElementById('login-lock');
+  if (pw === 'admin123') {
+    sessionStorage.setItem('auth', 'true');
+    document.getElementById('login-overlay').style.display = 'none';
+    _loginFailCount = 0;
+    if (_loginTimer) { clearInterval(_loginTimer); _loginTimer = null; }
+  } else {
+    _loginFailCount++;
+    if (_loginFailCount >= 3) {
+      _loginLocked = true;
+      var btn = document.getElementById('btn-login');
+      if (btn) btn.disabled = true;
+      var remaining = 30;
+      lockEl.textContent = '⚠️ 连续输错3次，已锁定 ' + remaining + ' 秒';
+      errEl.textContent = '';
+      _loginTimer = setInterval(function() {
+        remaining--;
+        if (remaining <= 0) {
+          clearInterval(_loginTimer);
+          _loginTimer = null;
+          _loginLocked = false;
+          _loginFailCount = 0;
+          if (btn) btn.disabled = false;
+          lockEl.textContent = '';
+        } else {
+          lockEl.textContent = '⚠️ 连续输错3次，已锁定 ' + remaining + ' 秒';
+        }
+      }, 1000);
+    } else {
+      errEl.textContent = '❌ 密码错误，剩余尝试次数：' + (3 - _loginFailCount);
+    }
+    document.getElementById('login-password').value = '';
+    document.getElementById('login-password').focus();
+  }
+}
+
+// ========== INIT ==========
+document.addEventListener('DOMContentLoaded', function() {
+  showPage('home');
+  renderHomeMatrices();
+});
+
+// ESC key close modal
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    var modal = document.getElementById('modal');
+    if (modal && modal.classList.contains('show')) {
+      closeModal();
+    }
+  }
+});
+
+// Resize radar on window resize
+window.addEventListener('resize', function() {
+  if (streetRadarChart) streetRadarChart.resize();
+  // Also resize all mini charts in expanded grid mode
+  if (streetRadarExpanded && streetMiniCharts.length > 0) {
+    streetMiniCharts.forEach(function(c) {
+      if (c && !c.isDisposed()) c.resize();
+    });
+  }
+});
+</script>
+</body>
+</html>
