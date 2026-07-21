@@ -717,8 +717,19 @@ body {
     </div>
     <div class="card metric-card clickable" onclick="navigate('domain-overview')">
       <div class="label">🗺️ 五大领域综合</div>
-      <div class="value">
-        <span class="star">★★★★★</span><span class="star">★★★★★</span><span class="star">★★★☆☆</span>
+      <div class="value" style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
+        <span style="display:flex;flex-direction:column;align-items:center;gap:2px">
+          <span class="star" style="font-size:16px">★★★★★</span>
+          <span style="font-size:10px;color:var(--text-muted)">教育</span>
+        </span>
+        <span style="display:flex;flex-direction:column;align-items:center;gap:2px">
+          <span class="star" style="font-size:16px">★★★★★</span>
+          <span style="font-size:10px;color:var(--text-muted)">国企</span>
+        </span>
+        <span style="display:flex;flex-direction:column;align-items:center;gap:2px">
+          <span class="star" style="font-size:16px">★★★☆☆</span>
+          <span style="font-size:10px;color:var(--text-muted)">医疗</span>
+        </span>
       </div>
       <div class="sub">教育五星 · 国企五星 · 医疗三星 · 领域四五建设</div>
     </div>
