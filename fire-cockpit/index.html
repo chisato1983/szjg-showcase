@@ -1,0 +1,1209 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>高层建筑消防安全综合智管 v3.5</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap');
+  :root {
+    --bg-deep:#081424;--bg-card:#0f2138;--bg-inner:#0a1828;--bg-inner-hover:#122a44;
+    --border:rgba(0,200,255,0.10);--border-strong:rgba(0,200,255,0.30);
+    --text-primary:#e6f3ff;--text-secondary:#8faec9;--text-muted:#557089;
+    --accent-cyan:#00c8ff;--green:#2ee6a6;--yellow:#ffcc33;--orange:#ff8c1a;--red:#ff4757;--gray:#6b8294;
+  }
+  html { font-size: clamp(10px, 0.55vw + 6px, 18px); }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%;background:var(--bg-deep);font-family:'Noto Sans SC',sans-serif;overflow:hidden}
+  body{background:linear-gradient(135deg,#06101f 0%,#0a1828 50%,#06101f 100%)}
+  .layout{display:flex;flex-direction:column;height:100vh;min-height:600px}
+  .topbar{height:90px;flex-shrink:0;display:grid;grid-template-columns:1fr 2fr 1fr;align-items:center;padding:0 2rem;
+    background:linear-gradient(180deg,rgba(0,40,80,0.6) 0%,rgba(0,20,40,0.3) 80%,transparent 100%);border-bottom:1px solid rgba(0,200,255,0.2);position:relative;overflow:hidden}
+  .topbar::before{content:'';position:absolute;top:50%;left:10%;right:10%;height:1px;background:linear-gradient(90deg,transparent,var(--accent-cyan),transparent);opacity:0.4}
+  .topbar-left{display:flex;flex-direction:column;gap:0.3rem;z-index:1}
+  .topbar-date{font-family:'Oswald',monospace;font-size:1.4rem;color:var(--text-primary);font-weight:500;letter-spacing:1px}
+  .topbar-time{font-family:'Oswald',monospace;font-size:0.95rem;color:var(--text-muted)}
+  .topbar-title{text-align:center;z-index:1}
+  .topbar-title h1{font-size:1.8rem;font-weight:700;color:var(--text-primary);letter-spacing:0.3em;background:linear-gradient(180deg,#fff 0%,#9fd9ff 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+  .topbar-title .sub{font-size:0.75rem;color:var(--text-muted);letter-spacing:0.4em;margin-top:0.2rem}
+  .topbar-right{display:flex;align-items:center;justify-content:flex-end;gap:1.2rem;z-index:1}
+  .tb-action{display:flex;align-items:center;gap:0.4rem;color:var(--text-secondary);font-size:0.85rem;cursor:pointer;padding:0.3rem 0.6rem;border-radius:3px;transition:all .2s}
+  .tb-action:hover{color:var(--accent-cyan);background:rgba(0,200,255,0.08)}
+  .tb-action .tb-icon{font-size:1rem}
+  .dashboard{flex:1;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);gap:8px;padding:8px;min-height:0;overflow:hidden}
+  .grid-cell{background:var(--bg-card);border:1px solid var(--border);border-radius:5px;padding:0.7rem 0.85rem 0.85rem;color:var(--text-primary);display:flex;flex-direction:column;gap:0.55rem;position:relative;overflow:hidden;min-width:0;min-height:0}
+  .grid-cell::before{content:'';position:absolute;top:0;left:0;width:0.2rem;height:1.6rem;background:var(--accent-cyan)}
+  .grid-cell.scroll{overflow-y:auto}
+  .cell-header{display:flex;justify-content:space-between;align-items:baseline;padding-bottom:0.45rem;border-bottom:1px solid var(--border);flex-shrink:0}
+  .cell-title{font-size:0.95rem;font-weight:500;color:var(--accent-cyan);letter-spacing:1.5px}
+  .cell-title .idx{font-family:'Oswald',sans-serif;color:var(--text-muted);margin-right:0.4rem;font-size:0.85rem}
+  .cell-sub{font-family:'Oswald',sans-serif;font-size:0.72rem;color:var(--text-muted)}
+  .section-label{font-size:0.7rem;color:var(--text-secondary);letter-spacing:0.5px;display:flex;align-items:center;gap:0.4rem}
+  .section-label .cnt{color:var(--text-muted);font-family:'Oswald',sans-serif;font-size:0.7rem}
+  .kpi-row{display:grid;grid-template-columns:repeat(3,1fr);gap:0.3rem}
+  .kpi-row.s2{grid-template-columns:1fr 1fr}
+  .kpi-card{background:var(--bg-inner);border:1px solid var(--border);border-radius:3px;padding:0.55rem 0.4rem;text-align:center;display:flex;flex-direction:column;gap:0.15rem;align-items:center;cursor:pointer;transition:border-color .25s,background .25s}
+  .kpi-card:hover{border-color:rgba(0,200,255,0.35);background:var(--bg-inner-hover)}
+  .kpi-card.active{border-color:var(--accent-cyan);background:rgba(0,200,255,0.08)}
+  .kpi-card .kpi-val{font-family:'Oswald',sans-serif;font-size:1.45rem;font-weight:600;line-height:1;color:var(--accent-cyan)}
+  .kpi-card .kpi-label{font-size:0.66rem;color:var(--text-muted)}
+  .kpi-card .kpi-status{font-size:0.6rem;color:var(--text-muted);display:flex;align-items:center;gap:0.2rem}
+  .trend-chart-hidden{display:none}
+  .dot{width:0.4rem;height:0.4rem;border-radius:50%;flex-shrink:0}
+  .dot.green{background:var(--green)}.dot.yellow{background:var(--yellow)}.dot.orange{background:var(--orange)}.dot.red{background:var(--red)}.dot.gray{background:var(--gray)}
+  .dot.pulse{animation:pulse 1.8s ease-in-out infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+  .trend{font-family:'Oswald',sans-serif;font-size:0.62rem}.trend.up{color:var(--green)}.trend.down{color:var(--green)}
+  .legend-row{display:flex;gap:0.5rem;font-size:0.62rem;color:var(--text-muted);border-top:1px dashed var(--border);padding-top:0.3rem;flex-wrap:wrap}
+  .legend-row span{display:flex;align-items:center;gap:0.2rem}
+  .live-badge{font-size:0.7rem;color:var(--text-muted);display:flex;align-items:center;gap:0.3rem}
+  .live-dot{width:0.45rem;height:0.45rem;border-radius:50%;background:var(--red);animation:blink 1.2s infinite}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
+  .event-list{display:flex;flex-direction:column;gap:0.4rem;flex:1;min-height:0;overflow-y:auto}
+  .event{background:var(--bg-inner);border:1px solid var(--border);border-left:0.2rem solid var(--yellow);border-radius:3px;padding:0.4rem 0.5rem;display:grid;grid-template-columns:4.5rem 1fr;gap:0.5rem;align-items:center;transition:all .15s}
+  .event:hover{background:var(--bg-inner-hover);border-color:var(--border-strong)}
+  .event.severe{border-left-color:var(--orange)}
+  #realtime-card .event{display:flex;flex-direction:column;gap:0.3rem;align-items:stretch;padding:0.45rem 0.55rem;flex:1;min-height:0;border-radius:2px;background:var(--bg-inner);border:1px solid var(--border);transition:all .15s}
+  .ev-thumb{width:4.5rem;height:3.2rem;background:#050a14;border-radius:2px;position:relative;overflow:hidden}
+  .ev-thumb-lg{width:5.5rem;height:4.2rem;background:#050a14;border-radius:3px;position:relative;overflow:hidden;flex-shrink:0}
+  .ev-scene-lg{position:absolute;inset:0;background:linear-gradient(180deg,#1a2a42 0%,#0d1c30 45%,#081020 100%)}
+  .ev-scene-lg::before{content:'';position:absolute;bottom:0;left:50%;width:130%;height:42%;background:repeating-linear-gradient(90deg,transparent 0,transparent 10px,rgba(255,255,255,0.08) 10px,rgba(255,255,255,0.08) 16px);transform:translateX(-50%) perspective(45px) rotateX(52deg);transform-origin:bottom}
+  .ev-car-lg{position:absolute;top:34%;left:24%;width:48%;height:24%;border:1.2px solid var(--yellow);background:rgba(255,204,51,0.08);border-radius:1.5px}
+  .ev-car-lg::after{content:'渝A·F8●●●';position:absolute;top:-1rem;left:0;font-size:0.6rem;color:var(--yellow);font-family:'Oswald',monospace;background:rgba(0,0,0,0.7);padding:1px 3px;border-radius:1.5px}
+  .ev-overlay-lg{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:space-between;padding:0.2rem 0.3rem;font-family:'Oswald',monospace;font-size:0.6rem}
+  .ev-rec-lg{color:var(--red);font-size:0.8rem;display:flex;align-items:center;gap:0.15rem}
+  .ev-rec-lg::before{content:'';width:0.3rem;height:0.3rem;border-radius:50%;background:var(--red);animation:blink 1.2s infinite}
+  .ev-cam-lg{color:rgba(255,255,255,0.3);font-size:0.55rem}
+  .ev-scene{position:absolute;inset:0;background:linear-gradient(180deg,#1a2840 0%,#0c1828 50%,#0a1520 100%)}
+  .ev-scene::before{content:'';position:absolute;bottom:0;left:50%;width:120%;height:40%;background:repeating-linear-gradient(90deg,transparent 0,transparent 8px,rgba(255,255,255,0.06) 8px,rgba(255,255,255,0.06) 14px);transform:translateX(-50%) perspective(40px) rotateX(50deg);transform-origin:bottom}
+  .ev-car{position:absolute;top:38%;left:28%;width:44%;height:22%;border:1px solid var(--yellow);background:rgba(255,204,51,0.08);border-radius:1px}
+  .ev-car::after{content:'渝A·F8●●●';position:absolute;top:-0.85rem;left:0;font-size:0.55rem;color:var(--yellow);font-family:'Oswald',monospace;background:rgba(0,0,0,0.6);padding:1px 2px;border-radius:1px}
+  .ev-overlay{position:absolute;inset:0;display:flex;justify-content:space-between;padding:0.15rem 0.2rem;font-family:'Oswald',monospace;font-size:0.55rem}
+  .ev-rec{color:var(--red)}.ev-cam{color:rgba(255,255,255,0.3)}
+  .ev-info{display:flex;flex-direction:column;gap:0.1rem;min-width:0}
+  .ev-point{font-size:0.72rem;font-weight:500;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .ev-timer{font-family:'Oswald',monospace;font-size:0.95rem;font-weight:500;color:var(--yellow);line-height:1}
+  .ev-duty{font-size:0.58rem;color:var(--text-muted)}
+  .level-tag{font-size:0.6rem;padding:1px 4px;border-radius:2px;white-space:nowrap}
+  .tag-warn{background:rgba(255,204,51,0.12);color:var(--yellow)}.tag-severe{background:rgba(255,140,26,0.12);color:var(--orange)}
+  .rule-bar-h{height:1.4rem;border-radius:2px;display:grid;grid-template-columns:1fr 2fr 1fr 1.3fr;overflow:hidden;border:1px solid var(--border);flex-shrink:0}
+  .rule-seg{display:flex;align-items:center;justify-content:center;font-size:0.8rem;font-weight:500}
+  .seg-safe{background:rgba(46,230,166,0.35);color:var(--green)}.seg-smart{background:rgba(255,204,51,0.35);color:var(--yellow)}.seg-warn{background:rgba(255,140,26,0.35);color:var(--orange)}.seg-alert{background:rgba(255,71,87,0.35);color:var(--red)}
+  .rule-ticks{display:grid;grid-template-columns:1fr 2fr 1fr 1.3fr;font-family:'Oswald',monospace;font-size:0.6rem;color:var(--text-muted)}
+  .rule-dispatch{display:grid;grid-template-columns:1fr 2fr 1fr 1.3fr;font-size:0.6rem;color:var(--text-secondary);line-height:1.2}
+  .rule-dispatch span{text-align:center}
+  .time-zones{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.2rem}
+  .tz{border-radius:2px;padding:0.25rem 0.35rem;font-size:0.6rem;display:flex;align-items:center;gap:0.2rem;line-height:1.2}
+  .tz-peak{background:rgba(46,230,166,0.06);border:1px solid rgba(46,230,166,0.2);color:var(--green)}
+  .tz-night{background:rgba(255,140,26,0.06);border:1px solid rgba(255,140,26,0.2);color:var(--orange)}
+  .tz-dawn{background:rgba(107,130,148,0.08);border:1px solid rgba(107,130,148,0.2);color:var(--gray)}
+  .tz.active{box-shadow:0 0 10px rgba(255,255,255,0.25),inset 0 0 8px rgba(255,255,255,0.06);border-color:rgba(255,255,255,0.55);font-weight:500;transition:all .4s}
+  .tz-peak.active{background:rgba(46,230,166,0.18);border-color:rgba(46,230,166,0.6);box-shadow:0 0 12px rgba(46,230,166,0.35)}
+  .tz-night.active{background:rgba(255,140,26,0.28);border-color:rgba(255,140,26,0.85);box-shadow:0 0 20px rgba(255,140,26,0.55),inset 0 0 12px rgba(255,140,26,0.12);font-weight:600;color:#fff;animation:tz-pulse 2s ease-in-out infinite}
+  .tz-dawn.active{background:rgba(107,130,148,0.18);border-color:rgba(107,130,148,0.6);box-shadow:0 0 12px rgba(107,130,148,0.35)}
+  .todo-list{display:flex;flex-direction:column;gap:0.3rem;flex:1;min-height:0;overflow-y:auto}
+  .todo{background:var(--bg-inner);border:1px solid var(--border);border-radius:3px;padding:0.4rem 0.5rem;display:grid;grid-template-columns:auto 1fr auto;gap:0.5rem;align-items:center;transition:all .15s}
+  .todo:hover{background:var(--bg-inner-hover);border-color:var(--border-strong)}
+  .todo-level{display:flex;flex-direction:column;align-items:center;min-width:2.2rem}
+  .todo-level .lv-num{font-family:'Oswald',sans-serif;font-size:1.1rem;font-weight:600;line-height:1}
+  .lv-warn .lv-num{color:var(--orange)}.lv-alert .lv-num{color:var(--red)}
+  .todo-point{font-size:0.7rem;font-weight:500;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .todo-meta{font-size:0.8rem;color:var(--text-muted);display:flex;gap:0.3rem;margin-top:0.1rem}
+  .todo-meta .tag{background:rgba(0,200,255,0.08);color:var(--accent-cyan);padding:0 0.2rem;border-radius:1px;font-family:'Oswald',monospace}
+  .btn-dispatch{background:linear-gradient(135deg,var(--accent-cyan),#0098cc);color:#001828;border:none;padding:0.2rem 0.55rem;border-radius:2px;font-size:0.6rem;font-weight:600;cursor:pointer;font-family:'Noto Sans SC',sans-serif;white-space:nowrap;transition:all .2s}
+  .btn-dispatch:hover{filter:brightness(1.15)}
+  .btn-dispatch.done{background:linear-gradient(135deg,#2ee6a6,#1abc9c);color:#001a10}
+  .btn-move-car{background:linear-gradient(135deg,#5b8def,#3b6fd4);color:#fff;border:none;padding:0.2rem 0.45rem;border-radius:2px;font-size:0.6rem;font-weight:600;cursor:pointer;font-family:'Noto Sans SC',sans-serif;white-space:nowrap;transition:all .2s}
+  .btn-move-car:hover{filter:brightness(1.15)}
+  .btn-move-car.done{background:linear-gradient(135deg,#2ee6a6,#1abc9c);color:#001a10}
+  .todo-actions{display:flex;gap:0.25rem;align-items:center;flex-shrink:0}
+  .chip{font-size:0.6rem;padding:0.15rem 0.5rem;border-radius:2px;border:1px solid;white-space:nowrap}
+  .chip-done{color:var(--green);border-color:rgba(46,230,166,0.3);background:rgba(46,230,166,0.06)}
+  .level-bar{display:grid;grid-template-columns:repeat(3,1fr);gap:0.3rem}
+  .level-node{background:var(--bg-inner);border:1px solid var(--border);border-radius:3px;padding:0.3rem;text-align:center}
+  .l-name{font-size:0.6rem;color:var(--text-muted)}.l-stat{font-family:'Oswald',sans-serif;font-size:0.7rem}
+  .l-doing{color:var(--accent-cyan)}.l-over{color:var(--red)}
+  .ev-card{background:var(--bg-inner);border:1px solid var(--border);border-radius:3px;padding:0.45rem 0.55rem;display:flex;flex-direction:column;gap:0.3rem}
+  .ev-card.over{border-color:rgba(255,71,87,0.4);background:rgba(255,71,87,0.04)}
+  .ev-card-top{display:flex;justify-content:space-between;align-items:center;gap:0.4rem}
+  .ev-pt{font-size:0.7rem;font-weight:500;color:var(--text-primary);display:flex;align-items:center;gap:0.25rem;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .belong{font-size:0.8rem;padding:0.05rem 0.3rem;border-radius:2px;flex-shrink:0}
+  .belong-street{background:rgba(46,230,166,0.1);color:var(--green);border:1px solid rgba(46,230,166,0.25)}
+  .belong-police{background:rgba(0,200,255,0.1);color:var(--accent-cyan);border:1px solid rgba(0,200,255,0.25)}
+  .ev-flag{font-size:0.58rem;padding:0.1rem 0.35rem;border-radius:2px;flex-shrink:0;white-space:nowrap}
+  .flag-over{background:rgba(255,71,87,0.12);color:var(--red)}.flag-warn{background:rgba(255,204,51,0.12);color:var(--yellow)}
+  .ev-cur{display:flex;align-items:center;gap:0.3rem;padding:0.2rem 0.35rem;background:var(--bg-deep);border-radius:2px;font-size:0.62rem;flex-wrap:wrap}
+  .cur-dept{color:var(--text-primary);font-weight:500}.cur-state{font-size:0.8rem;padding:0.05rem 0.3rem;border-radius:2px;background:rgba(0,200,255,0.12);color:var(--accent-cyan)}
+  .ev-time-row{display:flex;align-items:center;gap:0.4rem;font-size:0.58rem;flex-wrap:wrap}
+  .time-used{font-family:'Oswald',sans-serif;color:var(--text-secondary)}
+  .time-diff{font-family:'Oswald',sans-serif;font-weight:600;padding:0.05rem 0.3rem;border-radius:2px}
+  .diff-warn{color:var(--yellow);background:rgba(255,204,51,0.1)}.diff-bad{color:var(--red);background:rgba(255,71,87,0.1)}
+  .ev-history{display:none;flex-direction:column;gap:0.15rem;padding-top:0.3rem;border-top:1px dashed var(--border)}
+  .ev-history.expanded{display:flex}
+  .hist-row{display:flex;gap:0.4rem;font-size:0.8rem;align-items:center}
+  .hist-time{font-family:'Oswald',monospace;color:var(--text-muted);min-width:2.1rem}
+  .hist-text{color:var(--text-secondary)}.hist-dept{color:var(--text-primary)}
+  .toggle-btn{font-size:0.58rem;color:var(--accent-cyan);cursor:pointer;user-select:none}
+  .baseline-rows{display:flex;flex-direction:column;gap:0.2rem}
+  .baseline-row{display:grid;grid-template-columns:5.5rem 1fr 1.8rem;gap:0.3rem;align-items:center;font-size:0.8rem}
+  .b-name{color:var(--text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .b-bar{position:relative;height:0.7rem;background:var(--bg-deep);border-radius:2px;overflow:visible}
+  .b-fill{position:absolute;left:0;top:0;height:100%;border-radius:2px 3px 3px 2px;min-width:2px}
+  .b-fill.green{background:linear-gradient(90deg,var(--green),#1ec08a)}.b-fill.yellow{background:linear-gradient(90deg,var(--yellow),#e6b800)}
+  .b-fill.orange{background:linear-gradient(90deg,var(--orange),#e66a00)}.b-fill.red{background:linear-gradient(90deg,var(--red),#d63a4a)}
+  .b-baseline{position:absolute;top:-0.15rem;bottom:-0.15rem;width:1px;background:var(--accent-cyan);box-shadow:0 0 3px var(--accent-cyan);z-index:2}
+  .b-val{font-family:'Oswald',sans-serif;color:var(--text-primary);text-align:right}
+  .base-legend{display:grid;grid-template-columns:repeat(2,1fr);gap:0.15rem 0.5rem;padding:0.3rem 0.4rem;background:var(--bg-inner);border-radius:2px}
+  .base-legend .bl{display:flex;align-items:center;gap:0.25rem;font-size:0.8rem;color:var(--text-secondary)}
+  .bl-block{width:0.6rem;height:0.4rem;border-radius:1px;flex-shrink:0}
+  .bl-block.green{background:linear-gradient(90deg,var(--green),#1ec08a)}.bl-block.yellow{background:linear-gradient(90deg,var(--yellow),#e6b800)}
+  .bl-block.orange{background:linear-gradient(90deg,var(--orange),#e66a00)}.bl-block.red{background:linear-gradient(90deg,var(--red),#d63a4a)}
+  .baseline-head{display:flex;justify-content:flex-end;align-items:center;font-size:0.8rem;color:var(--accent-cyan)}
+  .baseline-head::before{content:'';width:1px;height:0.6rem;background:var(--accent-cyan);margin-right:0.25rem;box-shadow:0 0 3px var(--accent-cyan)}
+  #map-container{flex:1;position:relative;border-radius:3px;overflow:hidden;border:1px solid var(--border);min-height:0}
+  #mapid{position:absolute;inset:0}.amap-logo,.amap-copyright{display:none!important}
+  .amap-control-zoom a{background:rgba(15,33,56,0.9)!important;color:var(--accent-cyan)!important;border-color:var(--border)!important}
+  .pin-inner{display:flex;flex-direction:column;align-items:center;pointer-events:none}
+  .pin-dot{width:1rem;height:1rem;border-radius:50%;position:relative}
+  .pin-dot::after{content:'';position:absolute;inset:-0.3rem;border-radius:50%}
+  .pin-tri{width:0;margin-top:-1px;border:0.4rem solid transparent;border-top-width:0.55rem}
+  .pin-label{font-size:0.6rem;white-space:nowrap;margin-top:1px;padding:0.05rem 0.25rem;background:rgba(0,0,0,0.65);border-radius:1px;font-weight:500}
+  .pin.red .pin-dot{background:var(--red)}.pin.red .pin-dot::after{background:rgba(255,71,87,0.3);animation:pinPulse 1.4s infinite}
+  .pin.red .pin-tri{border-top-color:var(--red)}.pin.red .pin-label{color:var(--red)}
+  .pin.orange .pin-dot{background:var(--orange)}.pin.orange .pin-dot::after{background:rgba(255,140,26,0.3);animation:pinPulse 1.8s infinite}
+  .pin.orange .pin-tri{border-top-color:var(--orange)}.pin.orange .pin-label{color:var(--orange)}
+  .pin.yellow .pin-dot{background:var(--yellow)}.pin.yellow .pin-tri{border-top-color:var(--yellow)}.pin.yellow .pin-label{color:var(--yellow)}
+  .pin.gray .pin-dot{background:var(--gray)}.pin.gray .pin-tri{border-top-color:var(--gray)}.pin.gray .pin-label{color:var(--gray)}
+  @keyframes pinPulse{0%,100%{transform:scale(1);opacity:.3}50%{transform:scale(1.8);opacity:.02}}
+  .map-legend{position:absolute;right:0.4rem;bottom:0.4rem;display:flex;flex-direction:column;gap:0.1rem;background:rgba(0,0,0,0.75);padding:0.3rem 0.4rem;border-radius:3px;border:1px solid var(--border);z-index:1000}
+  .map-legend .ml{display:flex;align-items:center;gap:0.25rem;font-size:0.6rem;color:var(--text-secondary)}
+  .map-legend .ml-dot{width:0.4rem;height:0.4rem;border-radius:50%}
+  .ml-dot.red{background:var(--red)}.ml-dot.orange{background:var(--orange)}.ml-dot.yellow{background:var(--yellow)}.ml-dot.gray{background:var(--gray)}
+  .map-stat{display:flex;gap:0.4rem;font-size:0.65rem;align-items:center;flex-wrap:wrap}
+  .verify-list{display:flex;flex-direction:column;gap:0.4rem;flex:1;min-height:0;overflow-y:auto}
+  .verify-card{background:var(--bg-inner);border:1px solid var(--border);border-radius:3px;padding:0.45rem 0.55rem;display:flex;flex-direction:column;gap:0.35rem}
+  .verify-card.pass{border-color:rgba(46,230,166,0.2)}.verify-card.fail{border-color:rgba(255,71,87,0.35);background:rgba(255,71,87,0.03)}
+  .v-top{display:flex;justify-content:space-between;align-items:center;gap:0.4rem}
+  .v-point{font-size:0.7rem;font-weight:500;color:var(--text-primary)}
+  .v-tag{font-size:0.58rem;padding:0.1rem 0.4rem;border-radius:2px;white-space:nowrap;flex-shrink:0}
+  .v-tag.ing{background:rgba(0,200,255,0.1);color:var(--accent-cyan)}.v-tag.pass{background:rgba(46,230,166,0.1);color:var(--green)}.v-tag.fail{background:rgba(255,71,87,0.1);color:var(--red)}
+  .compare{display:grid;grid-template-columns:1fr 1.2rem 1fr;gap:0.25rem;align-items:center}
+  .cmp-thumb{height:3.2rem;border-radius:2px;position:relative;overflow:hidden;border:1px solid var(--border)}
+  .cmp-before{background:linear-gradient(180deg,#1a2840 0%,#0f1a30 50%,#0a1520 100%)}
+  .cmp-after{background:linear-gradient(180deg,#0d2a20 0%,#0a1f18 50%,#06150e 100%)}
+  .cmp-thumb .c-car{position:absolute;top:36%;left:28%;width:44%;height:22%;border:1px solid var(--yellow);background:rgba(255,204,51,0.05);border-radius:1px}
+  .cmp-after .c-car{display:none}
+  .cmp-thumb .c-road{position:absolute;bottom:0;left:50%;width:140%;height:40%;background:repeating-linear-gradient(90deg,transparent 0,transparent 8px,rgba(255,255,255,0.04) 8px,rgba(255,255,255,0.04) 12px);transform:translateX(-50%) perspective(40px) rotateX(45deg);transform-origin:bottom}
+  .cmp-arrow{text-align:center;font-size:0.9rem;color:var(--text-muted)}
+  .recheck-bar{height:0.2rem;background:var(--bg-deep);border-radius:1px;overflow:hidden}
+  .recheck-fill{height:100%;border-radius:1px}
+  .recheck-ing{background:linear-gradient(90deg,var(--accent-cyan),#0098cc)}.recheck-pass{background:linear-gradient(90deg,var(--green),#1ec08a)}.recheck-fail{background:linear-gradient(90deg,var(--red),#d63a4a)}
+  .v-status{display:flex;align-items:center;gap:0.3rem;font-size:0.6rem;color:var(--text-secondary);flex-wrap:wrap}
+  .line-chart{height:3.5rem;flex-shrink:0}
+  .line-chart svg{width:100%;height:100%;display:block}
+  .line-chart .gl{stroke:rgba(255,255,255,0.04);stroke-width:0.3}
+  .line-chart .tk{font-family:'Oswald',monospace;font-size:0.8rem;fill:var(--text-muted)}
+  #trend-echarts{min-height:4.2rem}
+  .tl{fill:none;stroke:var(--accent-cyan);stroke-width:1.4;stroke-linecap:round}
+  .tf{fill:url(#tg);opacity:0.2}
+  .bar-chart{display:flex;align-items:flex-end;gap:0.1rem;height:2.2rem;flex-shrink:0}
+  .bar-group{flex:1;display:flex;flex-direction:column;align-items:center;gap:0.05rem;min-width:0}
+  .bar-col{width:100%;border-radius:1px;min-height:1px;background:linear-gradient(180deg,var(--accent-cyan) 0%,rgba(0,200,255,0.3) 100%)}
+  .bar-col.peak{background:linear-gradient(180deg,var(--yellow) 0%,rgba(255,204,51,0.3) 100%)}
+  .bar-lbl{font-family:'Oswald',monospace;font-size:0.6rem;color:var(--text-muted);white-space:nowrap}
+  .dual-metrics{display:grid;grid-template-columns:repeat(2,1fr);gap:0.2rem}
+  .metric-row{display:flex;justify-content:space-between;align-items:center;font-size:0.6rem;padding:0.25rem 0.4rem;background:var(--bg-inner);border-radius:2px;gap:0.3rem}
+  .metric-left{display:flex;align-items:center;gap:0.25rem;min-width:0;overflow:hidden}
+  .metric-name{color:var(--text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:0.62rem}
+  .metric-val{font-family:'Oswald',sans-serif;color:var(--text-primary);white-space:nowrap;font-size:0.65rem}
+  .metric-trend{font-family:'Oswald',sans-serif;font-size:0.8rem;margin-left:0.1rem}
+  .status-bar{display:grid;grid-template-columns:repeat(3,1fr);gap:0.3rem}
+  .s-node{background:var(--bg-inner);border:1px solid var(--border);border-radius:3px;padding:0.4rem 0.5rem;display:flex;align-items:center;gap:0.4rem}
+  .s-dot{width:0.55rem;height:0.55rem;border-radius:50%;flex-shrink:0}
+  .s-info{display:flex;flex-direction:column;gap:0}
+  .s-num{font-family:'Oswald',sans-serif;font-size:1.1rem;font-weight:600;line-height:1}
+  .s-label{font-size:0.58rem;color:var(--text-muted)}
+  .s-node.online .s-dot{background:var(--green);box-shadow:0 0 4px rgba(46,230,166,0.3)}.s-node.online .s-num{color:var(--green)}
+  .s-node.offline .s-dot{background:var(--red);animation:pulse 1.5s infinite}.s-node.offline .s-num{color:var(--red)}
+  .s-node.suspect .s-dot{background:var(--orange);animation:pulse 2s infinite}.s-node.suspect .s-num{color:var(--orange)}
+  .occupy-d{width:0.3rem;height:0.3rem;border-radius:50%;background:rgba(255,204,51,0.2);transition:all .3s}
+  .occupy-d.on{background:var(--yellow);box-shadow:0 0 4px var(--yellow);width:0.7rem;border-radius:0.15rem}
+
+  /* 实时监测卡片滚动动画 */
+  #realtime-card{position:relative;overflow:hidden;flex:1;min-height:0}
+  #realtime-card .event{position:absolute;inset:0;transition:transform .5s cubic-bezier(.4,0,.2,1);will-change:transform}
+  #realtime-card .event.entering{transform:translateY(-100%)}
+  #realtime-card .event.active{transform:translateY(0)}
+  #realtime-card .event.leaving{transform:translateY(100%)}
+  .rt-dots{display:flex;align-items:center;gap:0.25rem}
+  .rt-dots .occupy-d{width:0.3rem;height:0.3rem;border-radius:50%;background:rgba(0,200,255,0.2);transition:all .3s;flex-shrink:0}
+  .rt-dots .occupy-d.on{background:var(--accent-cyan);box-shadow:0 0 4px var(--accent-cyan);width:0.7rem;border-radius:0.15rem}
+
+  /* ===== 地图展开/收起 ===== */
+  .btn-expand-map{background:rgba(0,200,255,0.08);border:1px solid rgba(0,200,255,0.25);color:var(--accent-cyan);padding:0.15rem 0.55rem;border-radius:2px;font-size:0.62rem;cursor:pointer;font-family:'Noto Sans SC',sans-serif;transition:all .2s;white-space:nowrap;letter-spacing:0.5px;flex-shrink:0}
+  .btn-expand-map:hover{background:rgba(0,200,255,0.18);border-color:rgba(0,200,255,0.5);box-shadow:0 0 6px rgba(0,200,255,0.2)}
+  .btn-expand-map.collapse{background:rgba(255,140,26,0.1);border-color:rgba(255,140,26,0.35);color:var(--orange)}
+  .btn-expand-map.collapse:hover{background:rgba(255,140,26,0.2);box-shadow:0 0 6px rgba(255,140,26,0.3)}
+  /* 遮罩层 */
+  .map-backdrop{position:fixed;inset:0;background:rgba(2,10,24,0.65);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);z-index:50;opacity:0;pointer-events:none;transition:opacity 1.2s cubic-bezier(.4,0,.2,1)}
+  .map-backdrop.on{opacity:1;pointer-events:auto}
+  /* 被推开的宫格——共同行为 */
+  .grid-cell.push-out{transition:transform 1.4s cubic-bezier(.4,0,.2,1),opacity 1.4s cubic-bezier(.4,0,.2,1);opacity:.3;cursor:pointer;z-index:1;pointer-events:auto}
+  .grid-cell.push-out:hover{opacity:.65}
+  /* 8个方向的推开量（相对自身尺寸） */
+  .grid-cell.push-tl{transform:translate(-115%,-115%)}
+  .grid-cell.push-tc{transform:translate(0,-115%)}
+  .grid-cell.push-tr{transform:translate(115%,-115%)}
+  .grid-cell.push-ml{transform:translate(-115%,0)}
+  .grid-cell.push-mr{transform:translate(115%,0)}
+  .grid-cell.push-bl{transform:translate(-115%,115%)}
+  .grid-cell.push-bc{transform:translate(0,115%)}
+  .grid-cell.push-br{transform:translate(115%,115%)}
+  /* 全屏地图宫格 */
+  .grid-cell.map-fullscreen{position:fixed!important;inset:1.2rem!important;z-index:100!important;transition:all 4.8s cubic-bezier(.4,0,.2,1);border-color:rgba(0,200,255,0.5)!important;box-shadow:0 0 60px rgba(0,200,255,0.15),0 0 120px rgba(0,200,255,0.05);border-radius:6px!important}
+  .grid-cell.map-fullscreen #map-container{border-color:rgba(0,200,255,0.25)}
+  /* 全屏时顶级遮罩防止误触 */
+  .grid-cell.map-fullscreen .cell-header{z-index:101;position:relative}
+
+  @keyframes flash{0%,100%{box-shadow:inset 0 0 0 rgba(255,204,51,0)}50%{box-shadow:inset 0 0 30px rgba(255,204,51,0.55)}}
+  @keyframes tz-pulse{0%,100%{box-shadow:0 0 20px rgba(255,140,26,0.55),inset 0 0 12px rgba(255,140,26,0.12)}50%{box-shadow:0 0 35px rgba(255,140,26,0.75),inset 0 0 20px rgba(255,140,26,0.25)}}
+  .occupy-flash{animation:flash 1s ease-in-out 5}
+
+  .alert-list{display:flex;flex-direction:column;gap:0.35rem;flex:1;min-height:0;overflow-y:auto}
+  .alert-row{display:flex;align-items:center;gap:0.35rem;font-size:0.65rem;padding:0.4rem 0.5rem;background:var(--bg-inner);border-radius:3px;border-left:2px solid var(--red)}
+  .alert-row.info{border-left-color:var(--accent-cyan)}
+  .alert-msg{color:var(--text-secondary);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .alert-time{font-family:'Oswald',sans-serif;font-size:0.65rem;color:var(--text-muted);white-space:nowrap;flex-shrink:0}
+  .algo-row{display:flex;justify-content:space-between;align-items:center;padding:0.3rem 0.4rem;background:var(--bg-inner);border-radius:2px;font-size:0.6rem;gap:0.5rem}
+  .algo-item{display:flex;flex-direction:column;gap:0}.algo-label{color:var(--text-muted);font-size:0.8rem}.algo-val{color:var(--text-primary);font-family:'Oswald',sans-serif;font-size:0.65rem}
+
+  /* ===== 09 复盘改进 ===== */
+  .review-kpi-area{display:flex;flex:8;min-height:0;gap:0.5rem}
+  .review-radar{flex:1;min-width:0;min-height:0;background:var(--bg-inner);border:1px solid var(--border);border-radius:4px;position:relative;overflow:hidden}
+  #review-radar{width:100%;height:100%;padding:0.2rem}
+  .review-kpi-right{flex:1;display:flex;flex-direction:column;gap:0.4rem;min-width:0}
+  .review-kpi-card{background:var(--bg-inner);border:1px solid var(--border);border-left:2px solid var(--accent-cyan);border-radius:3px;padding:0.6rem 0.7rem;display:flex;flex-direction:column;gap:0.2rem;flex:1;justify-content:center}
+  .review-kpi-card:last-child{border-left-color:var(--green)}
+  .review-kpi-num{font-family:'Oswald',sans-serif;font-size:1.8rem;font-weight:600;line-height:1;color:var(--text-primary)}
+  .review-kpi-num .unit{font-size:0.8rem;font-weight:400;color:var(--text-muted);margin-left:0.15rem}
+  .review-kpi-label{font-size:0.68rem;color:var(--text-secondary)}
+  .review-kpi-trend{font-size:0.6rem;display:flex;align-items:center;gap:0.15rem}
+  .review-kpi-trend.down{color:var(--green)}
+  .review-kpi-trend.flat{color:var(--text-muted)}
+  .review-ai-area{display:flex;flex:2;min-height:0;gap:0.5rem;align-items:center}
+  .review-ai-card{flex:1;background:var(--bg-inner);border:1px dashed rgba(0,200,255,0.25);border-radius:4px;padding:0.6rem 0.8rem;display:flex;align-items:center;gap:0.6rem;cursor:pointer;transition:all .25s}
+  .review-ai-card:hover{border-color:var(--accent-cyan);border-style:solid;background:rgba(0,200,255,0.04);transform:scale(1.01)}
+  .review-ai-icon{width:2.6rem;height:2.6rem;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .review-ai-icon svg{width:100%;height:100%}
+  .review-ai-title{font-size:0.72rem;font-weight:500;color:var(--text-primary)}
+  .review-ai-sub{font-size:0.58rem;color:var(--text-muted);margin-top:0.1rem}
+  .review-ai-arrow{font-size:1rem;color:var(--accent-cyan);opacity:0.6;flex-shrink:0;transition:all .25s}
+  .review-ai-card:hover .review-ai-arrow{opacity:1;transform:translateX(3px)}
+  @keyframes bot-float{0%,100%{transform:translateY(0)}30%{transform:translateY(-5px)}60%{transform:translateY(-2px)}80%{transform:translateY(-6px)}}
+  @keyframes bot-shadow-pulse{0%,100%{opacity:0.25;transform:scaleX(1)}30%{opacity:0.12;transform:scaleX(0.65)}80%{opacity:0.18;transform:scaleX(0.7)}}
+  @keyframes blink{0%,90%,96%,100%{transform:scaleY(1)}93%{transform:scaleY(0.08)}}
+  @keyframes antenna-glow{0%,100%{opacity:0.5;r:3}50%{opacity:1;r:4.5}}
+  .bot-shadow{animation:bot-shadow-pulse 3.6s ease-in-out infinite;transform-origin:center}
+  .bot-eye-l,.bot-eye-r{animation:blink 4s ease-in-out infinite;transform-origin:center}
+  .bot-eye-r{animation-delay:0.6s}
+  .bot-antenna-dot{animation:antenna-glow 2s ease-in-out infinite}
+
+  /* AI报告模态框 */
+  .ai-modal-overlay{position:fixed;inset:0;z-index:1100;background:rgba(0,0,0,0.65);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center}
+  .ai-modal-overlay.show{display:flex}
+  .ai-modal{background:var(--bg-card);border:1px solid var(--border-strong);border-radius:8px;width:min(90vw,46rem);max-height:85vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 0 60px rgba(0,200,255,0.2),0 0 120px rgba(0,100,180,0.08)}
+  .ai-modal-header{display:flex;justify-content:space-between;align-items:center;padding:0.8rem 1.1rem;background:linear-gradient(135deg,rgba(0,150,220,0.18),rgba(0,80,160,0.1));border-bottom:1px solid rgba(0,200,255,0.15);font-size:0.9rem;font-weight:600;color:var(--accent-cyan);letter-spacing:.02em}
+  .ai-modal-close{cursor:pointer;font-size:1.1rem;color:var(--text-muted);transition:all .2s;line-height:1;width:1.6rem;height:1.6rem;display:flex;align-items:center;justify-content:center;border-radius:50%;background:rgba(255,255,255,0.05)}
+  .ai-modal-close:hover{color:var(--red);background:rgba(255,71,87,0.12)}
+  .ai-modal-body{padding:1.1rem 1.2rem;overflow-y:auto;flex:1;font-size:0.72rem;color:var(--text-secondary);line-height:1.7;scroll-behavior:smooth}
+  /* Section */
+  .modal-section{margin-bottom:0.9rem;background:rgba(8,24,40,0.35);border:1px solid rgba(0,200,255,0.1);border-radius:6px;padding:0.75rem 0.95rem}
+  .modal-section-title{font-size:0.78rem;font-weight:600;color:var(--accent-cyan);margin-bottom:0.15rem;display:flex;align-items:center;gap:0.5rem}
+  .modal-section-num{width:1.45rem;height:1.45rem;background:linear-gradient(135deg,rgba(0,200,255,0.25),rgba(0,120,200,0.15));color:var(--accent-cyan);border:1px solid rgba(0,200,255,0.25);border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:0.68rem;flex-shrink:0;font-family:'Oswald',sans-serif;font-weight:600}
+  .modal-section-desc{font-size:0.6rem;color:var(--text-muted);margin-bottom:0.55rem;padding-left:1.95rem}
+  /* Callout */
+  .modal-callout{background:linear-gradient(135deg,rgba(46,230,166,0.08),rgba(0,200,255,0.04));border:1px solid rgba(46,230,166,0.18);border-radius:5px;padding:0.55rem 0.75rem;margin-bottom:0.6rem}
+  .modal-callout-body{font-size:0.68rem;color:var(--text-secondary);line-height:1.6}
+  .modal-callout-body strong{color:var(--green);font-weight:600}
+  /* KPI */
+  .modal-kpi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:0.5rem;margin-bottom:0.2rem}
+  .modal-kpi{background:rgba(0,200,255,0.04);border:1px solid rgba(0,200,255,0.12);border-radius:5px;padding:0.5rem 0.65rem;position:relative;overflow:hidden}
+  .modal-kpi::before{content:'';position:absolute;top:0;left:0;width:3px;height:100%;background:var(--accent-cyan)}
+  .modal-kpi.green::before{background:var(--green)}
+  .modal-kpi-label{font-size:0.55rem;color:var(--text-muted);letter-spacing:0.3px;margin-bottom:0.1rem}
+  .modal-kpi-value{font-family:'Oswald',sans-serif;font-size:1.25rem;font-weight:600;color:var(--accent-cyan);line-height:1.05}
+  .modal-kpi.green .modal-kpi-value{color:var(--green)}
+  .modal-kpi-value small{font-size:0.5rem;font-weight:400;color:var(--text-muted);margin-left:0.05rem}
+  .modal-kpi-sub{font-size:0.55rem;color:var(--text-muted);margin-top:0.2rem}
+  .modal-kpi-trend{font-size:0.55rem;color:var(--green);margin-top:0.15rem;font-weight:600}
+  /* Finding */
+  .modal-finding{background:rgba(0,200,255,0.04);border:1px solid rgba(0,200,255,0.1);border-left:3px solid var(--green);border-radius:4px;padding:0.5rem 0.65rem;margin-bottom:0.35rem}
+  .modal-finding.warning{border-left-color:var(--orange)}
+  .modal-finding.info{border-left-color:var(--accent-cyan)}
+  .modal-finding-title{font-size:0.66rem;font-weight:600;color:var(--text-primary);margin-bottom:0.1rem;display:flex;align-items:center;gap:0.4rem}
+  .modal-finding-badge{font-size:0.5rem;padding:0.08rem 0.4rem;border-radius:3px;font-weight:600;background:rgba(46,230,166,0.15);color:var(--green);letter-spacing:0.2px;flex-shrink:0}
+  .modal-finding-badge.warning{background:rgba(255,165,2,0.15);color:var(--orange)}
+  .modal-finding-badge.info{background:rgba(0,200,255,0.15);color:var(--accent-cyan)}
+  .modal-finding-body{font-size:0.62rem;color:var(--text-secondary);line-height:1.5}
+  /* Two col */
+  .modal-two-col{display:grid;grid-template-columns:1fr 1fr;gap:0.6rem}
+  .modal-two-col .modal-section{margin-bottom:0}
+  /* Rec */
+  .modal-rec-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:0.45rem}
+  .modal-rec{background:rgba(0,200,255,0.04);border:1px solid rgba(0,200,255,0.1);border-radius:4px;padding:0.5rem 0.6rem}
+  .modal-rec-title{font-size:0.64rem;font-weight:600;color:var(--text-primary);margin-bottom:0.2rem;display:flex;align-items:center;gap:0.3rem}
+  .modal-rec-tag{font-size:0.5rem;padding:0.06rem 0.4rem;border-radius:3px;background:rgba(255,71,87,0.15);color:var(--red);font-weight:600;letter-spacing:0.2px}
+  .modal-rec-tag.p1{background:rgba(255,165,2,0.15);color:var(--orange)}
+  .modal-rec-tag.p2{background:rgba(0,200,255,0.15);color:var(--accent-cyan)}
+  .modal-rec-body{font-size:0.6rem;color:var(--text-secondary);line-height:1.5}
+  .modal-rec-impact{font-size:0.55rem;color:var(--green);margin-top:0.25rem;padding-top:0.25rem;border-top:1px dashed rgba(46,230,166,0.18);font-weight:500}
+  /* Radar */
+  .modal-radar{width:100%;height:14rem;margin-top:0.3rem;background:rgba(8,24,40,0.5);border:1px solid rgba(0,200,255,0.12);border-radius:4px}
+  /* Footer */
+  .modal-footer{text-align:center;padding:0.7rem 0 0.3rem;font-size:0.55rem;color:var(--text-muted);border-top:1px solid rgba(0,200,255,0.08);margin-top:0.4rem;letter-spacing:0.3px}
+
+  /* 自定义滚动条 */
+  ::-webkit-scrollbar{width:4px;height:4px}
+  ::-webkit-scrollbar-track{background:transparent}
+  ::-webkit-scrollbar-thumb{background:rgba(0,200,255,0.15);border-radius:2px}
+  ::-webkit-scrollbar-thumb:hover{background:rgba(0,200,255,0.35)}
+  *{scrollbar-width:thin;scrollbar-color:rgba(0,200,255,0.15) transparent}
+
+  @media (max-width: 768px) {
+    .topbar{height:55px;grid-template-columns:1fr 1fr;padding:0 0.8rem}
+    .topbar-right{display:none}
+    .topbar-title h1{font-size:0.95rem;letter-spacing:0.1em}
+    .topbar-title .sub{display:none}
+    .topbar-date{font-size:0.75rem}
+    .topbar-time{font-size:0.65rem}
+    .layout{height:auto;min-height:100vh}
+    .dashboard{grid-template-columns:1fr;grid-template-rows:auto;height:auto;overflow-y:auto;overflow-x:hidden}
+    .grid-cell{min-height:280px;max-height:400px}
+  }
+  @media (min-width: 1920px) { html{font-size:15px} }
+  @media (min-width: 2560px) { html{font-size:18px} }
+</style>
+</head>
+<body>
+<div class="layout">
+  <header class="topbar">
+    <div class="topbar-left">
+      <div class="topbar-date" id="topbar-date">2026-07-14</div>
+      <div class="topbar-time" id="topbar-time">08:32:15 周二</div>
+    </div>
+    <div class="topbar-title">
+      <h1>高层建筑消防安全综合智管</h1>
+      <div class="sub" style="color:#8fc4e0">消防一件事驾驶舱</div>
+    </div>
+    <div class="topbar-right">
+      <div class="tb-action"><span class="tb-icon">🔔</span><span>信息</span></div>
+      <div class="tb-action"><span class="tb-icon">👤</span><span>管理员</span></div>
+      <div class="tb-action"><span class="tb-icon">⏻</span><span>退出登录</span></div>
+    </div>
+  </header>
+  <main class="dashboard">
+    <!-- ===== ① 态势总览 ===== -->
+    <div class="grid-cell" data-push="tl">
+      <div class="cell-header"><div class="cell-title"><span class="idx">01</span>态势感知</div><div class="cell-sub">实时</div></div>
+      <div style="display:grid;grid-template-rows:auto 1fr;gap:0.4rem;flex:1;min-height:0">
+        <!-- 上排：当前占道 + 今日告警 -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.4rem">
+          <div id="occupy-card" style="background:linear-gradient(135deg,rgba(255,204,51,0.1),rgba(255,204,51,0.02));border:1px solid rgba(255,204,51,0.25);border-radius:5px;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:0.25rem;position:relative;overflow:hidden;padding:0.5rem">
+            <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--yellow),transparent)"></div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:0">
+              <span style="font-size:1rem;font-weight:700;color:#ffe680;letter-spacing:1px">当前占道</span>
+              <span style="font-family:'Oswald',sans-serif;font-size:1rem;font-weight:700;color:#ffe680;line-height:1;text-shadow:0 0 8px rgba(255,230,128,0.5);position:relative">
+                2<span class="dot yellow pulse" style="position:absolute;top:-0.2rem;right:-0.5rem;width:0.4rem;height:0.4rem;background:#ffe680;box-shadow:0 0 6px #ffe680"></span>
+              </span>
+            </div>
+            <span id="occupy-body" style="font-size:0.8rem;color:#ffe680;opacity:0.7;text-align:center">学田湾正街65号<br>87min</span>
+            <div id="occupy-dots" style="position:absolute;left:0.5rem;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:0.25rem">
+              <span class="occupy-d on" data-idx="0"></span>
+              <span class="occupy-d" data-idx="1"></span>
+            </div>
+          </div>
+          <div style="background:linear-gradient(135deg,rgba(0,200,255,0.06),rgba(0,200,255,0.01));border:1px solid var(--border);border-radius:5px;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:0.25rem;position:relative;overflow:hidden;padding:0.5rem">
+            <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--accent-cyan),transparent)"></div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:0">
+              <span style="font-size:1rem;font-weight:700;color:#66e0ff;letter-spacing:1px">今日告警</span>
+              <span style="font-family:'Oswald',sans-serif;font-size:1rem;font-weight:700;color:#66e0ff;line-height:1;text-shadow:0 0 8px rgba(102,224,255,0.5)">3</span>
+            </div>
+            <span style="font-size:0.8rem;color:var(--orange)">含1件超3h</span>
+          </div>
+        </div>
+        <!-- 下排：今日消防通道占用趋势（双折线） -->
+        <div style="background:linear-gradient(135deg,rgba(0,200,255,0.04),rgba(0,200,255,0.01));border:1px solid var(--border);border-radius:5px;display:flex;flex-direction:column;padding:0.4rem 0.6rem;position:relative;overflow:hidden;min-height:0">
+          <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--accent-cyan),transparent)"></div>
+          <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:0.15rem">
+            <div style="display:flex;align-items:baseline;gap:0.5rem">
+              <span style="font-size:0.65rem;color:var(--text-secondary);letter-spacing:1px;font-weight:500">今日消防通道占用趋势</span>
+              <span style="font-size:0.8rem;color:var(--text-muted)">占道时长（小时）</span>
+            </div>
+            <div style="display:flex;gap:0.8rem;font-size:0.8rem;align-items:center">
+              <span style="display:flex;align-items:center;gap:0.25rem"><span style="display:inline-block;width:0.6rem;height:2px;background:#00c8ff"></span><span style="color:var(--accent-cyan)">今日</span></span>
+              <span style="display:flex;align-items:center;gap:0.25rem"><span style="display:inline-block;width:0.6rem;height:2px;background:#e8c878"></span><span style="color:#e8c878">今年平均</span></span>
+            </div>
+          </div>
+          <div style="flex:1;min-height:0;position:relative;padding:0.1rem 0">
+            <svg viewBox="0 0 280 100" preserveAspectRatio="none" style="width:100%;height:100%;display:block">
+              <!-- 网格线 -->
+              <line x1="20" y1="10" x2="280" y2="10" stroke="rgba(255,255,255,0.05)" stroke-width="0.3"/>
+              <line x1="20" y1="30" x2="280" y2="30" stroke="rgba(255,255,255,0.05)" stroke-width="0.3"/>
+              <line x1="20" y1="50" x2="280" y2="50" stroke="rgba(255,255,255,0.05)" stroke-width="0.3"/>
+              <line x1="20" y1="70" x2="280" y2="70" stroke="rgba(255,255,255,0.05)" stroke-width="0.3"/>
+              <line x1="20" y1="90" x2="280" y2="90" stroke="rgba(255,255,255,0.05)" stroke-width="0.3"/>
+              <!-- Y轴刻度 (2-6h) -->
+              <text x="16" y="13" text-anchor="end" font-family="Oswald" font-size="7" fill="#557089">6</text>
+              <text x="16" y="33" text-anchor="end" font-family="Oswald" font-size="7" fill="#557089">5</text>
+              <text x="16" y="53" text-anchor="end" font-family="Oswald" font-size="7" fill="#557089">4</text>
+              <text x="16" y="73" text-anchor="end" font-family="Oswald" font-size="7" fill="#557089">3</text>
+              <text x="16" y="93" text-anchor="end" font-family="Oswald" font-size="7" fill="#557089">2</text>
+              <!-- 今年平均（黄/米色 平稳线 2-2.5h） -->
+              <!-- Y映射: value 2→y90, 3→y70, 4→y50, 5→y30, 6→y10; Y=90-(v-2)*20 -->
+              <polyline fill="none" stroke="#e8c878" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" points="20,82 36,80 52,78 69,76 85,74 102,72 118,72 135,74 151,76 168,76 184,74 201,72 217,72 234,74 251,76 268,80 280,84"/>
+              <!-- 今日（蓝）从 1.5h→3h→1.5h 弧形 -->
+              <!-- 8:00=1.4, 9:00=1.5, 10:00=1.6, 11:00=1.8, 12:00=2.0, 13:00=2.2, 14:00=2.4, 15:00=2.6, 16:00=2.7, 17:00=2.8, 18:00=3.0(峰), 19:00=2.7, 20:00=2.0, 21:00=1.7, 22:00=1.4 -->
+              <polyline fill="none" stroke="#00c8ff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" points="20,92 36,90 52,88 69,84 85,80 102,76 118,72 135,68 151,64 168,60 184,60 201,66 217,80 234,86 251,90 280,92"/>
+              <!-- X轴刻度 8-22 -->
+              <text x="20" y="99" text-anchor="middle" font-family="Oswald" font-size="6.5" fill="#557089">8</text>
+              <text x="36" y="99" text-anchor="middle" font-family="Oswald" font-size="6.5" fill="#557089">9</text>
+              <text x="52" y="99" text-anchor="middle" font-family="Oswald" font-size="6.5" fill="#557089">10</text>
+              <text x="69" y="99" text-anchor="middle" font-family="Oswald" font-size="6.5" fill="#557089">11</text>
+              <text x="85" y="99" text-anchor="middle" font-family="Oswald" font-size="6.5" fill="#557089">12</text>
+              <text x="102" y="99" text-anchor="middle" font-family="Oswald" font-size="6.5" fill="#557089">13</text>
+              <text x="118" y="99" text-anchor="middle" font-family="Oswald" font-size="6.5" fill="#557089">14</text>
+              <text x="135" y="99" text-anchor="middle" font-family="Oswald" font-size="6.5" fill="#557089">15</text>
+              <text x="151" y="99" text-anchor="middle" font-family="Oswald" font-size="6.5" fill="#557089">16</text>
+              <text x="168" y="99" text-anchor="middle" font-family="Oswald" font-size="6.5" fill="#557089">17</text>
+              <text x="184" y="99" text-anchor="middle" font-family="Oswald" font-size="6.5" fill="#557089">18</text>
+              <text x="201" y="99" text-anchor="middle" font-family="Oswald" font-size="6.5" fill="#557089">19</text>
+              <text x="217" y="99" text-anchor="middle" font-family="Oswald" font-size="6.5" fill="#557089">20</text>
+              <text x="234" y="99" text-anchor="middle" font-family="Oswald" font-size="6.5" fill="#557089">21</text>
+              <text x="251" y="99" text-anchor="middle" font-family="Oswald" font-size="6.5" fill="#557089">22</text>
+            </svg>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="grid-cell scroll" data-push="tc">
+      <div class="cell-header"><div class="cell-title"><span class="idx">02</span>实时监测</div><div class="live-badge"><span class="live-dot"></span>LIVE</div></div>
+      <div style="display:flex;align-items:baseline;gap:0.5rem;font-size:0.75rem;color:var(--text-secondary);padding:0.1rem 0">
+        <b style="color:var(--yellow);font-family:Oswald;font-size:1.2rem">2</b> 个通道正在占道
+        <div class="rt-dots" id="rt-dots"><span class="occupy-d on" data-idx="0"></span><span class="occupy-d" data-idx="1"></span></div>
+        <span style="font-size:0.6rem;color:var(--text-muted);margin-left:auto">今日累计 3 件</span>
+      </div>
+      <div id="realtime-card">
+        <div class="event active" data-rt="0" style="border-left:3px solid var(--orange);flex-direction:column;gap:0.3rem;padding:0.45rem 0.55rem">
+          <div style="display:grid;grid-template-columns:0.55fr 1.4fr 0.55fr;gap:0.35rem;flex:1;min-height:0">
+            <div style="display:flex;flex-direction:column;gap:0.35rem;min-height:0">
+              <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:2px;overflow:hidden;display:flex;flex-direction:column;flex:1;min-height:0;min-width:2.8rem">
+                <div style="font-size:0.6rem;color:var(--text-secondary);padding:0.15rem 0.3rem;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);flex-shrink:0"><span style="font-weight:500;letter-spacing:0.5px">开始占道</span><span class="rt-t0" style="font-family:'Oswald',monospace;color:var(--text-muted)">08:00</span></div>
+                <div style="flex:1;position:relative;background:linear-gradient(180deg,#1a2840 0%,#0f1a30 45%,#0a1520 100%);min-height:2.8rem"><div style="position:absolute;bottom:0;left:50%;width:130%;height:35%;background:repeating-linear-gradient(90deg,transparent 0,transparent 6px,rgba(255,255,255,0.05) 6px,rgba(255,255,255,0.05) 10px);transform:translateX(-50%) perspective(30px) rotateX(45deg);transform-origin:bottom"></div><div style="position:absolute;top:35%;left:26%;width:46%;height:22%;border:0.8px solid var(--yellow);background:rgba(255,204,51,0.06)"></div></div>
+                <div style="font-size:0.7rem;color:var(--text-muted);padding:0.1rem 0.3rem;text-align:center;border-top:1px solid var(--border);flex-shrink:0">AI抓拍 · 驶入瞬间</div>
+              </div>
+              <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:2px;overflow:hidden;display:flex;flex-direction:column;flex:1;min-height:0;min-width:2.8rem">
+                <div style="font-size:0.6rem;color:var(--text-secondary);padding:0.15rem 0.3rem;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);flex-shrink:0"><span style="font-weight:500;letter-spacing:0.5px">持续占道</span><span class="rt-t1" style="font-family:'Oswald',monospace;color:var(--text-muted)">08:15</span></div>
+                <div style="flex:1;position:relative;background:linear-gradient(180deg,#1a2840 0%,#0f1a30 45%,#0a1520 100%);min-height:2.8rem"><div style="position:absolute;bottom:0;left:50%;width:130%;height:35%;background:repeating-linear-gradient(90deg,transparent 0,transparent 6px,rgba(255,255,255,0.05) 6px,rgba(255,255,255,0.05) 10px);transform:translateX(-50%) perspective(30px) rotateX(45deg);transform-origin:bottom"></div><div style="position:absolute;top:35%;left:26%;width:46%;height:22%;border:0.8px solid var(--yellow);background:rgba(255,204,51,0.06)"></div></div>
+                <div style="font-size:0.7rem;color:var(--text-muted);padding:0.1rem 0.3rem;text-align:center;border-top:1px solid var(--border);flex-shrink:0">AI抓拍 · 15min持续</div>
+              </div>
+            </div>
+            <div style="background:linear-gradient(180deg,#0d1e20,#051015);border:1px solid var(--border);border-radius:2px;overflow:hidden;display:flex;flex-direction:column;align-self:stretch;flex:1;min-height:0;min-width:2.8rem">
+              <div style="font-size:0.6rem;color:var(--red);padding:0.15rem 0.3rem;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);background:rgba(0,0,0,0.3);flex-shrink:0"><span style="font-weight:500;display:flex;align-items:center;gap:0.2rem"><span class="live-dot"></span>Live</span><span class="rt-t2" style="font-family:'Oswald',monospace;color:var(--text-muted)">08:32</span></div>
+              <div style="flex:1;position:relative;background:linear-gradient(180deg,#0d1e20 0%,#0a1a22 45%,#051015 100%);min-height:2.8rem"><div style="position:absolute;bottom:0;left:50%;width:130%;height:35%;background:repeating-linear-gradient(90deg,transparent 0,transparent 6px,rgba(255,255,255,0.05) 6px,rgba(255,255,255,0.05) 10px);transform:translateX(-50%) perspective(30px) rotateX(45deg);transform-origin:bottom"></div><div style="position:absolute;top:35%;left:26%;width:46%;height:22%;border:0.8px solid var(--yellow);background:rgba(255,204,51,0.06)"></div></div>
+              <div style="font-size:0.7rem;color:var(--red);padding:0.1rem 0.3rem;text-align:center;border-top:1px solid var(--border);flex-shrink:0">实时视频流</div>
+            </div>
+            <div style="background:linear-gradient(135deg,rgba(255,204,51,0.05),rgba(255,204,51,0.01));border:1px solid rgba(255,204,51,0.15);border-radius:3px;padding:0.4rem 0.5rem;display:flex;flex-direction:column;gap:0.2rem">
+              <span class="rt-name" style="font-size:0.85rem;font-weight:500;color:var(--text-primary);line-height:1.2">大溪沟正街12号<br>1F 消防通道</span>
+              <span class="rt-tag" style="align-self:flex-start;font-size:0.6rem;padding:1px 4px;border-radius:1px;background:rgba(255,140,26,0.12);color:var(--or);border:1px solid rgba(255,140,26,0.25)">严重</span>
+              <span class="rt-time" style="font-family:'Oswald',sans-serif;font-size:1.2rem;font-weight:600;color:var(--yellow);line-height:1;text-shadow:0 0 6px rgba(255,204,51,0.4)">03:12:44</span>
+              <span class="rt-state" style="font-size:0.8rem;color:var(--or)">持续占道中</span>
+              <span class="rt-duty" style="font-size:0.8rem;color:var(--text-muted);line-height:1.3">责任：交巡警支队<br>待接单</span>
+            </div>
+          </div>
+        </div>
+        <div class="event entering" data-rt="1" style="border-left:3px solid var(--yellow);flex-direction:column;gap:0.3rem;padding:0.45rem 0.55rem">
+          <div style="display:grid;grid-template-columns:0.55fr 1.4fr 0.55fr;gap:0.35rem;flex:1;min-height:0">
+            <div style="display:flex;flex-direction:column;gap:0.35rem;min-height:0">
+              <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:2px;overflow:hidden;display:flex;flex-direction:column;flex:1;min-height:0;min-width:2.8rem">
+                <div style="font-size:0.6rem;color:var(--text-secondary);padding:0.15rem 0.3rem;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);flex-shrink:0"><span style="font-weight:500;letter-spacing:0.5px">开始占道</span><span class="rt-t0" style="font-family:'Oswald',monospace;color:var(--text-muted)">07:05</span></div>
+                <div style="flex:1;position:relative;background:linear-gradient(180deg,#1a2840 0%,#0f1a30 45%,#0a1520 100%);min-height:2.8rem"><div style="position:absolute;bottom:0;left:50%;width:130%;height:35%;background:repeating-linear-gradient(90deg,transparent 0,transparent 6px,rgba(255,255,255,0.05) 6px,rgba(255,255,255,0.05) 10px);transform:translateX(-50%) perspective(30px) rotateX(45deg);transform-origin:bottom"></div><div style="position:absolute;top:35%;left:26%;width:46%;height:22%;border:0.8px solid var(--yellow);background:rgba(255,204,51,0.06)"></div></div>
+                <div style="font-size:0.55rem;color:var(--text-muted);padding:0.1rem 0.3rem;text-align:center;border-top:1px solid var(--border);flex-shrink:0">AI抓拍 · 驶入瞬间</div>
+              </div>
+              <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:2px;overflow:hidden;display:flex;flex-direction:column;flex:1;min-height:0;min-width:2.8rem">
+                <div style="font-size:0.6rem;color:var(--text-secondary);padding:0.15rem 0.3rem;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);flex-shrink:0"><span style="font-weight:500;letter-spacing:0.5px">持续占道</span><span class="rt-t1" style="font-family:'Oswald',monospace;color:var(--text-muted)">07:20</span></div>
+                <div style="flex:1;position:relative;background:linear-gradient(180deg,#1a2840 0%,#0f1a30 45%,#0a1520 100%);min-height:2.8rem"><div style="position:absolute;bottom:0;left:50%;width:130%;height:35%;background:repeating-linear-gradient(90deg,transparent 0,transparent 6px,rgba(255,255,255,0.05) 6px,rgba(255,255,255,0.05) 10px);transform:translateX(-50%) perspective(30px) rotateX(45deg);transform-origin:bottom"></div><div style="position:absolute;top:35%;left:26%;width:46%;height:22%;border:0.8px solid var(--yellow);background:rgba(255,204,51,0.06)"></div></div>
+                <div style="font-size:0.55rem;color:var(--text-muted);padding:0.1rem 0.3rem;text-align:center;border-top:1px solid var(--border);flex-shrink:0">AI抓拍 · 15min持续</div>
+              </div>
+            </div>
+            <div style="background:linear-gradient(180deg,#0d1e20,#051015);border:1px solid var(--border);border-radius:2px;overflow:hidden;display:flex;flex-direction:column;align-self:stretch;flex:1;min-height:0;min-width:2.8rem">
+              <div style="font-size:0.6rem;color:var(--red);padding:0.15rem 0.3rem;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);background:rgba(0,0,0,0.3);flex-shrink:0"><span style="font-weight:500;display:flex;align-items:center;gap:0.2rem"><span class="live-dot"></span>Live</span><span class="rt-t2" style="font-family:'Oswald',monospace;color:var(--text-muted)">08:32</span></div>
+              <div style="flex:1;position:relative;background:linear-gradient(180deg,#0d1e20 0%,#0a1a22 45%,#051015 100%);min-height:2.8rem"><div style="position:absolute;bottom:0;left:50%;width:130%;height:35%;background:repeating-linear-gradient(90deg,transparent 0,transparent 6px,rgba(255,255,255,0.05) 6px,rgba(255,255,255,0.05) 10px);transform:translateX(-50%) perspective(30px) rotateX(45deg);transform-origin:bottom"></div><div style="position:absolute;top:35%;left:26%;width:46%;height:22%;border:0.8px solid var(--yellow);background:rgba(255,204,51,0.06)"></div></div>
+              <div style="font-size:0.55rem;color:var(--red);padding:0.1rem 0.3rem;text-align:center;border-top:1px solid var(--border);flex-shrink:0">实时视频流</div>
+            </div>
+            <div style="background:linear-gradient(135deg,rgba(255,204,51,0.05),rgba(255,204,51,0.01));border:1px solid rgba(255,204,51,0.15);border-radius:3px;padding:0.4rem 0.5rem;display:flex;flex-direction:column;gap:0.2rem">
+              <span class="rt-name" style="font-size:0.85rem;font-weight:500;color:var(--text-primary);line-height:1.2">学田湾正街65号<br>1F 消防通道</span>
+              <span class="rt-tag" style="align-self:flex-start;font-size:0.6rem;padding:1px 4px;border-radius:1px;background:rgba(255,204,51,0.12);color:var(--yellow);border:1px solid rgba(255,204,51,0.25)">预警</span>
+              <span class="rt-time" style="font-family:'Oswald',sans-serif;font-size:1.2rem;font-weight:600;color:var(--yellow);line-height:1;text-shadow:0 0 6px rgba(255,204,51,0.4)">01:27:30</span>
+              <span class="rt-state" style="font-size:0.8rem;color:var(--yellow)">持续占道中</span>
+              <span class="rt-duty" style="font-size:0.8rem;color:var(--text-muted);line-height:1.3">责任：上清寺街道<br>已交办</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="grid-cell scroll" data-push="tr">
+      <div class="cell-header"><div class="cell-title"><span class="idx">03</span>分级预警交办</div><div class="cell-sub" style="color:var(--orange)">待派单 <b style="font-size:0.95rem">2</b></div></div>
+      <div style="font-size:0.6rem;color:var(--text-secondary);display:flex;justify-content:space-between;align-items:center"><span>风险分级 · 派单策略</span><span style="color:var(--accent-cyan);cursor:pointer">配置▸</span></div>
+      <div class="rule-bar-h"><div class="rule-seg seg-safe">正常</div><div class="rule-seg seg-smart">智能处置</div><div class="rule-seg seg-warn">预警</div><div class="rule-seg seg-alert">告警</div></div>
+      <div class="rule-ticks"><span>0</span><span>30</span><span>45</span><span>60</span></div>
+      <div class="rule-dispatch"><span>不派单<br><span style="color:var(--text-muted)">仅记录</span></span><span>车主<br><span style="color:var(--text-muted)">智能通知</span></span><span>区治理中心<br><span style="color:var(--text-muted)">大屏+研判</span></span><span>交巡警+街道<br><span style="color:var(--text-muted)">研判+一件事</span></span></div>
+      <div class="time-zones">
+        <div class="tz tz-peak" id="tz-peak"><span>☀</span>平峰 08-19<span style="color:var(--text-muted);font-size:0.6rem">无加权</span></div>
+        <div class="tz tz-night" id="tz-night"><span>◐</span>夜间 19-22 <span style="color:var(--text-muted);font-size:0.6rem">+1级</span></div>
+        <div class="tz tz-dawn" id="tz-dawn"><span>●</span>凌晨 22-08<span style="color:var(--text-muted);font-size:0.6rem">仅记录</span></div>
+      </div>
+      <div class="todo-list">
+        <div class="todo"><div class="todo-level lv-alert"><span class="lv-num">L3</span></div><div class="todo-info"><div class="todo-point">大溪沟正街12号</div><div class="todo-meta"><span class="tag">192min</span><span class="tag">≥60告警</span></div></div><div class="todo-actions"><button class="btn-move-car done" onclick="toggleMoveCar(this)">已通知挪车</button><button class="btn-dispatch" onclick="toggleDispatch(this)">一键交办</button></div></div>
+        <div class="todo"><div class="todo-level lv-warn"><span class="lv-num" style="color:var(--orange)">L2</span></div><div class="todo-info"><div class="todo-point">菜园坝正街88号</div><div class="todo-meta"><span class="tag">48min</span><span class="tag">≥45预警</span></div></div><div class="todo-actions"><button class="btn-move-car" onclick="toggleMoveCar(this)">一键挪车</button><button class="btn-dispatch" onclick="toggleDispatch(this)">一键交办</button></div></div>
+        <div class="todo"><div class="todo-level lv-alert"><span class="lv-num">L3</span></div><div class="todo-info"><div class="todo-point">学田湾正街65号</div><div class="todo-meta"><span class="tag">87min</span><span class="tag">≥60告警</span></div></div><div class="todo-actions"><button class="btn-move-car done" onclick="toggleMoveCar(this)">已通知挪车</button><button class="btn-dispatch done" onclick="toggleDispatch(this)">已交办</button></div></div>
+      </div>
+    </div>
+    <div class="grid-cell scroll" data-push="ml">
+      <div class="cell-header"><div class="cell-title"><span class="idx">04</span>交办跟踪</div><div class="cell-sub" style="color:var(--red)">超时 <b>1</b></div></div>
+      <div class="level-bar">
+        <div class="level-node"><div class="l-name">处置中</div><div class="l-stat"><span class="l-doing">3</span><span style="color:var(--text-muted)">件</span></div></div>
+        <div class="level-node"><div class="l-name">已超时</div><div class="l-stat"><span class="l-over">1</span><span style="color:var(--text-muted)">件</span></div></div>
+        <div class="level-node"><div class="l-name">已处置</div><div class="l-stat"><span style="color:var(--green)">15</span><span style="color:var(--text-muted)">件</span></div></div>
+      </div>
+      <div class="ev-card over">
+        <div class="ev-card-top"><span class="ev-pt">大溪沟正街12号 <span class="belong belong-police">交巡警</span></span><span class="ev-flag flag-over">🔴超时</span></div>
+        <div class="ev-cur"><span style="color:var(--text-muted);font-size:0.8rem">当前</span><span class="cur-dept">渝中公安分局</span><span class="cur-state">业务事项启动</span></div>
+        <div class="ev-time-row"><span class="time-used">2h17m</span><span style="color:var(--text-muted);font-size:0.8rem">/均时15min</span><span class="time-diff diff-bad">+2h2m</span></div>
+        <div class="toggle-btn">▸ 展开流转线</div>
+        <div class="ev-history"><div class="hist-row"><span class="hist-time">13:28</span><span class="hist-text"><span class="hist-dept">渝中公安</span> - 业务启动</span></div><div class="hist-row"><span class="hist-time">13:26</span><span class="hist-text"><span class="hist-dept">渝中治理</span> - 业务启动</span></div><div class="hist-row"><span class="hist-time">13:24</span><span class="hist-text" style="color:var(--red)">隐患上报</span></div></div>
+      </div>
+      <div class="ev-card">
+        <div class="ev-card-top"><span class="ev-pt">学田湾正街65号 <span class="belong belong-street">街道</span></span><span class="ev-flag flag-warn">⚠均时</span></div>
+        <div class="ev-cur"><span style="color:var(--text-muted);font-size:0.8rem">当前</span><span class="cur-dept">大坪街道</span><span class="cur-state">办理</span></div>
+        <div class="ev-time-row"><span class="time-used">35min</span><span style="color:var(--text-muted);font-size:0.8rem">/均时18min</span><span class="time-diff diff-warn">+17min</span></div>
+      </div>
+      <div class="baseline-head" style="display:none;font-size:0.6rem">部门均处置时长 20m</div>
+      <div class="base-legend" style="display:none"><div class="bl"><span class="bl-block green"></span>≤20m</div><div class="bl"><span class="bl-block yellow"></span>20-25m</div><div class="bl"><span class="bl-block orange"></span>25-30m</div><div class="bl"><span class="bl-block red"></span>&gt;30m</div></div>
+      <div class="baseline-rows" style="display:none">
+        <div class="baseline-row"><span class="b-name">渝中公安</span><div class="b-bar"><div class="b-fill green" style="width:50%"></div><div class="b-baseline" style="left:66.67%"></div></div><span class="b-val">15m</span></div>
+        <div class="baseline-row"><span class="b-name">大坪街道</span><div class="b-bar"><div class="b-fill green" style="width:60%"></div><div class="b-baseline" style="left:66.67%"></div></div><span class="b-val">18m</span></div>
+        <div class="baseline-row"><span class="b-name">菜园坝</span><div class="b-bar"><div class="b-fill orange" style="width:83.3%"></div><div class="b-baseline" style="left:66.67%"></div></div><span class="b-val">25m</span></div>
+        <div class="baseline-row"><span class="b-name">渝中治理</span><div class="b-bar"><div class="b-fill red" style="width:100%"></div><div class="b-baseline" style="left:66.67%"></div></div><span class="b-val">30m</span></div>
+      </div>
+    </div>
+    <div class="grid-cell" id="cell-map">
+      <div class="cell-header"><div class="cell-title"><span class="idx">05</span>渝中消防通道占用态势</div><button class="btn-expand-map" id="btn-expand-map" title="展开地图全屏">展开 ▸</button><div class="map-stat">告警<b style="color:var(--red)">2</b>·预警<b style="color:var(--orange)">1</b>·智处<b style="color:var(--yellow)">1</b>·离线<b style="color:var(--gray)">1</b></div></div>
+      <div id="map-container">
+        <div id="mapid"></div>
+        <div class="map-legend">
+          <div class="ml"><span class="ml-dot red"></span>告警≥60min</div>
+          <div class="ml"><span class="ml-dot orange"></span>预警45-60min</div>
+          <div class="ml"><span class="ml-dot yellow"></span>智处30-45min</div>
+          <div class="ml"><span class="ml-dot gray"></span>离线</div>
+        </div>
+      </div>
+    </div>
+    <div class="grid-cell scroll" data-push="mr">
+      <div class="cell-header"><div class="cell-title"><span class="idx">06</span>闭环核验</div><div class="cell-sub">待<b style="color:var(--accent-cyan)">2</b> 恢复<b style="color:var(--green)">8</b> 未<b style="color:var(--red)">1</b></div></div>
+      <div class="verify-list">
+        <div class="verify-card">
+          <div class="v-top"><span class="v-point">菜园坝正街88号</span><span class="v-tag ing">AI重检中</span></div>
+          <div class="compare"><div class="cmp-thumb cmp-before"><div class="c-car"></div><div class="c-road"></div></div><div class="cmp-arrow">→</div><div class="cmp-thumb cmp-after"><div class="c-road"></div></div></div>
+          <div class="recheck-bar"><div class="recheck-fill recheck-ing" style="width:60%"></div></div>
+          <div class="v-status"><span style="color:var(--accent-cyan);font-weight:600">AI</span> 15min窗口 · 未检测到占道 <span style="font-family:Oswald">9/15min</span></div>
+        </div>
+        <div class="verify-card pass">
+          <div class="v-top"><span class="v-point">两路口中山一路</span><span class="v-tag pass">✓已恢复</span></div>
+          <div class="recheck-bar"><div class="recheck-fill recheck-pass" style="width:100%"></div></div>
+          <div class="v-status"><span style="color:var(--green);font-weight:600">AI</span> 15分钟期满 · 无新占道 <span style="color:var(--green)">已恢复</span></div>
+        </div>
+        <div class="verify-card fail">
+          <div class="v-top"><span class="v-point">大坪正街56号</span><span class="v-tag fail">🔴未完成</span></div>
+          <div class="compare"><div class="cmp-thumb cmp-before"><div class="c-car"></div><div class="c-road"></div></div><div class="cmp-arrow">→</div><div class="cmp-thumb cmp-before"><div class="c-car" style="border-color:var(--red);background:rgba(255,71,87,0.04)"></div><div class="c-road"></div></div></div>
+          <div class="recheck-bar"><div class="recheck-fill recheck-fail" style="width:100%"></div></div>
+          <div class="v-status"><span style="color:var(--red);font-weight:600">AI</span> 第10分钟检测到新车辆 <span style="color:var(--red)">已重派</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="grid-cell scroll" data-push="bl">
+      <div class="cell-header"><div class="cell-title"><span class="idx">07</span>设备管理</div><div class="cell-sub">在线<b style="color:var(--green)">11</b> 异常<b style="color:var(--red)">2</b></div></div>
+      <div class="status-bar">
+        <div class="s-node online"><span class="s-dot"></span><div class="s-info"><span class="s-num">11</span><span class="s-label">在线</span></div></div>
+        <div class="s-node offline"><span class="s-dot"></span><div class="s-info"><span class="s-num">1</span><span class="s-label">离线</span></div></div>
+        <div class="s-node suspect"><span class="s-dot"></span><div class="s-info"><span class="s-num">1</span><span class="s-label">疑似故障</span></div></div>
+      </div>
+      <div class="section-label">▸ 系统预警</div>
+      <div class="alert-list">
+        <div class="alert-row"><span style="color:var(--red)">⚠</span><span class="alert-msg">菜园坝支路·离线超30min</span><span class="alert-time">47m</span></div>
+        <div class="alert-row"><span style="color:var(--orange)">⚠</span><span class="alert-msg">朝天门正街·9天零告警</span><span class="alert-time">9d</span></div>
+        <div class="alert-row"><span style="color:var(--orange)">⚠</span><span class="alert-msg">学田湾·检测量骤降↓62%</span><span class="alert-time">7,020</span></div>
+        <div class="alert-row info"><span style="color:var(--accent-cyan)">ℹ</span><span class="alert-msg">解放碑·心跳延迟异常</span><span class="alert-time">8.4s</span></div>
+      </div>
+      <div class="section-label" style="margin-top:0.2rem">▸ 算法配置</div>
+      <div class="algo-row"><div class="algo-item"><span class="algo-label">过滤阈值</span><span class="algo-val">60min</span></div><div class="algo-item"><span class="algo-label">灵敏度</span><span class="algo-val">高</span></div><div class="algo-item"><span class="algo-label">空窗监测</span><span class="algo-val">60min</span></div></div>
+    </div>
+    <div class="grid-cell scroll" data-push="bc">
+      <div class="cell-header"><div class="cell-title"><span class="idx">08</span>态势分析</div><div class="cell-sub">近30天</div></div>
+      <div class="kpi-row s2" style="margin-bottom:0.2rem">
+        <div class="kpi-card active" id="kpi-occ" onclick="switchTrend('occ')"><div class="kpi-val">15.2<span style="font-size:0.7rem">%</span></div><div class="kpi-label">通道占用率</div><div class="kpi-status"><span class="trend down">↓1.8%</span></div></div>
+        <div class="kpi-card" id="kpi-resp" onclick="switchTrend('resp')"><div class="kpi-val" style="color:var(--orange)">197<span style="font-size:0.7rem">min</span></div><div class="kpi-label">处置响应均时</div><div class="kpi-status" style="color:var(--orange)">↑1.2%</div></div>
+      </div>
+      <div style="font-size:0.6rem;color:var(--text-secondary)" id="trend-title"><span id="trend-title-main">通道占用趋势</span> <span style="color:var(--text-muted)" id="trend-title-sub">%/近30天</span></div>
+      <!-- 30天趋势图（ECharts） -->
+      <div class="line-chart" id="trend-echarts" style="height:6.75rem"></div>
+      <div class="section-label" style="margin-top:0.3rem">▸ 驱动指标 <span class="cnt" style="font-size:0.8rem">(本月)</span></div>
+      <div class="dual-metrics">
+        <div class="metric-row"><div class="metric-left"><span class="metric-name">超长占道率</span></div><span class="metric-val">26.4%<span class="metric-trend" style="color:var(--green)">↓2.1%</span></span></div>
+        <div class="metric-row"><div class="metric-left"><span class="metric-name">高峰占比(19-22)</span></div><span class="metric-val">48.9%<span class="metric-trend" style="color:var(--yellow)">↑3.2%</span></span></div>
+        <div class="metric-row"><div class="metric-left"><span class="metric-name">平均占道时长</span></div><span class="metric-val">146min<span class="metric-trend" style="color:var(--green)">↓12m</span></span></div>
+        <div class="metric-row"><div class="metric-left"><span class="metric-name">即停即走比</span></div><span class="metric-val">520:1<span class="metric-trend" style="color:var(--yellow)">↑45</span></span></div>
+      </div>
+    </div>
+    <div class="grid-cell" data-push="br">
+      <div class="cell-header"><div class="cell-title"><span class="idx">09</span>复盘改进</div><div class="cell-sub">2026年</div></div>
+      <!-- 区域1: 顶部70% KPI同比分析 -->
+      <div class="review-kpi-area">
+        <div class="review-radar" id="review-radar"></div>
+        <div class="review-kpi-right">
+          <div class="review-kpi-card">
+            <div class="review-kpi-num">53<span class="unit">件</span></div>
+            <div class="review-kpi-label">年度一件事</div>
+            <div class="review-kpi-trend down">&#x2193;1.8%</div>
+          </div>
+          <div class="review-kpi-card">
+            <div class="review-kpi-num">0<span class="unit">件</span></div>
+            <div class="review-kpi-label">消防通道占堵舆情数</div>
+            <div class="review-kpi-trend flat">不变</div>
+          </div>
+        </div>
+      </div>
+      <!-- 区域2: 底部30% AI复盘分析 -->
+      <div class="review-ai-area">
+        <div class="review-ai-card" onclick="openReportModal()">
+          <div class="review-ai-icon">
+            <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" id="ai-bot-svg">
+              <defs>
+                <linearGradient id="botHeadGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#1a4a6e"/><stop offset="50%" stop-color="#0d3b56"/><stop offset="100%" stop-color="#08263a"/></linearGradient>
+                <linearGradient id="botFaceGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#1e5a85"/><stop offset="100%" stop-color="#144266"/></linearGradient>
+                <radialGradient id="botGlow" cx="0.5" cy="0.5" r="0.5"><stop offset="0%" stop-color="#00dcff"/><stop offset="100%" stop-color="#006080"/></radialGradient>
+                <filter id="botOuterGlow"><feGaussianBlur stdDeviation="2" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+                <filter id="botDropShadow"><feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#000" flood-opacity="0.3"/></filter>
+              </defs>
+              <!-- 阴影 -->
+              <ellipse cx="50" cy="88" rx="22" ry="3" fill="rgba(0,0,0,0.22)" class="bot-shadow"/>
+              <!-- 天线 -->
+              <line x1="50" y1="25" x2="50" y2="7" stroke="#2a6a8a" stroke-width="2.5" stroke-linecap="round"/>
+              <circle cx="50" cy="5" r="4" fill="url(#botGlow)" filter="url(#botOuterGlow)" class="bot-antenna-dot"/>
+              <!-- 头部 -->
+              <g filter="url(#botDropShadow)">
+                <rect x="18" y="18" width="64" height="58" rx="20" fill="url(#botHeadGrad)" stroke="#1e6a90" stroke-width="2"/>
+                <rect x="18" y="18" width="64" height="58" rx="20" fill="none" stroke="#3a9ac0" stroke-width="0.7" opacity="0.5"/>
+                <rect x="23" y="25" width="54" height="44" rx="10" fill="url(#botFaceGrad)" stroke="#1a5a7a" stroke-width="1"/>
+                <rect x="40" y="20" width="20" height="3.5" rx="1.5" fill="#2a7aa0" opacity="0.5"/>
+                <g class="bot-eye-l"><ellipse cx="38" cy="43" rx="5.5" ry="6.5" fill="#00dcff" filter="url(#botOuterGlow)"/><circle cx="39.5" cy="41" r="2.2" fill="#fff" opacity="0.75"/></g>
+                <g class="bot-eye-r"><ellipse cx="62" cy="43" rx="5.5" ry="6.5" fill="#00dcff" filter="url(#botOuterGlow)"/><circle cx="63.5" cy="41" r="2.2" fill="#fff" opacity="0.75"/></g>
+                <path d="M38 56 Q50 65 62 56" fill="none" stroke="#2ee6a6" stroke-width="2.4" stroke-linecap="round"/>
+                <ellipse cx="28" cy="52" rx="5" ry="3" fill="#ff6b9d" opacity="0.25"/>
+                <ellipse cx="72" cy="52" rx="5" ry="3" fill="#ff6b9d" opacity="0.25"/>
+              </g>
+              <circle cx="14" cy="35" r="1.2" fill="#00dcff" opacity="0.25"/>
+              <circle cx="86" cy="48" r="0.9" fill="#2ee6a6" opacity="0.2"/>
+              <circle cx="12" cy="55" r="0.7" fill="#00dcff" opacity="0.15"/>
+              <circle cx="88" cy="28" r="1.1" fill="#2ee6a6" opacity="0.18"/>
+            </svg>
+          </div>
+          <div style="flex:1;min-width:0">
+            <div class="review-ai-title">2026年消防通道保畅一件事分析报告</div>
+            <div class="review-ai-sub">点击查看AI智能复盘分析</div>
+          </div>
+          <div class="review-ai-arrow">&#x2192;</div>
+        </div>
+      </div>
+    </div>
+  </main>
+  <!-- AI报告模态框 -->
+  <div class="ai-modal-overlay" id="ai-report-modal" onclick="closeReportModal(event)">
+    <div class="ai-modal" onclick="event.stopPropagation()">
+      <div class="ai-modal-header">
+        <span>2026年消防通道保畅一件事分析报告</span>
+        <span class="ai-modal-close" onclick="closeReportModal()">&#x2715;</span>
+      </div>
+      <div class="ai-modal-body">
+        <!-- 01 核心结论 -->
+        <div class="modal-section">
+          <div class="modal-section-title"><span class="modal-section-num">01</span>核心结论</div>
+          <div class="modal-section-desc">两个年份看同一份消防通道保畅一件事，看到的是全面改善</div>
+          <div class="modal-callout">
+            <div class="modal-callout-body">2026年上半年，消防通道保畅一件事整体运行平稳，六大核心指标同比全面改善。年度一件事累计处置<strong>53件</strong>，办结率<strong>98.6%</strong>，占堵相关舆情<strong>0件</strong>。</div>
+          </div>
+          <div class="modal-kpi-grid">
+            <div class="modal-kpi green"><div class="modal-kpi-label">年度一件事</div><div class="modal-kpi-value">53<small>件</small></div><div class="modal-kpi-trend">&#x2193;1.8%</div></div>
+            <div class="modal-kpi green"><div class="modal-kpi-label">办结率</div><div class="modal-kpi-value">98.6<small>%</small></div><div class="modal-kpi-sub">51 / 53 件</div></div>
+            <div class="modal-kpi green"><div class="modal-kpi-label">占堵舆情</div><div class="modal-kpi-value">0<small>件</small></div><div class="modal-kpi-sub">连续 12 月</div></div>
+          </div>
+        </div>
+
+        <!-- 02 六维指标同比 -->
+        <div class="modal-section">
+          <div class="modal-section-title"><span class="modal-section-num">02</span>六维指标同比</div>
+          <div class="modal-section-desc">2026 vs 2025 · 六项核心指标全部改善</div>
+          <div class="modal-radar" id="modal-radar-chart"></div>
+        </div>
+
+        <!-- 03 + 04 亮点成效 & 待改进领域（双栏） -->
+        <div class="modal-two-col">
+          <div class="modal-section">
+            <div class="modal-section-title"><span class="modal-section-num">03</span>亮点成效</div>
+            <div class="modal-finding">
+              <div class="modal-finding-title"><span class="modal-finding-badge">亮点</span>高峰占比 &#x2193;30%</div>
+              <div class="modal-finding-body">错时巡查与智能调度策略有效实施，高峰时段占道事件大幅压减。</div>
+            </div>
+            <div class="modal-finding">
+              <div class="modal-finding-title"><span class="modal-finding-badge">亮点</span>超长占道率 &#x2193;20%</div>
+              <div class="modal-finding-body">长期占用预警机制发挥作用，超长占道事件显著减少。</div>
+            </div>
+            <div class="modal-finding">
+              <div class="modal-finding-title"><span class="modal-finding-badge">亮点</span>舆情管控 0件</div>
+              <div class="modal-finding-body">全年消防通道占堵相关舆情 0 件，公众满意度持续提升。</div>
+            </div>
+            <div class="modal-finding info">
+              <div class="modal-finding-title"><span class="modal-finding-badge info">AI赋能</span>识别准确率 98.6%</div>
+              <div class="modal-finding-body">AI 智能识别准确率提升至 98.6%，误报率降至历史最低。</div>
+            </div>
+          </div>
+
+          <div class="modal-section">
+            <div class="modal-section-title"><span class="modal-section-num">04</span>待改进领域</div>
+            <div class="modal-finding warning">
+              <div class="modal-finding-title"><span class="modal-finding-badge warning">弱项</span>夜间响应偏慢</div>
+              <div class="modal-finding-body">处置响应均时改善幅度仅 5%，夜间时段响应速度仍有提升空间。</div>
+            </div>
+            <div class="modal-finding warning">
+              <div class="modal-finding-title"><span class="modal-finding-badge warning">弱项</span>老旧小区反复率高</div>
+              <div class="modal-finding-body">个别老旧小区通道占用反复率偏高，需加强源头治理与硬件投入。</div>
+            </div>
+            <div class="modal-finding warning">
+              <div class="modal-finding-title"><span class="modal-finding-badge warning">弱项</span>极端天气掉线</div>
+              <div class="modal-finding-body">设备离线率在极端天气下波动较大，需增强硬件抗灾能力与冗余部署。</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 05 下半年建议 -->
+        <div class="modal-section">
+          <div class="modal-section-title"><span class="modal-section-num">05</span>下半年建议</div>
+          <div class="modal-section-desc">力争年末六项指标全面优于 2025 年基准值 20% 以上</div>
+          <div class="modal-rec-grid">
+            <div class="modal-rec">
+              <div class="modal-rec-title"><span class="modal-rec-tag p1">P1</span>夜间智能巡检</div>
+              <div class="modal-rec-body">推进夜间 AI 智能巡检覆盖，缩短夜间响应均时。</div>
+              <div class="modal-rec-impact">&#x2191; 响应均时 &#x2192; &#x2193;10%</div>
+            </div>
+            <div class="modal-rec">
+              <div class="modal-rec-title"><span class="modal-rec-tag p1">P1</span>老旧小区改造</div>
+              <div class="modal-rec-body">消防通道标准化改造，从源头降低反复占道率。</div>
+              <div class="modal-rec-impact">&#x2191; 反复率 &#x2192; &#x2193;25%</div>
+            </div>
+            <div class="modal-rec">
+              <div class="modal-rec-title"><span class="modal-rec-tag p2">P2</span>设备冗余部署</div>
+              <div class="modal-rec-body">关键点位设备冗余部署，降低极端天气离线率。</div>
+              <div class="modal-rec-impact">&#x2191; 抗灾能力 &#x2192; 离线率 &#x2193;50%</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">报告生成时间：2026-07-22 · 渝中区消防通道保畅一件事驾驶舱</div>
+      </div>
+    </div>
+  </div>
+  <div class="map-backdrop" id="map-backdrop"></div>
+</div>
+<script src="https://webapi.amap.com/maps?v=2.0&key=7ee14ec4e8ec1bc26ad5ad26625c3b28"></script>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+<script>
+(function(){
+  var _mapInstance=null,_origZoom=14,_mapExpanded=false;
+  function pad(n){return n<10?'0'+n:n;}
+  function tick(){
+    var d=new Date(),wk=['日','一','二','三','四','五','六'];
+    document.getElementById('topbar-date').textContent=d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+    document.getElementById('topbar-time').textContent=pad(d.getHours())+':'+pad(d.getMinutes())+':'+pad(d.getSeconds())+' 周'+wk[d.getDay()];
+  }
+  tick();setInterval(tick,1000);
+
+  document.querySelectorAll('.toggle-btn').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      var h=this.nextElementSibling;
+      h.classList.toggle('expanded');
+      this.textContent=h.classList.contains('expanded')?'▾ 收起':'▸ 展开流转线';
+    });
+  });
+  var _occData=[['学田湾正街65号<br>87min'],['大溪沟正街12号<br>60min']];
+  var _occBody=document.getElementById('occupy-body');
+  var _occDots=document.querySelectorAll('#occupy-dots .occupy-d');
+  var _occCard=document.getElementById('occupy-card');
+  var _occCur=0;
+  function _occTick(){
+    _occCur=(_occCur+1)%_occData.length;
+    if(_occBody){_occBody.style.transition='opacity .25s ease';_occBody.style.opacity='0';
+    setTimeout(function(){_occBody.innerHTML=_occData[_occCur][0];_occBody.style.opacity='0.7';},250);}
+    if(_occDots)_occDots.forEach(function(d,j){d.classList.toggle('on',j===_occCur);});
+    if(_occCard){_occCard.classList.add('occupy-flash');setTimeout(function(){_occCard.classList.remove('occupy-flash');},3000);}
+  }
+  if(_occBody)setInterval(_occTick,15000);
+  var _rtCur=0;
+  var _rtTotal=2;
+  function _rtTick(){
+    var nxt=(_rtCur+1)%_rtTotal;
+    var curEv=document.querySelector('#realtime-card .event[data-rt="'+_rtCur+'"]');
+    var nxtEv=document.querySelector('#realtime-card .event[data-rt="'+nxt+'"]');
+    var dots=document.querySelectorAll('#rt-dots .occupy-d');
+    if(!curEv||!nxtEv)return;
+    // 旧卡片向下滑出
+    curEv.classList.remove('active');
+    curEv.classList.add('leaving');
+    // 新卡片从上方滑入
+    nxtEv.classList.remove('entering');
+    nxtEv.classList.add('active');
+    // 更新圆点
+    if(dots)dots.forEach(function(d,j){d.classList.toggle('on',j===nxt);});
+    // 动画结束后重置旧卡片状态
+    setTimeout(function(){
+      curEv.classList.remove('leaving');
+      curEv.classList.add('entering');
+    },500);
+    _rtCur=nxt;
+  }
+  setInterval(_rtTick,60000);
+  /* 时段高亮：根据当前小时自动高亮 tz 卡片 */
+  function highlightTz(){
+    var h=new Date().getHours();
+    var id='tz-dawn';
+    if(h>=8&&h<19)id='tz-peak';
+    else if(h>=19&&h<22)id='tz-night';
+    document.querySelectorAll('#tz-peak,#tz-night,#tz-dawn').forEach(function(el){
+      el.classList.toggle('active',el.id===id);
+    });
+  }
+  highlightTz();
+  setInterval(highlightTz,60000);
+
+  /* ===== 04 一键挪车 / 一键交办 状态切换 ===== */
+  function toggleMoveCar(btn){
+    if(btn.classList.contains('done')){
+      btn.classList.remove('done');
+      btn.textContent='一键挪车';
+    }else{
+      btn.classList.add('done');
+      btn.textContent='已通知挪车';
+    }
+  }
+  function toggleDispatch(btn){
+    if(btn.classList.contains('done')){
+      btn.classList.remove('done');
+      btn.textContent='一键交办';
+    }else{
+      btn.classList.add('done');
+      btn.textContent='已交办';
+    }
+  }
+
+  /* ===== 05 地图展开/收起 ===== */
+  var _expandTimers=[];
+  function clearExpandTimers(){
+    _expandTimers.forEach(function(t){clearTimeout(t);});
+    _expandTimers=[];
+  }
+
+  function toggleMapExpand(){
+    _mapExpanded=!_mapExpanded;
+    var btn=document.getElementById('btn-expand-map');
+    var backdrop=document.getElementById('map-backdrop');
+    var cellMap=document.getElementById('cell-map');
+    var pushed=document.querySelectorAll('.grid-cell[data-push]');
+
+    if(_mapExpanded){
+      /* 展开 — 分阶段执行 */
+      // 按钮切换（立即）
+      if(btn){btn.textContent='收起 ◂';btn.classList.add('collapse');btn.title='收起地图';}
+
+      // 阶段1：8宫格推开（0ms，立即启动）
+      pushed.forEach(function(el){
+        var dir=el.getAttribute('data-push');
+        el.classList.add('push-out','push-'+dir);
+      });
+
+      // 阶段2：遮罩淡入（delay 1s）
+      _expandTimers.push(setTimeout(function(){
+        if(backdrop)backdrop.classList.add('on');
+      },1000));
+
+      // 阶段3：地图全屏+zoom（delay 1.2s）
+      _expandTimers.push(setTimeout(function(){
+        if(cellMap)cellMap.classList.add('map-fullscreen');
+        if(_mapInstance){
+          _origZoom=_mapInstance.getZoom();
+          _mapInstance.setZoom(_origZoom+1);
+        }
+      },1200));
+    }else{
+      /* 收起 — 清除待执行定时器，立即移除所有class */
+      clearExpandTimers();
+      if(btn){btn.textContent='展开 ▸';btn.classList.remove('collapse');btn.title='展开地图全屏';}
+      if(backdrop)backdrop.classList.remove('on');
+      pushed.forEach(function(el){
+        var dir=el.getAttribute('data-push');
+        el.classList.remove('push-out','push-'+dir);
+      });
+      if(cellMap)cellMap.classList.remove('map-fullscreen');
+      if(_mapInstance)_mapInstance.setZoom(_origZoom);
+    }
+  }
+
+  /* 展开按钮 */
+  document.getElementById('btn-expand-map').addEventListener('click',toggleMapExpand);
+  /* 点击遮罩收起 */
+  document.getElementById('map-backdrop').addEventListener('click',function(){
+    if(_mapExpanded)toggleMapExpand();
+  });
+  /* 点击任意推开宫格收起（委托） */
+  document.querySelector('.dashboard').addEventListener('click',function(e){
+    if(!_mapExpanded)return;
+    var cell=e.target.closest('.grid-cell.push-out');
+    if(cell)toggleMapExpand();
+  });
+
+  /* ===== 08 态势分析 30天趋势图（ECharts） ===== */
+  var _trendChart=null;
+  var _trendMockData={dates:[],occData:[],respData:[]};
+  (function genMock(){
+    var now=new Date();
+    for(var i=29;i>=0;i--){
+      var d=new Date(now);d.setDate(d.getDate()-i);
+      _trendMockData.dates.push((d.getMonth()+1)+'/'+d.getDate());
+      _trendMockData.occData.push(parseFloat((15+Math.random()*4).toFixed(1)));
+      // 处置响应均时：前段平稳 190-210，末尾上扬至 210-220
+      var base=190+Math.random()*20;
+      if(i<5)base=205+Math.random()*15;
+      _trendMockData.respData.push(Math.round(base));
+    }
+  })();
+
+  function initTrendChart(){
+    var dom=document.getElementById('trend-echarts');
+    if(!dom||typeof echarts==='undefined'){setTimeout(initTrendChart,200);return;}
+    _trendChart=echarts.init(dom);
+    switchTrend('occ');
+    // 兜底：在容器最终尺寸确定后重绘，避免初次渲染时被父容器压缩导致标签溢出
+    setTimeout(function(){if(_trendChart)_trendChart.resize();},100);
+    setTimeout(function(){if(_trendChart)_trendChart.resize();},500);
+    window.addEventListener('resize',function(){if(_trendChart)_trendChart.resize();});
+  }
+
+  function switchTrend(type){
+    var kpiOcc=document.getElementById('kpi-occ');
+    var kpiResp=document.getElementById('kpi-resp');
+    var titleMain=document.getElementById('trend-title-main');
+    var titleSub=document.getElementById('trend-title-sub');
+    if(!kpiOcc||!kpiResp||!_trendChart)return;
+    var isOcc=type==='occ';
+    var data=isOcc?_trendMockData.occData:_trendMockData.respData;
+    var lineColor=isOcc?'#00c8ff':'#ff8c42';
+    var yMin=isOcc?14:180;
+    var yMax=isOcc?20:225;
+    var yInt=isOcc?2:15;
+    if(isOcc){
+      kpiOcc.classList.add('active');kpiResp.classList.remove('active');
+    }else{
+      kpiResp.classList.add('active');kpiOcc.classList.remove('active');
+    }
+    if(titleMain)titleMain.textContent=isOcc?'通道占用趋势':'处置响应均时';
+    if(titleSub)titleSub.textContent=isOcc?'%/近30天':'min/近30天';
+    _trendChart.setOption({
+      grid:{left:'2.6rem',right:'0.4rem',top:'0.4rem',bottom:'1.6rem',containLabel:true},
+      xAxis:{type:'category',data:_trendMockData.dates,name:'日期',nameLocation:'end',nameTextStyle:{color:'rgba(255,255,255,0.6)',fontSize:9,padding:[2,0,0,-6]},axisLine:{lineStyle:{color:'rgba(255,255,255,0.25)'}},axisTick:{show:false},axisLabel:{color:'rgba(255,255,255,0.6)',fontSize:9,interval:5}},
+      yAxis:{type:'value',name:isOcc?'占用率（%）':'响应均时（min）',nameTextStyle:{color:'rgba(255,255,255,0.6)',fontSize:9,padding:[0,0,0,-2]},splitLine:{lineStyle:{color:'rgba(255,255,255,0.06)'}},axisLabel:{color:'rgba(255,255,255,0.6)',fontSize:9},min:yMin,max:yMax,interval:yInt},
+      series:[{data:data,type:'line',smooth:0.4,symbol:'none',lineStyle:{color:lineColor,width:1.4},
+        areaStyle:{color:new echarts.graphic.LinearGradient(0,0,0,1,[{offset:0,color:isOcc?'rgba(0,200,255,0.28)':'rgba(255,140,66,0.28)'},{offset:1,color:'rgba(0,0,0,0)'}])}
+      }]
+    },true);
+  }
+  window.switchTrend=switchTrend;
+
+  /* ===== 09 复盘改进 雷达图 & 模态框 ===== */
+  var _reviewRadar=null;
+  function initReviewRadar(){
+    var dom=document.getElementById('review-radar');
+    if(!dom||typeof echarts==='undefined'){setTimeout(initReviewRadar,200);return;}
+    if(!dom.clientHeight){setTimeout(initReviewRadar,100);return;}
+    _reviewRadar=echarts.init(dom);
+    _reviewRadar.setOption({
+      color:['#6b8294','#00c8ff'],
+      legend:{
+        data:['2025','2026'],
+        left:6,top:4,
+        orient:'vertical',
+        itemWidth:14,itemHeight:6,
+        itemGap:6,
+        textStyle:{color:'rgba(255,255,255,0.7)',fontSize:10,padding:[0,0,0,2]},
+        backgroundColor:'rgba(8,24,40,0.45)',
+        borderColor:'rgba(0,200,255,0.18)',borderWidth:1,
+        borderRadius:3,padding:[4,6]
+      },
+      radar:{
+        center:['54%','55%'],
+        radius:'58%',
+        axisName:{
+          formatter:function(v){
+            var map={'通道占用率':'同比↓15%','处置响应均时':'同比↓5%','平均占道时长':'同比↓10%','超长占道率':'同比↓20%','高峰占比':'同比↓30%','日均告警事件':'同比↓10%'};
+            return '{name|'+v+'}\n{delta|'+map[v]+'}';
+          },
+          rich:{
+            name:{color:'#cfe9f7',fontSize:9,fontWeight:500,backgroundColor:'rgba(0,80,120,0.35)',borderColor:'rgba(0,200,255,0.25)',borderWidth:1,borderRadius:2,padding:[1,3]},
+            delta:{color:'#2ee6a6',fontSize:7,fontWeight:400,padding:[1,3,1,3],backgroundColor:'rgba(46,230,166,0.08)',borderRadius:2}
+          }
+        },
+        indicator:[
+          {name:'通道占用率',max:1},
+          {name:'处置响应均时',max:1},
+          {name:'平均占道时长',max:1},
+          {name:'超长占道率',max:1},
+          {name:'高峰占比',max:1},
+          {name:'日均告警事件',max:1}
+        ],
+        splitNumber:4,
+        splitArea:{
+          areaStyle:{
+            color:['rgba(0,200,255,0.05)','rgba(0,200,255,0.02)','rgba(0,200,255,0.05)','rgba(0,200,255,0.02)','rgba(0,200,255,0.07)'],
+            shadowColor:'rgba(0,200,255,0.18)',shadowBlur:8,shadowOffsetY:2
+          }
+        },
+        splitLine:{lineStyle:{color:'rgba(0,200,255,0.22)',width:1}},
+        axisLine:{lineStyle:{color:'rgba(0,200,255,0.18)',width:1}}
+      },
+      series:[{
+        type:'radar',
+        symbol:'circle',symbolSize:4,
+        emphasis:{focus:'self',lineStyle:{width:2.5}},
+        data:[
+          {name:'2025',value:[1,1,1,1,1,1],
+            lineStyle:{color:'#9bb0c4',width:1.2,type:'dashed'},
+            areaStyle:{color:'rgba(155,176,196,0.06)'},
+            itemStyle:{color:'#9bb0c4',borderColor:'#9bb0c4',borderWidth:1}
+          },
+          {name:'2026',value:[0.85,0.95,0.9,0.8,0.7,0.9],
+            lineStyle:{color:'#00c8ff',width:2,shadowColor:'rgba(0,200,255,0.6)',shadowBlur:6},
+            areaStyle:{
+              color:new echarts.graphic.RadialGradient(0.5,0.5,1,[
+                {offset:0,color:'rgba(0,200,255,0.35)'},
+                {offset:0.7,color:'rgba(0,150,220,0.18)'},
+                {offset:1,color:'rgba(0,100,180,0.05)'}
+              ])
+            },
+            itemStyle:{color:'#7ef0ff',borderColor:'#00c8ff',borderWidth:1.5,shadowColor:'#00c8ff',shadowBlur:6}
+          }
+        ]
+      }]
+    });
+    setTimeout(function(){if(_reviewRadar)_reviewRadar.resize();},100);
+    setTimeout(function(){if(_reviewRadar)_reviewRadar.resize();},500);
+    window.addEventListener('resize',function(){if(_reviewRadar)_reviewRadar.resize();});
+  }
+
+  var _modalRadar=null;
+  function openReportModal(){
+    var modal=document.getElementById('ai-report-modal');
+    if(modal)modal.classList.add('show');
+    setTimeout(function(){
+      var dom=document.getElementById('modal-radar-chart');
+      if(!dom||!dom.clientHeight)return;
+      if(_modalRadar){_modalRadar.dispose();_modalRadar=null;}
+      _modalRadar=echarts.init(dom);
+      _modalRadar.setOption({
+        color:['#6b8294','#00c8ff'],
+        legend:{
+          data:['2025','2026'],
+          left:4,top:2,orient:'vertical',
+          itemWidth:12,itemHeight:5,itemGap:4,
+          textStyle:{color:'rgba(255,255,255,0.65)',fontSize:9}
+        },
+        radar:{
+          center:['54%','55%'],radius:'58%',
+          axisName:{color:'rgba(255,255,255,0.6)',fontSize:8},
+          indicator:[
+            {name:'占用率',max:1},{name:'响应均时',max:1},{name:'占道时长',max:1},
+            {name:'超长占道',max:1},{name:'高峰占比',max:1},{name:'日均告警',max:1}
+          ],
+          splitNumber:4,
+          splitArea:{areaStyle:{color:['rgba(0,200,255,0.06)','rgba(0,200,255,0.03)','rgba(0,200,255,0.06)','rgba(0,200,255,0.03)','rgba(0,200,255,0.09)']}},
+          splitLine:{lineStyle:{color:'rgba(0,200,255,0.18)',width:.8}},
+          axisLine:{lineStyle:{color:'rgba(0,200,255,0.14)',width:.8}}
+        },
+        series:[{
+          type:'radar',symbol:'circle',symbolSize:3,
+          emphasis:{focus:'self',lineStyle:{width:2}},
+          data:[
+            {name:'2025',value:[1,1,1,1,1,1],
+              lineStyle:{color:'#9bb0c4',width:1,type:'dashed'},
+              areaStyle:{color:'rgba(155,176,196,0.05)'},
+              itemStyle:{color:'#9bb0c4'}
+            },
+            {name:'2026',value:[0.85,0.95,0.9,0.8,0.7,0.9],
+              lineStyle:{color:'#00c8ff',width:1.8,shadowColor:'rgba(0,200,255,0.4)',shadowBlur:4},
+              areaStyle:{color:new echarts.graphic.RadialGradient(.5,.5,1,[
+                {offset:0,color:'rgba(0,200,255,0.3)'},{offset:.7,color:'rgba(0,150,220,0.12)'},{offset:1,color:'rgba(0,100,180,0.03)'}
+              ])},
+              itemStyle:{color:'#7ef0ff',borderColor:'#00c8ff',borderWidth:1,shadowColor:'#00c8ff',shadowBlur:4}
+            }
+          ]
+        }]
+      });
+    },200);
+  }
+  function closeReportModal(e){
+    if(e&&e.target!==document.getElementById('ai-report-modal'))return;
+    var modal=document.getElementById('ai-report-modal');
+    if(modal)modal.classList.remove('show');
+    if(_modalRadar){_modalRadar.dispose();_modalRadar=null;}
+  }
+  window.addEventListener('resize',function(){if(_modalRadar)_modalRadar.resize();});
+  window.openReportModal=openReportModal;
+  window.closeReportModal=closeReportModal;
+
+  /* ===== AI机器人悬浮动画 ===== */
+  function initAiBot(){
+    var svg=document.getElementById('ai-bot-svg');
+    if(!svg){setTimeout(initAiBot,300);return;}
+    svg.style.animation='bot-float 3.6s ease-in-out infinite';
+  }
+
+  function initMap(){
+    if(typeof AMap==='undefined'){setTimeout(initMap,300);return;}
+    _mapInstance=new AMap.Map('mapid',{center:[106.55,29.56],zoom:_origZoom,mapStyle:'amap://styles/dark',viewMode:'3D',pitch:45,rotation:-12,showBuildingBlock:true,features:['bg','road','building','point']});
+    function mkPin(color,label){
+      var d=document.createElement('div');d.className='pin-inner pin '+color;
+      d.innerHTML='<div class="pin-dot"></div><div class="pin-tri"></div><div class="pin-label">'+label+'</div>';return d;
+    }
+    function addM(lng,lat,color,label){
+      var m=new AMap.Marker({position:[lng,lat],content:mkPin(color,label),offset:new AMap.Pixel(0,-18)});
+      _mapInstance.add(m);
+    }
+    addM(106.550,29.559,'red','学田湾 87min');
+    addM(106.558,29.565,'red','大溪沟 192min');
+    addM(106.535,29.547,'orange','菜园坝 48min');
+    addM(106.542,29.555,'yellow','两路口 35min');
+    addM(106.525,29.540,'gray','离线');
+  }
+  setTimeout(initMap,200);
+  initTrendChart();
+  initReviewRadar();
+  initAiBot();
+})();
+</script>
+</body>
+</html>
