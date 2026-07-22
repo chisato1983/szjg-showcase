@@ -1,0 +1,1966 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>消防通道保畅一件事 — 事件处置详情</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap');
+
+  :root {
+    --bg-deep: #081424;
+    --bg-card: #0f2138;
+    --bg-inner: #0a1828;
+    --bg-inner-hover: #122a44;
+    --border: rgba(0,200,255,0.10);
+    --border-strong: rgba(0,200,255,0.30);
+    --text-primary: #e6f3ff;
+    --text-secondary: #8faec9;
+    --text-muted: #557089;
+    --accent-cyan: #00c8ff;
+    --green: #2ee6a6;
+    --yellow: #ffcc33;
+    --orange: #ff8c1a;
+    --red: #ff4757;
+    --gray: #6b8294;
+    --radius: 5px;
+    --transition: 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; overflow: hidden; }
+  body {
+    background: linear-gradient(135deg, #06101f 0%, #0a1828 50%, #06101f 100%);
+    font-family: 'Noto Sans SC', sans-serif;
+    color: var(--text-primary);
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ===== TOP BAR ===== */
+  .topbar {
+    height: 60px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 2rem;
+    background: linear-gradient(180deg, rgba(0,40,80,0.6) 0%, rgba(0,20,40,0.3) 80%, transparent 100%);
+    border-bottom: 1px solid rgba(0,200,255,0.2);
+    position: relative;
+    overflow: hidden;
+  }
+  .topbar::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 10%;
+    right: 10%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--accent-cyan), transparent);
+    opacity: 0.4;
+  }
+  .topbar-left {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    z-index: 1;
+  }
+  .btn-back {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    color: var(--accent-cyan);
+    font-size: 0.85rem;
+    cursor: pointer;
+    padding: 0.3rem 0.6rem;
+    border-radius: 3px;
+    transition: all 0.2s;
+    text-decoration: none;
+    border: 1px solid rgba(0,200,255,0.2);
+    background: rgba(0,200,255,0.06);
+  }
+  .btn-back:hover {
+    background: rgba(0,200,255,0.15);
+    border-color: var(--accent-cyan);
+    text-shadow: 0 0 8px var(--accent-cyan);
+  }
+  .btn-back-arrow { font-size: 1.1rem; line-height: 1; }
+  .topbar-title {
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    letter-spacing: 2px;
+    z-index: 1;
+  }
+  .topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    z-index: 1;
+  }
+  .event-id {
+    font-family: 'Oswald', monospace;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+  }
+  .status-badge {
+    font-size: 0.75rem;
+    padding: 0.2rem 0.7rem;
+    border-radius: 3px;
+    font-weight: 500;
+  }
+  .status-badge.done {
+    background: rgba(46,230,166,0.12);
+    color: var(--green);
+    border: 1px solid rgba(46,230,166,0.3);
+  }
+  .status-badge.active {
+    background: rgba(0,200,255,0.12);
+    color: var(--accent-cyan);
+    border: 1px solid rgba(0,200,255,0.3);
+  }
+  .status-badge.pending {
+    background: rgba(255,140,26,0.12);
+    color: var(--orange);
+    border: 1px solid rgba(255,140,26,0.3);
+  }
+
+  /* ===== MAIN CONTAINER ===== */
+  .main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 1.5rem 2rem 1rem;
+    gap: 0;
+    min-height: 0;
+    position: relative;
+  }
+  /* ===== TOP 70%: 3 columns (discover / dispatch / result) ===== */
+  .main-top {
+    flex: 0 0 70%;
+    display: flex;
+    gap: 0;
+    min-height: 0;
+    align-items: stretch;
+    position: relative;
+  }
+  /* ===== BOTTOM 30%: trend chart ===== */
+  .main-bottom {
+    flex: 0 0 30%;
+    display: flex;
+    min-height: 0;
+    padding: 0.6rem 0 0.4rem;
+    box-sizing: border-box;
+  }
+
+  /* ===== TIMELINE NODE CARD ===== */
+  .node {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    position: relative;
+  }
+
+  /* Horizontal connector between nodes */
+  .node + .node::before {
+    content: '';
+    position: absolute;
+    left: -20px;
+    top: 50%;
+    width: 20px;
+    height: 0;
+    border-top: 1px dashed rgba(0,200,255,0.35);
+    transform: translateY(-0.5px);
+    z-index: 0;
+  }
+
+  .node-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    overflow: hidden;
+    cursor: pointer;
+    transition: all var(--transition);
+    position: relative;
+  }
+  .node-card:hover {
+    border-color: var(--border-strong);
+    box-shadow: 0 0 20px rgba(0,200,255,0.06), inset 0 1px 0 rgba(0,200,255,0.04);
+  }
+  .node-card.expanded {
+    border-color: var(--border-strong);
+    box-shadow: 0 0 30px rgba(0,200,255,0.1), inset 0 1px 0 rgba(0,200,255,0.06);
+  }
+
+  /* Top color strip */
+  .node-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 12px;
+    right: 12px;
+    height: 3px;
+    border-radius: 0 0 3px 3px;
+    z-index: 2;
+    transition: all var(--transition);
+  }
+  .node-card.node-discover::before { background: linear-gradient(90deg, var(--accent-cyan), #0098cc); }
+  .node-card.node-dispatch::before { background: linear-gradient(90deg, var(--orange), #ffcc33); }
+  .node-card.node-result::before { background: linear-gradient(90deg, var(--green), #1ec08a); }
+
+  /* ===== COLLAPSED VIEW ===== */
+  .node-collapsed {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+    padding: 1.5rem 1rem;
+    gap: 0.6rem;
+    text-align: center;
+    transition: opacity var(--transition), max-height var(--transition);
+  }
+  .node-card.expanded .node-collapsed {
+    max-height: 0;
+    opacity: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    overflow: hidden;
+  }
+
+  .nc-status {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.72rem;
+    font-weight: 500;
+  }
+  .nc-status .dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .dot-done { background: var(--green); box-shadow: 0 0 6px var(--green); }
+  .dot-active { background: var(--accent-cyan); box-shadow: 0 0 6px var(--accent-cyan); animation: pulse-dot 2s infinite; }
+  .dot-pending { background: var(--orange); box-shadow: 0 0 6px var(--orange); }
+  .dot-overdue { background: var(--red); box-shadow: 0 0 6px var(--red); }
+  @keyframes pulse-dot {
+    0%,100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+  .txt-done { color: var(--green); }
+  .txt-active { color: var(--accent-cyan); }
+  .txt-pending { color: var(--orange); }
+  .txt-overdue { color: var(--red); }
+
+  .nc-icon {
+    font-size: 2.6rem;
+    line-height: 1;
+    opacity: 0.6;
+  }
+  .nc-name {
+    font-size: 1.3rem;
+    font-weight: 600;
+    letter-spacing: 2px;
+    color: var(--text-primary);
+  }
+  .nc-summary {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    max-width: 90%;
+  }
+
+  .nc-toggle {
+    margin-top: 0.3rem;
+    font-size: 0.72rem;
+    color: var(--accent-cyan);
+    display: flex;
+    align-items: center;
+    gap: 0.2rem;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+  }
+  .node-card:hover .nc-toggle { opacity: 1; }
+  .nc-toggle-arrow { transition: transform 0.3s; display: inline-block; }
+
+  /* ===== EXPANDED VIEW ===== */
+  .node-expanded {
+    max-height: 0;
+    opacity: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 0 1rem;
+    transition: max-height var(--transition), opacity var(--transition), padding var(--transition);
+  }
+  .node-card.expanded .node-expanded {
+    max-height: 65vh;
+    opacity: 1;
+    padding: 1rem;
+    padding-top: 0.3rem;
+  }
+  .node-expanded::-webkit-scrollbar { width: 3px; }
+  .node-expanded::-webkit-scrollbar-thumb { background: rgba(0,200,255,0.2); border-radius: 2px; }
+
+  .ne-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 0.5rem;
+    margin-bottom: 0.6rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .ne-name {
+    font-size: 1rem;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  /* Info group inside expanded view */
+  .info-group {
+    background: var(--bg-inner);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 0.6rem 0.7rem;
+    margin-bottom: 0.5rem;
+  }
+  .info-group-label {
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    letter-spacing: 0.5px;
+    margin-bottom: 0.4rem;
+    text-transform: uppercase;
+  }
+  .info-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 0.25rem 0;
+    font-size: 0.73rem;
+    border-bottom: 1px solid rgba(0,200,255,0.04);
+    gap: 0.5rem;
+  }
+  .info-row:last-child { border-bottom: none; }
+  .info-label {
+    color: var(--text-muted);
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .info-value {
+    color: var(--text-primary);
+    text-align: right;
+    word-break: break-all;
+  }
+  .info-value.device-id { font-family: 'Oswald', monospace; font-size: 0.68rem; }
+
+  /* Long text (collapsible) */
+  .long-text-wrap {
+    position: relative;
+  }
+  .long-text {
+    font-size: 0.73rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    max-height: 3em;
+    overflow: hidden;
+    transition: max-height var(--transition);
+    position: relative;
+  }
+  .long-text.expanded { max-height: 20em; }
+  .long-text:not(.expanded)::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 1.6em;
+    background: linear-gradient(transparent, var(--bg-inner));
+  }
+  .text-toggle {
+    font-size: 0.68rem;
+    color: var(--accent-cyan);
+    cursor: pointer;
+    margin-top: 0.3rem;
+    display: inline-block;
+    user-select: none;
+  }
+  .text-toggle:hover { text-decoration: underline; }
+
+  /* Photo display */
+  .photo-block {
+    background: var(--bg-inner);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 0.5rem;
+    margin-bottom: 0.5rem;
+    text-align: center;
+  }
+  .photo-block img {
+    width: 100%;
+    max-height: 280px;
+    object-fit: cover;
+    border-radius: 2px;
+    display: block;
+  }
+  .photo-label {
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    margin-top: 0.3rem;
+  }
+
+  /* ===== FLOW TIMELINE (dispatch node) ===== */
+  .flow-timeline {
+    position: relative;
+    padding-left: 1.2rem;
+    margin: 0.3rem 0;
+  }
+  .flow-line {
+    position: absolute;
+    left: 5px;
+    top: 6px;
+    bottom: 6px;
+    width: 1px;
+    background: rgba(0,200,255,0.2);
+  }
+  .flow-item {
+    position: relative;
+    padding: 0.35rem 0 0.35rem 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+  }
+  .flow-dot {
+    position: absolute;
+    left: -1.2rem;
+    top: 0.55rem;
+    width: 9px; height: 9px;
+    border-radius: 50%;
+    background: var(--accent-cyan);
+    border: 2px solid var(--bg-card);
+    z-index: 1;
+  }
+  .flow-dot.dot-start { background: var(--accent-cyan); }
+  .flow-dot.dot-dispatch { background: var(--orange); }
+  .flow-dot.dot-done { background: var(--green); }
+  .flow-time {
+    font-family: 'Oswald', monospace;
+    font-size: 0.68rem;
+    color: var(--text-muted);
+  }
+  .flow-level {
+    margin-left: 0.5rem;
+    font-size: 0.55rem;
+    padding: 1px 4px;
+    border-radius: 2px;
+    background: rgba(0,200,255,0.08);
+    color: var(--text-muted);
+    vertical-align: middle;
+  }
+  .flow-header {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+  }
+  .flow-unit {
+    font-size: 0.7rem;
+    font-weight: 500;
+    color: var(--text-primary);
+  }
+  .flow-tag {
+    font-size: 0.58rem;
+    padding: 1px 5px;
+    border-radius: 2px;
+    white-space: nowrap;
+  }
+  .tag-start { background: rgba(0,200,255,0.1); color: var(--accent-cyan); border: 1px solid rgba(0,200,255,0.2); }
+  .tag-process { background: rgba(255,140,26,0.1); color: var(--orange); border: 1px solid rgba(255,140,26,0.2); }
+  .tag-done { background: rgba(46,230,166,0.1); color: var(--green); border: 1px solid rgba(46,230,166,0.2); }
+  .flow-desc {
+    font-size: 0.65rem;
+    color: var(--text-secondary);
+    line-height: 1.4;
+  }
+
+  /* Collapse button in expanded view */
+  .ne-collapse {
+    text-align: center;
+    padding: 0.5rem 0 0.2rem;
+    font-size: 0.7rem;
+    color: var(--accent-cyan);
+    cursor: pointer;
+    user-select: none;
+    opacity: 0.6;
+    transition: opacity 0.2s;
+  }
+  .ne-collapse:hover { opacity: 1; }
+
+  /* ===== PERFORMANCE METRICS ===== */
+  .metric-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.4rem;
+    margin: 0.3rem 0;
+  }
+  .metric-item {
+    background: var(--bg-inner);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 0.45rem 0.5rem;
+    text-align: center;
+  }
+  .metric-val {
+    font-family: 'Oswald', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 600;
+    line-height: 1;
+  }
+  .metric-label {
+    font-size: 0.6rem;
+    color: var(--text-muted);
+    margin-top: 0.15rem;
+  }
+
+  /* ===== RESPONSIVE ===== */
+  @media (max-width: 1100px) {
+    .main {
+      flex-direction: column;
+      gap: 0.6rem;
+      padding: 0.8rem;
+      overflow-y: auto;
+    }
+    .node {
+      flex: none;
+      min-height: auto;
+    }
+    .node + .node::before { display: none; }
+    .node-card.expanded .node-expanded {
+      max-height: 40vh;
+    }
+  }
+
+  /* Tech corner decoration for the main container */
+  .main::before {
+    content: '';
+    position: absolute;
+    top: 10px; left: 20px;
+    width: 30px; height: 30px;
+    border-top: 2px solid rgba(0,200,255,0.4);
+    border-left: 2px solid rgba(0,200,255,0.4);
+    pointer-events: none;
+    z-index: 0;
+  }
+  .main::after {
+    content: '';
+    position: absolute;
+    bottom: 10px; right: 20px;
+    width: 30px; height: 30px;
+    border-bottom: 2px solid rgba(0,200,255,0.4);
+    border-right: 2px solid rgba(0,200,255,0.4);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ===== TIME LABEL (top of each node card) ===== */
+  .nc-time-row {
+    display: flex;
+    justify-content: center;
+    align-items: baseline;
+    gap: 0.4rem;
+    padding: 0.5rem 0 0 0;
+    font-size: 0.72rem;
+  }
+  .nc-time-label {
+    font-weight: 600;
+    letter-spacing: 0.5px;
+  }
+  .nc-time-value {
+    font-family: 'Oswald', monospace;
+    font-size: 0.78rem;
+    font-weight: 500;
+    opacity: 0.85;
+  }
+  .nc-time-row.time-cyan .nc-time-label { color: var(--accent-cyan); }
+  .nc-time-row.time-cyan .nc-time-value { color: var(--accent-cyan); }
+  .nc-time-row.time-orange .nc-time-label { color: var(--orange); }
+  .nc-time-row.time-orange .nc-time-value { color: var(--orange); }
+  .nc-time-row.time-green .nc-time-label { color: var(--green); }
+  .nc-time-row.time-green .nc-time-value { color: var(--green); }
+
+  /* ===== FLOW VIEW TOGGLE ===== */
+  .flow-view-toggle {
+    display: flex;
+    gap: 0;
+    margin-bottom: 0.5rem;
+    border-radius: 3px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    width: fit-content;
+  }
+  .flow-view-btn {
+    font-size: 0.65rem;
+    padding: 0.2rem 0.7rem;
+    cursor: pointer;
+    background: transparent;
+    color: var(--text-muted);
+    border: none;
+    transition: all 0.2s;
+    font-family: inherit;
+  }
+  .flow-view-btn:hover { color: var(--text-primary); }
+  .flow-view-btn.active {
+    background: rgba(0,200,255,0.15);
+    color: var(--accent-cyan);
+    font-weight: 500;
+  }
+
+  /* ===== HORIZONTAL FLOW TIMELINE ===== */
+  .hz-timeline {
+    position: relative;
+    padding: 1.2rem 0;
+    min-height: 340px;
+    overflow-x: auto;
+    overflow-y: visible;
+  }
+  .hz-timeline::-webkit-scrollbar { height: 3px; }
+  .hz-timeline::-webkit-scrollbar-thumb { background: rgba(0,200,255,0.2); border-radius: 2px; }
+  .hz-track {
+    position: relative;
+    display: flex;
+    min-width: max-content;
+    padding: 0 1.5rem;
+    min-height: 280px;
+    align-items: stretch;
+  }
+  .hz-line {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 1.5px;
+    background: rgba(0,200,255,0.25);
+    transform: translateY(-0.75px);
+  }
+  .hz-node-wrap {
+    position: relative;
+    flex-shrink: 0;
+    width: 140px;
+    min-height: 280px;
+    display: flex;
+    flex-direction: column;
+  }
+  .hz-dot {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--accent-cyan);
+    border: 2px solid var(--bg-card);
+    z-index: 2;
+  }
+  .hz-dot.dot-done-bg { background: var(--green); }
+  .hz-dot.dot-process-bg { background: var(--orange); }
+  .hz-card {
+    background: var(--bg-inner);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 0.4rem 0.5rem;
+    transition: all 0.2s;
+    min-height: 56px;
+    position: relative;
+    z-index: 2;
+  }
+  .hz-card:hover {
+    border-color: var(--border-strong);
+    box-shadow: 0 0 10px rgba(0,200,255,0.06);
+  }
+  .hz-node-wrap.top .hz-card { margin-bottom: auto; }
+  .hz-node-wrap.bottom .hz-card { margin-top: auto; }
+  .hz-card-time {
+    font-family: 'Oswald', monospace;
+    font-size: 0.62rem;
+    color: var(--text-muted);
+    margin-bottom: 0.15rem;
+  }
+  .hz-card-header {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.1rem;
+  }
+  .hz-card-unit {
+    font-size: 0.65rem;
+    font-weight: 500;
+    color: var(--text-primary);
+  }
+  .hz-card-level {
+    font-size: 0.5rem;
+    padding: 1px 4px;
+    border-radius: 2px;
+    background: rgba(0,200,255,0.08);
+    color: var(--text-muted);
+    white-space: nowrap;
+  }
+  .hz-card-tag {
+    font-size: 0.55rem;
+    padding: 0 4px;
+    border-radius: 2px;
+    white-space: nowrap;
+  }
+  .hz-card-desc {
+    font-size: 0.58rem;
+    color: var(--text-secondary);
+    line-height: 1.35;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .hz-connector {
+    position: absolute;
+    left: 50%;
+    width: 1px;
+    background: rgba(0,200,255,0.2);
+    z-index: 1;
+  }
+  .hz-node-wrap.top .hz-connector {
+    top: 0;
+    height: calc(50% - 6px);
+  }
+  .hz-node-wrap.bottom .hz-connector {
+    bottom: 0;
+    height: calc(50% - 6px);
+  }
+
+  /* Illustrated photo placeholder */
+  .photo-illustration {
+    width: 100%;
+    height: 140px;
+    background: linear-gradient(180deg, #0d1c30 0%, #081020 100%);
+    border-radius: 3px;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .photo-illustration .pi-scene {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+  }
+  /* Before scene: info card style */
+  .pi-before-card {
+    width: 70%;
+    max-width: 200px;
+    background: rgba(0,200,255,0.06);
+    border: 1px solid rgba(0,200,255,0.2);
+    border-radius: 4px;
+    padding: 0.5rem 0.8rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+  .pi-before-card .pi-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.6rem;
+    gap: 0.5rem;
+  }
+  .pi-before-card .pi-row .pi-key { color: var(--text-muted); }
+  .pi-before-card .pi-row .pi-val { color: var(--text-primary); font-weight: 500; }
+  .pi-before-card .pi-row .pi-val.pi-alert { color: var(--red); }
+
+  /* After scene: green clear icon */
+  .pi-after-icon {
+    width: 56px; height: 56px;
+    border-radius: 50%;
+    background: rgba(46,230,166,0.1);
+    border: 2px solid rgba(46,230,166,0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.6rem;
+  }
+  .pi-after-label {
+    font-size: 0.7rem;
+    color: var(--green);
+    margin-top: 0.5rem;
+    font-weight: 500;
+    letter-spacing: 1px;
+  }
+
+  /* Hidden state for view switching */
+  .flow-container { transition: opacity 0.25s; }
+  .flow-container.hidden { display: none; }
+
+  /* ===== COLLAPSED THUMBNAIL (photo in folded state) ===== */
+  .nc-thumb {
+    margin: 0.4rem 0.5rem 0;  /* sit just below .nc-toggle, no auto-push to bottom */
+    border-radius: 3px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    width: calc(100% - 1rem);
+    align-self: stretch;
+    background: var(--bg-deep);
+  }
+  .nc-thumb img {
+    width: 100%;
+    height: auto;
+    object-fit: contain;
+    display: block;
+  }
+  .nc-thumb-title {
+    font-size: 0.65rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    text-align: center;
+    padding: 0.3rem 0 0.25rem;
+    letter-spacing: 1px;
+  }
+  .nc-thumb .photo-illustration {
+    height: 120px;
+  }
+
+  /* ===== COLLAPSED MINI ALTERNATING HORIZONTAL TIMELINE ===== */
+  .nc-mini-timeline {
+    margin: calc(0.4rem + 10px) 0 0;
+    padding: 0.8rem 0.2rem 0;
+    position: relative;
+    overflow-x: auto;
+    overflow-y: visible;
+    width: 100%;
+  }
+  .nc-mini-timeline::-webkit-scrollbar { height: 2px; }
+  .nc-mini-timeline::-webkit-scrollbar-thumb { background: rgba(0,200,255,0.12); border-radius: 1px; }
+  /* ===== CUSTOM HORIZONTAL SCROLLBAR BELOW MINI TIMELINE ===== */
+  .nc-mini-scrollbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    height: 38px;
+    padding: 0 0.4rem;
+    margin-top: 18px;
+    user-select: none;
+  }
+  .nc-mini-scrollbar-btn {
+    flex-shrink: 0;
+    width: 28px; height: 28px;
+    border: 1px solid rgba(0,200,255,0.15);
+    background: rgba(0,200,255,0.04);
+    color: rgba(0,200,255,0.6);
+    border-radius: 3px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px;
+    line-height: 1;
+    transition: all 0.2s;
+  }
+  .nc-mini-scrollbar-btn:hover {
+    background: rgba(0,200,255,0.12);
+    color: rgba(0,200,255,0.9);
+    border-color: rgba(0,200,255,0.35);
+  }
+  .nc-mini-scrollbar-btn:active {
+    background: rgba(0,200,255,0.2);
+  }
+  .nc-mini-scrollbar-track {
+    flex: 1;
+    height: 10px;
+    background: rgba(255,255,255,0.04);
+    border-radius: 5px;
+    position: relative;
+    cursor: pointer;
+  }
+  .nc-mini-scrollbar-track:hover {
+    background: rgba(255,255,255,0.06);
+  }
+  .nc-mini-scrollbar-thumb {
+    position: absolute;
+    top: 0;
+    height: 100%;
+    background: rgba(0,200,255,0.22);
+    border-radius: 5px;
+    min-width: 32px;
+    cursor: grab;
+    transition: background 0.15s;
+  }
+  .nc-mini-scrollbar-thumb:hover {
+    background: rgba(0,200,255,0.4);
+  }
+  .nc-mini-scrollbar-thumb:active {
+    background: rgba(0,200,255,0.55);
+    cursor: grabbing;
+  }
+  .nc-mini-track {
+    position: relative;
+    display: flex;
+    min-width: max-content;
+    padding: 0 0.2rem;
+    height: 190px;
+  }
+  /* Horizontal line through center */
+  .nc-mini-line {
+    display: block;
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 1.5px;
+    background: rgba(0,200,255,0.3);
+    transform: translateY(-0.75px);
+    z-index: 0;
+  }
+  /* Each node: fixed 92px wide so 15px text fits with room to wrap */
+  .nc-mini-node-wrap {
+    position: relative;
+    flex-shrink: 0;
+    width: 92px;
+    height: 190px;
+  }
+  /* Dot: always at center of wrap, on the line */
+  .nc-mini-dot {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--accent-cyan);
+    border: 1.5px solid var(--bg-card);
+    z-index: 3;
+    box-shadow: 0 0 4px rgba(0,200,255,0.4);
+  }
+  .nc-mini-dot.mdot-done { background: var(--green); box-shadow: 0 0 4px rgba(46,230,166,0.4); }
+  .nc-mini-dot.mdot-process { background: var(--orange); box-shadow: 0 0 4px rgba(255,140,26,0.4); }
+  /* Connector: short vertical line between card and dot */
+  .nc-mini-connector {
+    position: absolute;
+    left: 50%;
+    width: 1px;
+    background: rgba(0,200,255,0.25);
+    transform: translateX(-0.5px);
+    z-index: 1;
+  }
+  .nc-mini-node-wrap.top .nc-mini-connector {
+    bottom: calc(50% + 3.5px);
+    height: 10px;
+  }
+  .nc-mini-node-wrap.bottom .nc-mini-connector {
+    top: calc(50% + 3.5px);
+    height: 10px;
+  }
+  /* Card: flex column, 3 rows — unit / tag / time */
+  .nc-mini-card {
+    position: absolute;
+    left: 4px;
+    right: 4px;
+    background: var(--bg-inner);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 0.3rem 0.15rem;
+    text-align: center;
+    z-index: 2;
+    transition: all 0.2s;
+    cursor: default;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+  }
+  .nc-mini-card:hover {
+    border-color: rgba(0,200,255,0.4);
+    box-shadow: 0 0 8px rgba(0,200,255,0.15);
+    transform: scale(1.05);
+  }
+  .nc-mini-node-wrap.top .nc-mini-card {
+    bottom: calc(50% + 17px);
+  }
+  .nc-mini-node-wrap.bottom .nc-mini-card {
+    top: calc(50% + 17px);
+  }
+  .nc-mini-unit {
+    font-size: 0.65rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    line-height: 1.25;
+    word-break: break-all;
+  }
+  .nc-mini-tag {
+    font-size: 0.75rem;
+    padding: 0 2px;
+    border-radius: 1.5px;
+    line-height: 1.2;
+    display: inline-block;
+    align-self: center;
+  }
+  .nc-mini-time {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    line-height: 1.2;
+    font-family: 'Oswald', monospace;
+  }
+
+  /* ===== TREND CHART (bottom 30% of main) ===== */
+  .nc-trend-chart {
+    margin: 0 0 0.6rem;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: linear-gradient(180deg, #102940 0%, #0b1c2e 40%, #081828 100%);
+    border: 1px solid rgba(0,200,255,0.11);
+    border-radius: 5px;
+    padding: 0.7rem 1rem 0.6rem;
+    box-sizing: border-box;
+    min-height: 0;
+    position: relative;
+    /* Multi-layer 3D shadow */
+    box-shadow:
+      0 8px 32px rgba(0,0,0,0.45),
+      0 2px 8px rgba(0,0,0,0.35),
+      inset 0 1px 0 rgba(255,255,255,0.03),
+      inset 1px 0 0 rgba(0,200,255,0.03),
+      inset -1px 0 0 rgba(0,200,255,0.03);
+  }
+  /* Top accent line — light reflection */
+  .nc-trend-chart::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 20px; right: 20px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(0,200,255,0.3), transparent);
+    z-index: 1;
+    pointer-events: none;
+  }
+  /* Bottom soft reflection */
+  .nc-trend-chart::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 20px; right: 20px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(0,200,255,0.06), transparent);
+    z-index: 1;
+    pointer-events: none;
+  }
+  .tc-header {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    letter-spacing: 2px;
+    margin-bottom: 0.15rem;
+  }
+  .tc-header::before {
+    content: '📊 ';
+    font-size: 0.75rem;
+  }
+  .tc-title {
+    position: absolute;
+    top: 0.7rem;
+    right: 1rem;
+    font-size: 0.62rem;
+    color: #5a738c;
+    letter-spacing: 1px;
+    font-family: 'Oswald', 'Noto Sans SC', sans-serif;
+  }
+  .tc-svg {
+    flex: 1;
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    display: block;
+    filter: drop-shadow(0 2px 8px rgba(0,0,0,0.5));
+  }
+  /* Green point: breathing pulse animation */
+  .tc-pt {
+    transition: r 0.25s ease;
+    cursor: pointer;
+    animation: tc-pulse 2.5s ease-in-out infinite;
+  }
+  .tc-pt:nth-child(odd) { animation-delay: 0s; }
+  .tc-pt:nth-child(even) { animation-delay: 1s; }
+  @keyframes tc-pulse {
+    0%, 100% { opacity: 0.7; }
+    50% { opacity: 1; }
+  }
+  .tc-pt:hover {
+    r: 8;
+    animation: none;
+    opacity: 1;
+  }
+  /* Active (currently selected) green dot */
+  .tc-pt.tc-pt-active {
+    r: 7;
+    opacity: 1;
+    animation: none;
+    stroke: rgba(46,230,166,0.7);
+    stroke-width: 2;
+  }
+  .tc-pt-active-ring {
+    fill: none;
+    stroke: rgba(46,230,166,0.35);
+    stroke-width: 2.5;
+    animation: tc-ring-pulse 1.8s ease-in-out infinite;
+  }
+  @keyframes tc-ring-pulse {
+    0%, 100% { r: 8; opacity: 0.35; }
+    50% { r: 13; opacity: 0.08; }
+  }
+
+  /* ===== CLICK RIPPLE on green dot ===== */
+  .tc-ripple {
+    fill: none;
+    stroke: rgba(46,230,166,0.6);
+    stroke-width: 3;
+    animation: tc-ripple-out 0.6s ease-out forwards;
+    pointer-events: none;
+  }
+  @keyframes tc-ripple-out {
+    0% { r: 5; opacity: 1; }
+    100% { r: 40; opacity: 0; }
+  }
+
+  /* ===== NODE CARD FLASH on data switch ===== */
+  .node-card.node-flash {
+    animation: node-flash 0.7s ease-out;
+  }
+  @keyframes node-flash {
+    0% { box-shadow: 0 0 0 0 rgba(0,200,255,0.4); }
+    30% { box-shadow: 0 0 20px 4px rgba(0,200,255,0.25); }
+    100% { box-shadow: 0 0 0 0 rgba(0,200,255,0); }
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== TOP BAR ===== -->
+<div class="topbar">
+  <div class="topbar-left">
+    <a class="btn-back" href="#" title="返回驾驶舱首页">
+      <span class="btn-back-arrow">&#x2190;</span> 返回
+    </a>
+    <span class="topbar-title">消防通道保畅 · SPGXF202602021022090982524 · 事件处置详情</span> 
+    <span class="status-badge done" id="statusBadge">已完成</span>
+  </div>
+  <div class="topbar-right">
+<!--    <span class="event-id" id="eventId">SPGXF202602021022090982524</span>-->
+  </div>
+</div>
+
+<!-- ===== TIMELINE MAIN ===== -->
+<div class="main" id="mainContainer">
+  <!-- Nodes rendered by JS -->
+</div>
+
+<script>
+// =============================================================================
+// DATA — Modify this object to change event content
+// =============================================================================
+const eventData = {
+  id: 'SPGXF202602021022090982524',
+  status: 'done', // 'done' | 'active' | 'pending' | 'overdue'
+  title: '消防通道保畅一件事 · 事件处置详情',
+
+  // ① DISCOVER node
+  discover: {
+    name: '发现',
+    icon: '📍',
+    status: 'done',
+    summary: '渝中区上清寺街道 · 治理中心研判 · 消防车通行保畅',
+    publishTime: '2026-02-02 08:34:37',  // 顶部时间标签：上报时间
+    district: '渝中区',
+    street: '--',
+    source: '单位巡查发现',
+    hazardId: 'SPGXF202602021022090982524',
+    eventType: '消防车通行保畅',
+    reportTime: '2026-02-02 08:34:37',
+    reportPhone: '--',
+    assessment: '学田湾正街65号_1F_消防通道||上清寺街道_学田湾正街65号_1F_消防通道_1||2026-02-02 08:34:37消防车通道持续占道超过104分钟，存在消防安全隐患，该监控下已累计产生"消防车通行保畅"督办事件3次，需交巡上清寺大队协调相关负责人员做好当前占用车辆疏散、消防车生命通道畅通维护工作。',
+    beforePhoto: 'before-photo.jpg' // 处置前图片URL，null=占位图
+  },
+
+  // ② DISPATCH node
+  dispatch: {
+    name: '处置',
+    icon: '🛠',
+    status: 'done',
+    summary: '指挥大队已办结 · 8条流转记录',
+    dispatchTime: '2026-02-02 10:22:12',  // 顶部时间标签：派单时间
+    reportPhone: '--',
+    flow: [
+      { time: '10:22:10', level: '上报', unit: '隐患上报', tag: '隐患上报', tagType: 'start', desc: '学田湾正街65号_1F_消防通道||上清寺街道_学田湾正街65号_1F_消防通道_1||2026-02-02 08:34:37消防车通道持续占道超过104分钟，存在消防安全隐患，该监控下已累计产生"消防车通行保畅"督办事件3次，需交巡上清寺大队协调相关负责人员做好当前占用车辆疏散、消防车生命通道畅通维护工作。' },
+      { time: '10:22:12', level: '市级', unit: '重庆市消防救援总队', tag: '业务事项启动', tagType: 'start', desc: '市消防救援局火灾警情联动请求业务事项启动' },
+      { time: '10:22:21', level: '市级', unit: '重庆市消防救援总队', tag: '业务事项启动', tagType: 'start', desc: '系统处理 市消防救援局火灾警情联动请求' },
+      { time: '10:25:27', level: '市级', unit: '重庆市消防救援总队', tag: '业务事项完结', tagType: 'done', desc: '系统处理 市消防救援局火灾警情联动请求业务事项完结' },
+      { time: '10:25:28', level: '市级', unit: '渝中区城市运行和治理中心', tag: '业务事项启动', tagType: 'start', desc: '渝中区城市运行和治理中心接收业务事项启动' },
+      { time: '10:25:28', level: '区县', unit: '渝中区公安分局', tag: '业务事项启动', tagType: 'start', desc: '渝中区交巡警研判消防车平时通行保畅业务事项启动' },
+      { time: '14:28:50', level: '乡镇', unit: '指挥大队', tag: '已签收', tagType: 'process', desc: '渝中区交巡警研判消防车平时通行保畅已签收' },
+      { time: '14:29:54', level: '乡镇', unit: '指挥大队', tag: '业务事项完结', tagType: 'done', desc: '已安排相关警力前往处置。渝中区交巡警研判消防车平时通行保畅业务事项完结' }
+    ]
+  },
+
+  // ③ RESULT node
+  result: {
+    name: '结果',
+    icon: '✅',
+    status: 'done',
+    summary: '已办结 · 销案时间 2026-02-02 14:29:54',
+    closeTime: '2026-02-02 14:29:54',  // 顶部时间标签：销案时间
+    statusText: '已完成',
+    reportTime: '2026-02-02 08:34:37',
+    disposeTime: '2026-02-02 14:29:54',
+    afterPhoto: 'after-photo.jpg' // 处置后图片URL，null=占位图
+  }
+};
+
+// =============================================================================
+// RENDER
+// =============================================================================
+const statusMap = {
+  done: { dot: 'dot-done', text: '已完成', cls: 'txt-done', badge: 'done' },
+  active: { dot: 'dot-active', text: '进行中', cls: 'txt-active', badge: 'active' },
+  pending: { dot: 'dot-pending', text: '待处置', cls: 'txt-pending', badge: 'pending' },
+  overdue: { dot: 'dot-overdue', text: '已逾期', cls: 'txt-overdue', badge: 'pending' }
+};
+
+// Save original data for date switching (deep copy preserves time-of-day parts)
+const eventDataBase = JSON.parse(JSON.stringify(eventData));
+
+function applyEventDate(newDate) {
+  // Preserve the time-of-day portion from base data; only swap the YYYY-MM-DD prefix.
+  const swapDate = (s) => (s || '').replace(/^\d{4}-\d{2}-\d{2}/, newDate);
+  const swapInline = (s) => (s || '').replace(/\d{4}-\d{2}-\d{2}/g, newDate);
+  // Discover
+  eventData.discover.publishTime = swapDate(eventDataBase.discover.publishTime);
+  eventData.discover.reportTime = eventData.discover.publishTime;
+  eventData.discover.assessment = swapInline(eventDataBase.discover.assessment);
+  // Dispatch
+  eventData.dispatch.dispatchTime = swapDate(eventDataBase.dispatch.dispatchTime);
+  eventData.dispatch.flow.forEach((f, i) => {
+    f.desc = swapInline(eventDataBase.dispatch.flow[i].desc);
+  });
+  // Result
+  eventData.result.summary = swapInline(eventDataBase.result.summary);
+  eventData.result.closeTime = swapDate(eventDataBase.result.closeTime);
+  eventData.result.reportTime = eventData.discover.publishTime;
+  eventData.result.disposeTime = eventData.result.closeTime;
+  renderAll();
+  // Flash node cards to signal data switch
+  requestAnimationFrame(() => {
+    document.querySelectorAll('.node-card').forEach(card => {
+      card.classList.add('node-flash');
+      card.addEventListener('animationend', function h() {
+        card.classList.remove('node-flash');
+        card.removeEventListener('animationend', h);
+      }, { once: true });
+    });
+  });
+}
+
+function renderPhoto(src, label, type) {
+  if (src) {
+    return `<img src="${src}" alt="${label}" onerror="this.src='https://placehold.co/400x200/0a1828/557089?text=${encodeURIComponent(label)}'" style="width:100%;max-height:280px;object-fit:cover;border-radius:3px;display:block">`;
+  }
+  // Illustrated placeholder: no image → show illustration, has image → show actual
+  if (type === 'before') {
+    return `
+    <div class="photo-illustration">
+      <div class="pi-scene">
+        <div class="pi-before-card">
+          <div class="pi-row"><span class="pi-key">隐患类型</span><span class="pi-val">消防通道占道</span></div>
+          <div class="pi-row"><span class="pi-key">占道时长</span><span class="pi-val pi-alert">104分钟</span></div>
+          <div class="pi-row"><span class="pi-key">累计督办</span><span class="pi-val pi-alert">3次</span></div>
+          <div class="pi-row"><span class="pi-key">所在位置</span><span class="pi-val">学田湾正街65号</span></div>
+        </div>
+      </div>
+    </div>`;
+  } else {
+    return `
+    <div class="photo-illustration">
+      <div class="pi-scene">
+        <div class="pi-after-icon">✓</div>
+        <div class="pi-after-label">通道畅通</div>
+      </div>
+    </div>`;
+  }
+}
+
+function renderFlowTimeline(flowData) {
+  return flowData.map(f => {
+    const dotClass = f.tagType === 'done' ? 'dot-done' : f.tagType === 'process' ? 'dot-dispatch' : 'dot-start';
+    const tagClass = f.tagType === 'done' ? 'tag-done' : f.tagType === 'process' ? 'tag-process' : 'tag-start';
+    return `
+      <div class="flow-item">
+        <div class="flow-dot ${dotClass}"></div>
+        <div class="flow-time">${f.time}<span class="flow-level">${f.level}</span></div>
+        <div class="flow-header">
+          <span class="flow-unit">${f.unit}</span>
+          <span class="flow-tag ${tagClass}">${f.tag}</span>
+        </div>
+        <div class="flow-desc">${f.desc}</div>
+      </div>`;
+  }).join('');
+}
+
+// ---- Catmull-Rom spline → cubic Bézier path ----
+function smoothPath(pointsArr, tension = 0.3) {
+  const pts = pointsArr.map(p => [parseFloat(p.x), parseFloat(p.y)]);
+  const n = pts.length;
+  if (n < 2) return '';
+  let d = `M ${pts[0][0].toFixed(1)},${pts[0][1].toFixed(1)}`;
+  for (let i = 0; i < n - 1; i++) {
+    const p0 = pts[Math.max(0, i - 1)];
+    const p1 = pts[i];
+    const p2 = pts[i + 1];
+    const p3 = pts[Math.min(n - 1, i + 2)];
+    const cp1x = p1[0] + (p2[0] - p0[0]) * tension;
+    const cp1y = p1[1] + (p2[1] - p0[1]) * tension;
+    const cp2x = p2[0] - (p3[0] - p1[0]) * tension;
+    const cp2y = p2[1] - (p3[1] - p1[1]) * tension;
+    d += ` C ${cp1x.toFixed(1)},${cp1y.toFixed(1)} ${cp2x.toFixed(1)},${cp2y.toFixed(1)} ${p2[0].toFixed(1)},${p2[1].toFixed(1)}`;
+  }
+  return d;
+}
+
+// Trend chart — bottom 30% area
+// W, H params allow dynamic viewBox matching container ratio (see refreshTrendChart)
+function renderTrendChart(W = 1500, H = 163, activeDate = '') {
+  // 182 days from 2026-01-01 to 2026-07-01
+  const startDate = new Date(2026, 0, 1);
+  const days = 182;
+  const maxY = 700;
+  // Deterministic mock data (pseudo-random from index, no Math.random flicker)
+  const data = [];
+  for (let i = 0; i < days; i++) {
+    const v =
+      180 +
+      Math.sin(i * 0.45) * 90 +
+      Math.cos(i * 0.27) * 60 +
+      Math.sin(i * 1.13) * 40 +
+      Math.abs(Math.sin(i * 0.71)) * 120;
+    data.push(Math.max(15, Math.min(maxY, Math.round(v))));
+  }
+  // Force the two green points to peak values
+  data[0] = 480;   // 2026-01-01
+  data[32] = 620;  // 2026-02-02
+  const pad = { top: 24, right: 16, bottom: 28, left: 52 };
+  const plotW = W - pad.left - pad.right;
+  const plotH = H - pad.top - pad.bottom;
+
+  // Build polyline points array
+  const pointsArr = data.map((v, i) => {
+    const x = pad.left + (i / (days - 1)) * plotW;
+    const y = pad.top + plotH - (v / maxY) * plotH;
+    return { x: x.toFixed(1), y: y.toFixed(1) };
+  });
+
+  // ---- DEFS: gradients & filters ----
+  const defs = `
+    <defs>
+      <linearGradient id="tc-area-grad" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#00c8ff" stop-opacity="0.22"/>
+        <stop offset="40%" stop-color="#00c8ff" stop-opacity="0.06"/>
+        <stop offset="80%" stop-color="#00c8ff" stop-opacity="0.01"/>
+        <stop offset="100%" stop-color="#00c8ff" stop-opacity="0.00"/>
+      </linearGradient>
+      <linearGradient id="tc-line-grad" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0%" stop-color="#00c8ff"/>
+        <stop offset="40%" stop-color="#2ee6a6"/>
+        <stop offset="60%" stop-color="#2ee6a6"/>
+        <stop offset="100%" stop-color="#00c8ff"/>
+      </linearGradient>
+      <linearGradient id="tc-dot-grad" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stop-color="#2ee6a6"/>
+        <stop offset="100%" stop-color="#00c8ff"/>
+      </linearGradient>
+      <filter id="tc-glow">
+        <feGaussianBlur stdDeviation="3" result="blur"/>
+        <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+      </filter>
+      <filter id="tc-glow-lg">
+        <feGaussianBlur stdDeviation="5" result="blur"/>
+        <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+      </filter>
+      <filter id="tc-blur">
+        <feGaussianBlur stdDeviation="4"/>
+      </filter>
+    </defs>`;
+
+  // ---- 3-tier Y-axis grid ----
+  // Major (100): solid
+  const yMajors = [0, 100, 200, 300, 400, 500, 600, 700];
+  const yGridMajor = yMajors.map(v => {
+    const y = pad.top + plotH - (v / maxY) * plotH;
+    return `<line x1="${pad.left}" y1="${y.toFixed(1)}" x2="${W - pad.right}" y2="${y.toFixed(1)}" stroke="rgba(0,200,255,0.12)" stroke-width="0.5"/>`;
+  }).join('');
+  // Minor (50): dashed
+  const yMinors = [50, 150, 250, 350, 450, 550, 650];
+  const yGridMinor = yMinors.map(v => {
+    const y = pad.top + plotH - (v / maxY) * plotH;
+    return `<line x1="${pad.left}" y1="${y.toFixed(1)}" x2="${W - pad.right}" y2="${y.toFixed(1)}" stroke="rgba(0,200,255,0.05)" stroke-width="0.3" stroke-dasharray="3 6"/>`;
+  }).join('');
+  // Micro (25): dotted
+  const yMicros = [];
+  for (let v = 25; v < 700; v += 50) yMicros.push(v);
+  const yGridMicro = yMicros.map(v => {
+    const y = pad.top + plotH - (v / maxY) * plotH;
+    return `<line x1="${pad.left}" y1="${y.toFixed(1)}" x2="${W - pad.right}" y2="${y.toFixed(1)}" stroke="rgba(0,200,255,0.02)" stroke-width="0.2" stroke-dasharray="1 7"/>`;
+  }).join('');
+
+  // ---- Y-axis labels ----
+  const yText = yMajors.map(v => {
+    const y = pad.top + plotH - (v / maxY) * plotH;
+    return `<text x="${pad.left - 6}" y="${(y + 3.5).toFixed(1)}" text-anchor="end" fill="#6b8294" font-size="9.5" font-family="'Oswald', monospace">${v}</text>`;
+  }).join('');
+  // Y-axis title
+  const yAxisTitle = `<text x="${pad.left - 42}" y="${12}" text-anchor="start" fill="#5a738c" font-size="9" font-family="'Oswald', 'Noto Sans SC', sans-serif" letter-spacing="1">占道长(分钟)</text>`;
+
+  // ---- X-axis date labels + month markers ----
+  const xText = [];
+  for (let i = 0; i < days; i += 15) {
+    const x = pad.left + (i / (days - 1)) * plotW;
+    const d = new Date(startDate);
+    d.setDate(d.getDate() + i);
+    const isMonthStart = d.getDate() === 1;
+    const md = `${String(d.getMonth() + 1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    xText.push(
+      `<text x="${x.toFixed(1)}" y="${isMonthStart ? H - 7 : H - 8}" text-anchor="middle" fill="${isMonthStart ? '#8faec9' : '#5a738c'}" font-size="${isMonthStart ? 9.5 : 8.5}" font-family="'Oswald', monospace" ${isMonthStart ? 'font-weight="500"' : ''}>${md}</text>`
+    );
+  }
+
+  // ---- Smooth curve path (Catmull-Rom) ----
+  const baselineY = pad.top + plotH; // chart bottom
+  const curveD = smoothPath(pointsArr, 0.3);
+
+  // ---- Area fill (smooth) ----
+  const areaPath = `<path d="M ${pad.left},${baselineY} ${curveD.replace('M','L')} L ${W - pad.right},${baselineY} Z" fill="url(#tc-area-grad)" stroke="none"/>`;
+
+  // ---- Trend line: 4-layer 3D rendering ----
+  const trendLine = `
+    <!-- Layer 1: bottom glow -->
+    <path d="${curveD}" fill="none" stroke="#00c8ff" stroke-width="6" opacity="0.08" stroke-linecap="round" filter="url(#tc-blur)"/>
+    <!-- Layer 2: shadow trace -->
+    <path d="${curveD}" fill="none" stroke="#00c8ff" stroke-width="3.5" opacity="0.15" stroke-linecap="round" transform="translate(0,1)"/>
+    <!-- Layer 3: main gradient line -->
+    <path d="${curveD}" fill="none" stroke="url(#tc-line-grad)" stroke-width="2" stroke-linecap="round"/>
+    <!-- Layer 4: top highlight -->
+    <path d="${curveD}" fill="none" stroke="rgba(255,255,255,0.18)" stroke-width="0.8" stroke-linecap="round" transform="translate(0,-0.5)"/>
+  `;
+
+  // ---- Data-point markers (every 10 days) ----
+  const dotMarkers = data.map((v, i) => {
+    if (i % 10 !== 0) return '';
+    const p = pointsArr[i];
+    return `<circle cx="${p.x}" cy="${p.y}" r="2" fill="url(#tc-dot-grad)" opacity="0.55"/>`;
+  }).join('');
+
+  // ---- Green clickable points (double-ring + glow) ----
+  // activeDate: if matches, render with active-state highlight
+  const mkPt = (i, date) => {
+    const p = pointsArr[i];
+    const isActive = activeDate && activeDate === date;
+    return `
+      <circle cx="${p.x}" cy="${p.y}" r="8" fill="none" stroke="rgba(46,230,166,${isActive ? '0.35' : '0.12'})" stroke-width="${isActive ? '2.5' : '2'}" class="${isActive ? 'tc-pt-active-ring' : ''}"/>
+      <circle cx="${p.x}" cy="${p.y}" r="${isActive ? '7' : '5'}" fill="var(--green)" class="tc-pt${isActive ? ' tc-pt-active' : ''}" data-date="${date}" filter="url(#tc-glow-lg)">
+        <title>${date} · ${data[i]} 分钟</title>
+      </circle>`;
+  };
+  const greenPts = mkPt(0, '2026-01-01') + mkPt(32, '2026-02-02');
+
+  // ---- Plot area border frame ----
+  const baseline = `<line x1="${pad.left}" y1="${baselineY}" x2="${W - pad.right}" y2="${baselineY}" stroke="rgba(0,200,255,0.15)" stroke-width="0.7"/>`;
+  const leftBorder = `<line x1="${pad.left}" y1="${pad.top}" x2="${pad.left}" y2="${baselineY}" stroke="rgba(0,200,255,0.08)" stroke-width="0.5"/>`;
+
+  return `
+    <div class="nc-trend-chart">
+      <div class="tc-header">隐患事件处置情况趋势统计</div>
+      <div class="tc-title">占道长(分钟)</div>
+      <svg id="tc-svg" class="tc-svg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" onclick="trendChartClick(event)">
+        ${defs}
+        ${yGridMicro}
+        ${yGridMinor}
+        ${yGridMajor}
+        ${baseline}
+        ${leftBorder}
+        ${yText}
+        ${xText.join('')}
+        ${areaPath}
+        ${trendLine}
+        ${dotMarkers}
+        ${greenPts}
+      </svg>
+    </div>
+  `;
+}
+
+// Dynamic viewBox: measure actual SVG container size and re-render trend chart
+// so that viewBox ratio matches physical dimensions, eliminating horizontal gaps.
+function refreshTrendChart() {
+  const svg = document.getElementById('tc-svg');
+  if (!svg) return;
+  const cw = svg.clientWidth;
+  const ch = svg.clientHeight;
+  if (cw <= 0 || ch <= 0) return;
+  const ratio = cw / ch;
+  const newH = Math.round(1500 / ratio);
+  // Skip re-render if H hasn't changed by >1px (avoids infinite loops)
+  const currentViewBox = svg.getAttribute('viewBox') || '';
+  const [, , , currentH] = currentViewBox.split(/\s+/).map(Number);
+  if (currentH === newH) return;
+  const container = document.querySelector('.nc-trend-chart');
+  if (!container) return;
+  container.innerHTML = renderTrendChart(1500, newH, (eventData.discover.publishTime || '').slice(0, 10));
+}
+
+function trendChartClick(e) {
+  const t = e.target;
+  if (t && t.classList && t.classList.contains('tc-pt')) {
+    // Click ripple: create expanding circle at click position
+    const svg = t.closest('svg');
+    if (svg) {
+      const svgRect = svg.getBoundingClientRect();
+      const viewBox = svg.viewBox.baseVal;
+      const scaleX = viewBox.width / svgRect.width;
+      const scaleY = viewBox.height / svgRect.height;
+      const cx = (t.cx.baseVal.value).toFixed(1);
+      const cy = (t.cy.baseVal.value).toFixed(1);
+      const ripple = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+      ripple.setAttribute('cx', cx);
+      ripple.setAttribute('cy', cy);
+      ripple.setAttribute('r', '5');
+      ripple.classList.add('tc-ripple');
+      svg.appendChild(ripple);
+      ripple.addEventListener('animationend', () => ripple.remove());
+    }
+    // Brief delay so ripple starts before DOM rebuild
+    setTimeout(() => applyEventDate(t.getAttribute('data-date')), 80);
+  }
+}
+
+function renderHorizontalTimeline(flowData) {
+  return flowData.map((f, i) => {
+    const pos = i % 2 === 0 ? 'top' : 'bottom';
+    const dotBg = f.tagType === 'done' ? 'dot-done-bg' : f.tagType === 'process' ? 'dot-process-bg' : '';
+    const tagClass = f.tagType === 'done' ? 'tag-done' : f.tagType === 'process' ? 'tag-process' : 'tag-start';
+    return `
+      <div class="hz-node-wrap ${pos}" style="z-index:${flowData.length - i}">
+        <div class="hz-card">
+          <div class="hz-card-time">${f.time}</div>
+          <div class="hz-card-header">
+            <span class="hz-card-unit">${f.unit}</span>
+            <span class="hz-card-level">${f.level}</span>
+            <span class="hz-card-tag ${tagClass}">${f.tag}</span>
+          </div>
+          <div class="hz-card-desc" title="${f.desc.replace(/"/g,'&quot;')}">${f.desc}</div>
+        </div>
+        <div class="hz-connector"></div>
+        <div class="hz-dot ${dotBg}"></div>
+      </div>`;
+  }).join('');
+}
+
+function renderCollapsedTimeline(flowData) {
+  return flowData.map((f, i) => {
+    const dotCls = f.tagType === 'done' ? 'mdot-done' : f.tagType === 'process' ? 'mdot-process' : '';
+    const tagCls = f.tagType === 'done' ? 'tag-done' : f.tagType === 'process' ? 'tag-process' : 'tag-start';
+    const pos = i % 2 === 0 ? 'top' : 'bottom';
+    // Top (above line): unit → tag → time
+    // Bottom (below line): time → tag → unit
+    const rows = pos === 'top'
+      ? `<div class="nc-mini-unit">${f.unit}</div>
+         <span class="nc-mini-tag ${tagCls}">${f.tag}</span>
+         <span class="nc-mini-time">${f.time}</span>`
+      : `<span class="nc-mini-time">${f.time}</span>
+         <span class="nc-mini-tag ${tagCls}">${f.tag}</span>
+         <div class="nc-mini-unit">${f.unit}</div>`;
+    return `
+      <div class="nc-mini-node-wrap ${pos}">
+        <div class="nc-mini-card" title="${f.time} · ${f.unit} · ${f.tag}">
+          ${rows}
+        </div>
+        <div class="nc-mini-connector"></div>
+        <div class="nc-mini-dot ${dotCls}"></div>
+      </div>`;
+  }).join('');
+}
+
+function renderDiscoverNode(data) {
+  const st = statusMap[data.status];
+  return `
+    <div class="node-card node-discover" id="node-discover" onclick="toggleNode('discover')">
+      <div class="node-collapsed">
+        <!-- nc-status disabled -->
+        <div class="nc-time-row time-cyan">
+          <span class="nc-time-label">上报时间</span>
+          <span class="nc-time-value">${data.publishTime}</span>
+        </div>
+        <!-- nc-icon & nc-name disabled -->
+        <div class="nc-summary">${data.summary}</div>
+        <div class="nc-toggle"><span class="nc-toggle-arrow">▸</span> 展开详情</div>
+        <div class="nc-thumb">
+          <div class="nc-thumb-title">处置前现场图片</div>
+          ${renderPhoto(data.beforePhoto, '处置前现场照片', 'before')}
+        </div>
+      </div>
+      <div class="node-expanded" onclick="event.stopPropagation()">
+        <div class="ne-header">
+          <div class="ne-name" style="color:var(--accent-cyan)">${data.icon} ${data.name}</div>
+          <!-- nc-status disabled -->
+        </div>
+        <div class="info-group">
+          <div class="info-group-label">📍 地点信息</div>
+          <div class="info-row"><span class="info-label">区县</span><span class="info-value">${data.district}</span></div>
+          <div class="info-row"><span class="info-label">乡镇街道</span><span class="info-value">${data.street}</span></div>
+          <div class="info-row"><span class="info-label">隐患ID</span><span class="info-value device-id">${data.hazardId}</span></div>
+        </div>
+        <div class="info-group">
+          <div class="info-group-label">⏰ 发现信息</div>
+          <div class="info-row"><span class="info-label">上报时间</span><span class="info-value" style="font-family:'Oswald',monospace">${data.reportTime}</span></div>
+          <div class="info-row"><span class="info-label">事件来源</span><span class="info-value">${data.source}</span></div>
+          <div class="info-row"><span class="info-label">事件类型</span><span class="info-value" style="color:var(--accent-cyan)">${data.eventType}</span></div>
+        </div>
+        <div class="info-group">
+          <div class="info-group-label">📝 研判内容</div>
+          <div class="long-text-wrap">
+            <div class="long-text" id="assessment-text">${data.assessment}</div>
+            <span class="text-toggle" onclick="event.stopPropagation();toggleText('assessment-text', this)">展开全文 ▸</span>
+          </div>
+        </div>
+        <div class="photo-block">
+          ${renderPhoto(data.beforePhoto, '处置前现场照片', 'before')}
+          <div class="photo-label">处置前现场照片</div>
+        </div>
+        <div class="ne-collapse" onclick="event.stopPropagation();toggleNode('discover')">收起详情 ▴</div>
+      </div>
+    </div>`;
+}
+
+function renderDispatchNode(data) {
+  const st = statusMap[data.status];
+  return `
+    <div class="node-card node-dispatch" id="node-dispatch" onclick="toggleNode('dispatch')">
+      <div class="node-collapsed">
+        <!-- nc-status disabled -->
+        <div class="nc-time-row time-orange">
+          <span class="nc-time-label">派单时间</span>
+          <span class="nc-time-value">${data.dispatchTime}</span>
+        </div>
+        <!-- nc-icon & nc-name disabled -->
+        <div class="nc-summary">${data.summary}</div>
+        <div class="nc-toggle"><span class="nc-toggle-arrow">▸</span> 展开详情</div>
+        <div class="nc-mini-timeline">
+          <div class="nc-mini-track">
+            <div class="nc-mini-line"></div>
+            ${renderCollapsedTimeline(data.flow)}
+          </div>
+        </div>
+      </div>
+      <div class="node-expanded" onclick="event.stopPropagation()">
+        <div class="ne-header">
+          <div class="ne-name" style="color:var(--orange)">${data.icon} ${data.name}</div>
+          <!-- nc-status disabled -->
+        </div>
+        <div class="info-group">
+          <div class="info-group-label">📋 派单流转时间线</div>
+          <div class="flow-view-toggle">
+            <button class="flow-view-btn active" onclick="event.stopPropagation();switchFlowView('vertical')" id="flow-btn-vertical">纵向</button>
+            <button class="flow-view-btn" onclick="event.stopPropagation();switchFlowView('horizontal')" id="flow-btn-horizontal">横向</button>
+          </div>
+          <div class="flow-container" id="flow-vertical">
+            <div class="flow-timeline">
+              <div class="flow-line"></div>
+              ${renderFlowTimeline(data.flow)}
+            </div>
+          </div>
+          <div class="flow-container hidden" id="flow-horizontal">
+            <div class="hz-timeline">
+              <div class="hz-track">
+                <div class="hz-line"></div>
+                ${renderHorizontalTimeline(data.flow)}
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="info-group">
+          <div class="info-group-label">👤 相关信息</div>
+          <div class="info-row"><span class="info-label">上报电话</span><span class="info-value" style="font-family:'Oswald',monospace">${data.reportPhone}</span></div>
+          <div class="info-row"><span class="info-label">最终处置单位</span><span class="info-value">${data.flow[data.flow.length - 1].unit}</span></div>
+          <div class="info-row"><span class="info-label">流转节点数</span><span class="info-value" style="font-family:'Oswald',monospace;color:var(--accent-cyan)">${data.flow.length}</span></div>
+        </div>
+        <div class="ne-collapse" onclick="event.stopPropagation();toggleNode('dispatch')">收起详情 ▴</div>
+      </div>
+    </div>`;
+}
+
+function renderResultNode(data) {
+  const st = statusMap[data.status];
+
+  return `
+    <div class="node-card node-result" id="node-result" onclick="toggleNode('result')">
+      <div class="node-collapsed">
+        <!-- nc-status disabled -->
+        <div class="nc-time-row time-green">
+          <span class="nc-time-label">销案时间</span>
+          <span class="nc-time-value">${data.closeTime}</span>
+        </div>
+        <!-- nc-icon & nc-name disabled -->
+        <div class="nc-summary">已办结</div>
+        <div class="nc-toggle"><span class="nc-toggle-arrow">▸</span> 展开详情</div>
+        <div class="nc-thumb">
+          <div class="nc-thumb-title">处置后现场图片</div>
+          ${renderPhoto(data.afterPhoto, '处置后现场照片', 'after')}
+        </div>
+      </div>
+      <div class="node-expanded" onclick="event.stopPropagation()">
+        <div class="ne-header">
+          <div class="ne-name" style="color:var(--green)">${data.icon} ${data.name}</div>
+          <!-- nc-status disabled -->
+        </div>
+        <div class="info-group">
+          <div class="info-group-label">📋 处置结果</div>
+          <div class="info-row"><span class="info-label">事件状态</span><span class="info-value" style="color:var(--green)">${data.statusText}</span></div>
+          <div class="info-row"><span class="info-label">上报时间</span><span class="info-value" style="font-family:'Oswald',monospace">${data.reportTime}</span></div>
+          <div class="info-row"><span class="info-label">销案时间</span><span class="info-value" style="font-family:'Oswald',monospace">${data.disposeTime}</span></div>
+        </div>
+        <div class="photo-block">
+          ${renderPhoto(data.afterPhoto, '处置后现场照片', 'after')}
+          <div class="photo-label">处置后现场照片</div>
+        </div>
+        <div class="ne-collapse" onclick="event.stopPropagation();toggleNode('result')">收起详情 ▴</div>
+      </div>
+    </div>`;
+}
+
+// =============================================================================
+// RENDER MAIN
+// =============================================================================
+function renderAll() {
+  const container = document.getElementById('mainContainer');
+  container.innerHTML = `
+    <div class="main-top">
+      <div class="node" id="node-wrap-discover">${renderDiscoverNode(eventData.discover)}</div>
+      <div class="node" id="node-wrap-dispatch">${renderDispatchNode(eventData.dispatch)}</div>
+      <div class="node" id="node-wrap-result">${renderResultNode(eventData.result)}</div>
+    </div>
+    <div class="main-bottom">
+      ${renderTrendChart(1500, 163, (eventData.discover.publishTime || '').slice(0, 10))}
+    </div>
+  `;
+  // After DOM layout, measure container and adjust viewBox to match real aspect ratio
+  // Double-insurance: rAF + setTimeout in case layout hasn't fully settled
+  requestAnimationFrame(() => {
+    refreshTrendChart();
+    setTimeout(() => refreshTrendChart(), 80);
+  });
+}
+
+// =============================================================================
+// INTERACTIONS
+// =============================================================================
+
+// Toggle node expand/collapse
+function toggleNode(name) {
+  const card = document.getElementById('node-' + name);
+  if (!card) return;
+  card.classList.toggle('expanded');
+
+  // Update toggle arrow
+  const collapsedView = card.querySelector('.node-collapsed');
+  const arrow = collapsedView?.querySelector('.nc-toggle-arrow');
+  if (arrow) {
+    arrow.style.transform = card.classList.contains('expanded') ? 'rotate(90deg)' : 'rotate(0deg)';
+  }
+}
+
+// Toggle long text (assessment content)
+function toggleText(textId, btn) {
+  const textEl = document.getElementById(textId);
+  if (!textEl) return;
+  const isExpanded = textEl.classList.contains('expanded');
+  if (isExpanded) {
+    textEl.classList.remove('expanded');
+    btn.textContent = '展开全文 ▸';
+  } else {
+    textEl.classList.add('expanded');
+    btn.textContent = '收起全文 ▴';
+  }
+}
+
+// Switch flow view: vertical ↔ horizontal
+let currentFlowView = 'vertical';
+function switchFlowView(view) {
+  if (currentFlowView === view) return;
+  currentFlowView = view;
+  const vContainer = document.getElementById('flow-vertical');
+  const hContainer = document.getElementById('flow-horizontal');
+  const vBtn = document.getElementById('flow-btn-vertical');
+  const hBtn = document.getElementById('flow-btn-horizontal');
+  if (view === 'vertical') {
+    vContainer?.classList.remove('hidden');
+    hContainer?.classList.add('hidden');
+    vBtn?.classList.add('active');
+    hBtn?.classList.remove('active');
+  } else {
+    vContainer?.classList.add('hidden');
+    hContainer?.classList.remove('hidden');
+    vBtn?.classList.remove('active');
+    hBtn?.classList.add('active');
+  }
+}
+
+// Toggle event status badge
+function updateStatusBadge(status) {
+  const badge = document.getElementById('statusBadge');
+  const sm = statusMap[status] || statusMap.done;
+  badge.textContent = sm.text;
+  badge.className = 'status-badge ' + sm.badge;
+}
+
+// =============================================================================
+// CUSTOM HORIZONTAL SCROLLBAR FOR MINI TIMELINE
+// =============================================================================
+function initMiniScrollbars() {
+  document.querySelectorAll('.nc-mini-timeline').forEach(timeline => {
+    // Avoid double-init
+    if (timeline.nextElementSibling?.classList?.contains('nc-mini-scrollbar')) return;
+
+    // Create scrollbar element
+    const sb = document.createElement('div');
+    sb.className = 'nc-mini-scrollbar';
+    sb.innerHTML = `
+      <button class="nc-mini-scrollbar-btn" data-dir="left" title="向左滚动">◀</button>
+      <div class="nc-mini-scrollbar-track">
+        <div class="nc-mini-scrollbar-thumb"></div>
+      </div>
+      <button class="nc-mini-scrollbar-btn" data-dir="right" title="向右滚动">▶</button>
+    `;
+    timeline.insertAdjacentElement('afterend', sb);
+
+    const thumb  = sb.querySelector('.nc-mini-scrollbar-thumb');
+    const track  = sb.querySelector('.nc-mini-scrollbar-track');
+    const btnL   = sb.querySelector('[data-dir="left"]');
+    const btnR   = sb.querySelector('[data-dir="right"]');
+
+    // --- Update thumb position & width from current scroll state ---
+    function updateThumb() {
+      const maxScroll = timeline.scrollWidth - timeline.clientWidth;
+      if (maxScroll <= 0) {
+        thumb.style.width = '100%';
+        thumb.style.left  = '0';
+        return;
+      }
+      const viewRatio  = timeline.clientWidth / timeline.scrollWidth;
+      const thumbW     = Math.max(28, viewRatio * track.clientWidth);
+      const thumbMaxL  = track.clientWidth - thumbW;
+      thumb.style.width = thumbW + 'px';
+      thumb.style.left  = (timeline.scrollLeft / maxScroll * thumbMaxL) + 'px';
+    }
+
+    function scrollBy(delta) {
+      timeline.scrollBy({ left: delta, behavior: 'smooth' });
+    }
+
+    // --- Mouse wheel on scrollbar → horizontal scroll ---
+    sb.addEventListener('wheel', e => {
+      e.preventDefault();
+      e.stopPropagation();
+      scrollBy(e.deltaY * 2);
+    });
+
+    // --- Wheel on timeline itself → also horizontal ---
+    timeline.addEventListener('wheel', e => {
+      if (Math.abs(e.deltaX) < Math.abs(e.deltaY)) {
+        e.preventDefault();
+        e.stopPropagation();
+        scrollBy(e.deltaY * 2);
+      }
+    }, { passive: false });
+
+    // --- Arrow button clicks (stopPropagation to avoid triggering toggleNode) ---
+    btnL.addEventListener('click', e => { e.stopPropagation(); scrollBy(-200); });
+    btnR.addEventListener('click', e => { e.stopPropagation(); scrollBy(200); });
+
+    // --- Click on track (not thumb) → jump to position ---
+    track.addEventListener('click', e => {
+      e.stopPropagation();
+      if (e.target === thumb) return;
+      const rect   = track.getBoundingClientRect();
+      const ratio  = (e.clientX - rect.left) / rect.width;
+      timeline.scrollTo({
+        left: ratio * (timeline.scrollWidth - timeline.clientWidth),
+        behavior: 'smooth'
+      });
+    });
+
+    // --- Thumb drag ---
+    let dragging = false, dragStartX = 0, dragStartScroll = 0;
+    thumb.addEventListener('mousedown', e => {
+      e.stopPropagation();
+      dragging = true;
+      dragStartX = e.clientX;
+      dragStartScroll = timeline.scrollLeft;
+      thumb.style.transition = 'none';
+      e.preventDefault();
+    });
+    document.addEventListener('mousemove', e => {
+      if (!dragging) return;
+      const maxScroll = timeline.scrollWidth - timeline.clientWidth;
+      if (maxScroll <= 0) return;
+      const dx          = e.clientX - dragStartX;
+      const thumbW      = parseFloat(thumb.style.width) || 28;
+      const thumbMaxL   = track.clientWidth - thumbW;
+      if (thumbMaxL <= 0) return;
+      timeline.scrollLeft = Math.max(0, Math.min(maxScroll,
+        dragStartScroll + (dx / thumbMaxL) * maxScroll));
+    });
+    document.addEventListener('mouseup', () => {
+      if (dragging) { dragging = false; thumb.style.transition = ''; }
+    });
+
+    // --- Sync thumb on native scroll ---
+    timeline.addEventListener('scroll', updateThumb);
+
+    // --- Initial render + resize observe ---
+    updateThumb();
+    const ro = new ResizeObserver(updateThumb);
+    ro.observe(timeline);
+    ro.observe(track);
+  });
+}
+
+// Initialize
+renderAll();
+updateStatusBadge(eventData.status);
+initMiniScrollbars();
+
+// Dynamic trend chart viewBox: recalc on window resize (debounced)
+let _tcResizeTimer = null;
+window.addEventListener('resize', () => {
+  clearTimeout(_tcResizeTimer);
+  _tcResizeTimer = setTimeout(refreshTrendChart, 150);
+});
+
+// =============================================================================
+// KEYBOARD NAVIGATION — press 1/2/3 to toggle nodes
+// =============================================================================
+document.addEventListener('keydown', function(e) {
+  const nodeMap = { '1': 'discover', '2': 'dispatch', '3': 'result' };
+  const name = nodeMap[e.key];
+  if (name) toggleNode(name);
+});
+</script>
+
+</body>
+</html>
