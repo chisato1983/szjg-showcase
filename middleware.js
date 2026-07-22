@@ -38,7 +38,7 @@ export default async function middleware(req) {
   const url = new URL(req.url);
   const path = url.pathname;
 
-  const isProtected = /^\/(gdp|dashboard|fire-event-detail)(\/|$)/.test(path);
+  const isProtected = /^\/(gdp|dashboard|fire-event-detail|fire-cockpit)(\/|$)/.test(path);
   if (!isProtected) return;
 
   const cookieHeader = req.headers.get('cookie');
@@ -52,5 +52,5 @@ export default async function middleware(req) {
 }
 
 export const config = {
-  matcher: ['/((?!api|login\\.html|_next|favicon|assets|.*\\.svg|.*\\.png|.*\\.jpg).*)'],
+  matcher: ['/((?!api|login\\.html|_next|favicon|assets|.*\\\\.svg|.*\\\\.png|.*\\\\.jpg).*)'],
 };
