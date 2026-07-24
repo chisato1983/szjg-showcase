@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>高层建筑消防安全综合智管 v3.5</title>
+<title>高层建筑消防安全综合智管 v3.15</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap');
   :root {
@@ -63,7 +63,8 @@
   .event{background:var(--bg-inner);border:1px solid var(--border);border-left:0.2rem solid var(--yellow);border-radius:3px;padding:0.4rem 0.5rem;display:grid;grid-template-columns:4.5rem 1fr;gap:0.5rem;align-items:center;transition:all .15s}
   .event:hover{background:var(--bg-inner-hover);border-color:var(--border-strong)}
   .event.severe{border-left-color:var(--orange)}
-  #realtime-card .event{display:flex;flex-direction:column;gap:0.3rem;align-items:stretch;padding:0.45rem 0.55rem;flex:1;min-height:0;border-radius:2px;background:var(--bg-inner);border:1px solid var(--border);transition:all .15s}
+  #realtime-card-bl,#realtime-card-bc,#realtime-card-br{flex:1;min-height:0;display:flex;flex-direction:column}
+  #realtime-card .event,#realtime-card-bl .event,#realtime-card-bc .event,#realtime-card-br .event{display:flex;flex-direction:column;gap:0.3rem;align-items:stretch;padding:0.45rem 0.55rem;flex:1;min-height:0;border-radius:2px;background:var(--bg-inner);border:1px solid var(--border);transition:all .15s}
   .ev-thumb{width:4.5rem;height:3.2rem;background:#050a14;border-radius:2px;position:relative;overflow:hidden}
   .ev-thumb-lg{width:5.5rem;height:4.2rem;background:#050a14;border-radius:3px;position:relative;overflow:hidden;flex-shrink:0}
   .ev-scene-lg{position:absolute;inset:0;background:linear-gradient(180deg,#1a2a42 0%,#0d1c30 45%,#081020 100%)}
@@ -160,10 +161,67 @@
   .bl-block.orange{background:linear-gradient(90deg,var(--orange),#e66a00)}.bl-block.red{background:linear-gradient(90deg,var(--red),#d63a4a)}
   .baseline-head{display:flex;justify-content:flex-end;align-items:center;font-size:0.8rem;color:var(--accent-cyan)}
   .baseline-head::before{content:'';width:1px;height:0.6rem;background:var(--accent-cyan);margin-right:0.25rem;box-shadow:0 0 3px var(--accent-cyan)}
+  /* 04 态势分析 TOP10 滚动列表 */
+  .top10-scroll{flex:1;min-height:0;overflow:hidden;position:relative;border-radius:2px}
+  .top10-scroll::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1.2rem;background:linear-gradient(180deg,transparent,var(--bg-card));pointer-events:none;z-index:1}
+  .top10-track{display:flex;flex-direction:column;gap:0.18rem;will-change:transform}
+  .top10-item{background:var(--bg-inner);border:1px solid var(--border);border-radius:3px;padding:0.35rem 0.45rem;display:grid;grid-template-columns:1.8rem 1fr auto;gap:0.4rem;align-items:center;cursor:pointer;transition:all .18s}
+  .top10-item:hover{background:var(--bg-inner-hover);border-color:var(--border-strong)}
+  .top10-item:active{background:rgba(0,200,255,0.06)}
+  .top10-rank{font-family:'Oswald',sans-serif;font-size:0.95rem;font-weight:700;text-align:center;line-height:1;padding:0.15rem 0;border-radius:2px;min-width:1.8rem}
+  .top10-rank.r1,.top10-rank.r2,.top10-rank.r3{color:#fff;background:linear-gradient(135deg,var(--red),#d63031)}
+  .top10-rank.r4,.top10-rank.r5,.top10-rank.r6,.top10-rank.r7{color:#fff;background:linear-gradient(135deg,var(--orange),#d4740a)}
+  .top10-rank.r8,.top10-rank.r9,.top10-rank.r10{color:#001a28;background:linear-gradient(135deg,var(--accent-cyan),#0098cc)}
+  .top10-info{display:flex;flex-direction:column;gap:0.08rem;min-width:0}
+  .top10-name{font-size:0.68rem;font-weight:500;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .top10-sub{font-size:0.56rem;color:var(--text-muted)}
+  .top10-meta{display:flex;flex-direction:column;align-items:flex-end;gap:0.08rem;flex-shrink:0}
+  .top10-count{font-family:'Oswald',sans-serif;font-size:1.05rem;font-weight:600;color:var(--text-primary);line-height:1}
+  .top10-unit{font-size:0.6rem;font-weight:400;color:var(--text-muted);margin-left:1px}
+  .top10-trend{font-family:'Oswald',sans-serif;font-size:0.62rem;font-weight:500;padding:0.05rem 0.3rem;border-radius:2px}
+  .top10-trend.up{color:var(--red);background:rgba(255,71,87,0.08)}
+  .top10-trend.down{color:var(--green);background:rgba(46,230,166,0.08)}
+
+  /* 事件详情全屏弹窗 */
+  .evt-detail-overlay{position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,0.75);backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center}
+  .evt-detail-overlay.show{display:flex}
+  .evt-detail-modal{background:var(--bg-card);border:1px solid var(--border-strong);border-radius:0;width:100vw;height:100vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 0 80px rgba(0,200,255,0.25),0 0 160px rgba(0,80,160,0.1);animation:evtSlideIn .3s ease-out}
+  @keyframes evtSlideIn{from{opacity:0;transform:scale(0.96) translateY(12px)}to{opacity:1;transform:scale(1) translateY(0)}}
+  .evt-detail-header{display:flex;justify-content:space-between;align-items:center;padding:0.65rem 1rem;background:linear-gradient(135deg,rgba(0,150,220,0.2),rgba(0,80,160,0.12));border-bottom:1px solid rgba(0,200,255,0.18);flex-shrink:0}
+  .evt-detail-title{font-size:0.85rem;font-weight:600;color:var(--accent-cyan);letter-spacing:.02em;display:flex;align-items:center;gap:0.5rem}
+  .evt-detail-title .evt-loc-badge{font-size:0.6rem;padding:0.1rem 0.5rem;border-radius:2px;background:rgba(0,200,255,0.1);border:1px solid rgba(0,200,255,0.25)}
+  .evt-detail-close{cursor:pointer;font-size:1.1rem;color:var(--text-muted);transition:all .2s;width:1.8rem;height:1.8rem;display:flex;align-items:center;justify-content:center;border-radius:50%;background:rgba(255,255,255,0.04)}
+  .evt-detail-close:hover{color:var(--red);background:rgba(255,71,87,0.15)}
+  .evt-detail-body{flex:1;overflow:hidden;position:relative}
+  .evt-detail-body iframe{width:100%;height:100%;border:none}
+  .evt-detail-loading{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:0.8rem;background:var(--bg-deep)}
+  .evt-detail-loading .spinner{width:1.2rem;height:1.2rem;border:2px solid var(--border-strong);border-top-color:var(--accent-cyan);border-radius:50%;animation:spin .8s linear infinite;margin-right:0.5rem}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
   #map-container{flex:1;position:relative;border-radius:3px;overflow:hidden;border:1px solid var(--border);min-height:0}
   #mapid{position:absolute;inset:0}.amap-logo,.amap-copyright{display:none!important}
   .amap-control-zoom a{background:rgba(15,33,56,0.9)!important;color:var(--accent-cyan)!important;border-color:var(--border)!important}
-  .pin-inner{display:flex;flex-direction:column;align-items:center;pointer-events:none}
+  .pin-inner{display:flex;flex-direction:column;align-items:center;cursor:pointer}
+  .pin-inner .pin-dot,.pin-inner .pin-tri{pointer-events:none}
+  .pin-inner .pin-label{pointer-events:none}
+
+  /* 视频直播弹窗 */
+  .cam-popup{position:absolute;z-index:2000;background:var(--bg-card);border:1px solid rgba(0,200,255,0.3);border-radius:5px;width:14rem;box-shadow:0 0 24px rgba(0,200,255,0.25),0 0 60px rgba(0,0,0,0.5);overflow:hidden;pointer-events:auto;animation:camSlideIn .25s ease-out}
+  @keyframes camSlideIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+  .cam-popup::before{content:'';position:absolute;bottom:-8px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:8px solid transparent;border-right:8px solid transparent;border-top:8px solid rgba(0,200,255,0.3)}
+  .cam-popup::after{content:'';position:absolute;bottom:-6px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-top:6px solid var(--bg-card)}
+  .cam-popup-header{display:flex;justify-content:space-between;align-items:center;padding:0.35rem 0.5rem;background:linear-gradient(135deg,rgba(255,71,87,0.3),rgba(200,0,0,0.2));border-bottom:1px solid rgba(255,71,87,0.25)}
+  .cam-popup-live{font-family:'Oswald',sans-serif;font-size:0.6rem;font-weight:600;color:#fff;background:var(--red);padding:0.08rem 0.4rem;border-radius:2px;animation:livePulse 1.5s ease-in-out infinite;letter-spacing:0.5px}
+  @keyframes livePulse{0%,100%{box-shadow:0 0 0 rgba(255,71,87,0)}50%{box-shadow:0 0 8px rgba(255,71,87,0.6)}}
+  .cam-popup-name{font-size:0.6rem;color:rgba(255,255,255,0.85);font-weight:500;flex:1;margin-left:0.4rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .cam-popup-close{cursor:pointer;font-size:0.7rem;color:rgba(255,255,255,0.5);width:1rem;height:1rem;display:flex;align-items:center;justify-content:center;border-radius:50%;flex-shrink:0;transition:all .2s}
+  .cam-popup-close:hover{color:#fff;background:rgba(255,71,87,0.4)}
+  .cam-popup-video{position:relative;width:100%;height:7.5rem;background:linear-gradient(135deg,#0a1a2e 0%,#0d2040 50%,#0a1628 100%);overflow:hidden}
+  .cam-popup-video canvas{width:100%;height:100%;display:block}
+  .cam-popup-timestamp{position:absolute;bottom:0.2rem;right:0.3rem;font-family:'Oswald',sans-serif;font-size:0.52rem;color:rgba(255,255,255,0.6);background:rgba(0,0,0,0.5);padding:0.05rem 0.3rem;border-radius:2px}
+  .cam-popup-footer{display:flex;justify-content:space-between;align-items:center;padding:0.3rem 0.5rem;background:rgba(0,0,0,0.3);font-size:0.55rem;color:var(--text-muted)}
+  .cam-popup-footer .cam-device{color:var(--accent-cyan)}
+  .cam-popup-footer .cam-quality{color:var(--green)}
   .pin-dot{width:1rem;height:1rem;border-radius:50%;position:relative}
   .pin-dot::after{content:'';position:absolute;inset:-0.3rem;border-radius:50%}
   .pin-tri{width:0;margin-top:-1px;border:0.4rem solid transparent;border-top-width:0.55rem}
@@ -230,7 +288,7 @@
   .occupy-d.on{background:var(--yellow);box-shadow:0 0 4px var(--yellow);width:0.7rem;border-radius:0.15rem}
 
   /* 实时监测卡片滚动动画 */
-  #realtime-card{position:relative;overflow:hidden;flex:1;min-height:0}
+  #realtime-card,#realtime-card-bl,#realtime-card-bc,#realtime-card-br{position:relative;overflow:hidden;flex:1;min-height:0}
   #realtime-card .event{position:absolute;inset:0;transition:transform .5s cubic-bezier(.4,0,.2,1);will-change:transform}
   #realtime-card .event.entering{transform:translateY(-100%)}
   #realtime-card .event.active{transform:translateY(0)}
@@ -259,6 +317,12 @@
   .grid-cell.push-bl{transform:translate(-115%,115%)}
   .grid-cell.push-bc{transform:translate(0,115%)}
   .grid-cell.push-br{transform:translate(115%,115%)}
+  .grid-cell.push-b{transform:translate(0,115%)}
+  /* AI智能监测合并宫格 - 三列子面板 */
+  .monitor-panels{display:flex;gap:0.5rem;flex:1;min-height:0}
+  .monitor-panel{flex:1;min-width:0;display:flex;flex-direction:column;gap:0.3rem;background:var(--bg-inner);border:1px solid var(--border);border-radius:3px;padding:0.45rem 0.5rem;overflow:hidden}
+  .monitor-panel .panel-label{font-size:0.6rem;color:var(--text-muted);padding-bottom:0.2rem;border-bottom:1px solid var(--border);flex-shrink:0;display:flex;justify-content:space-between;align-items:center}
+  .monitor-panel .panel-label .cam-id{font-family:'Oswald',sans-serif;color:var(--accent-cyan);font-size:0.65rem}
   /* 全屏地图宫格 */
   .grid-cell.map-fullscreen{position:fixed!important;inset:1.2rem!important;z-index:100!important;transition:all 4.8s cubic-bezier(.4,0,.2,1);border-color:rgba(0,200,255,0.5)!important;box-shadow:0 0 60px rgba(0,200,255,0.15),0 0 120px rgba(0,200,255,0.05);border-radius:6px!important}
   .grid-cell.map-fullscreen #map-container{border-color:rgba(0,200,255,0.25)}
@@ -278,19 +342,21 @@
   .algo-item{display:flex;flex-direction:column;gap:0}.algo-label{color:var(--text-muted);font-size:0.8rem}.algo-val{color:var(--text-primary);font-family:'Oswald',sans-serif;font-size:0.65rem}
 
   /* ===== 09 复盘改进 ===== */
-  .review-kpi-area{display:flex;flex:8;min-height:0;gap:0.5rem}
+  .review-kpi-area{display:flex;flex:7;min-height:0;gap:0.5rem}
   .review-radar{flex:1;min-width:0;min-height:0;background:var(--bg-inner);border:1px solid var(--border);border-radius:4px;position:relative;overflow:hidden}
   #review-radar{width:100%;height:100%;padding:0.2rem}
-  .review-kpi-right{flex:1;display:flex;flex-direction:column;gap:0.4rem;min-width:0}
-  .review-kpi-card{background:var(--bg-inner);border:1px solid var(--border);border-left:2px solid var(--accent-cyan);border-radius:3px;padding:0.6rem 0.7rem;display:flex;flex-direction:column;gap:0.2rem;flex:1;justify-content:center}
-  .review-kpi-card:last-child{border-left-color:var(--green)}
-  .review-kpi-num{font-family:'Oswald',sans-serif;font-size:1.8rem;font-weight:600;line-height:1;color:var(--text-primary)}
-  .review-kpi-num .unit{font-size:0.8rem;font-weight:400;color:var(--text-muted);margin-left:0.15rem}
-  .review-kpi-label{font-size:0.68rem;color:var(--text-secondary)}
-  .review-kpi-trend{font-size:0.6rem;display:flex;align-items:center;gap:0.15rem}
+  .review-kpi-right{flex:1;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:0.35rem;min-width:0}
+  .review-kpi-card{background:var(--bg-inner);border:1px solid var(--border);border-left:2px solid var(--accent-cyan);border-radius:3px;padding:0.45rem 0.55rem;display:flex;flex-direction:column;gap:0.15rem;justify-content:center}
+  .review-kpi-card.orange{border-left-color:var(--orange)}
+  .review-kpi-card.green{border-left-color:var(--green)}
+  .review-kpi-num{font-family:'Oswald',sans-serif;font-size:1.4rem;font-weight:600;line-height:1;color:var(--text-primary)}
+  .review-kpi-num .unit{font-size:0.7rem;font-weight:400;color:var(--text-muted);margin-left:0.1rem}
+  .review-kpi-label{font-size:0.6rem;color:var(--text-secondary)}
+  .review-kpi-trend{font-size:0.58rem;display:flex;align-items:center;gap:0.15rem}
   .review-kpi-trend.down{color:var(--green)}
+  .review-kpi-trend.up{color:var(--orange)}
   .review-kpi-trend.flat{color:var(--text-muted)}
-  .review-ai-area{display:flex;flex:2;min-height:0;gap:0.5rem;align-items:center}
+  .review-ai-area{display:flex;flex:3;min-height:0;gap:0.5rem;align-items:center}
   .review-ai-card{flex:1;background:var(--bg-inner);border:1px dashed rgba(0,200,255,0.25);border-radius:4px;padding:0.6rem 0.8rem;display:flex;align-items:center;gap:0.6rem;cursor:pointer;transition:all .25s}
   .review-ai-card:hover{border-color:var(--accent-cyan);border-style:solid;background:rgba(0,200,255,0.04);transform:scale(1.01)}
   .review-ai-icon{width:2.6rem;height:2.6rem;display:flex;align-items:center;justify-content:center;flex-shrink:0}
@@ -405,7 +471,7 @@
     <!-- ===== ① 态势总览 ===== -->
     <div class="grid-cell" data-push="tl">
       <div class="cell-header"><div class="cell-title"><span class="idx">01</span>态势感知</div><div class="cell-sub">实时</div></div>
-      <div style="display:grid;grid-template-rows:auto 1fr;gap:0.4rem;flex:1;min-height:0">
+      <div style="display:grid;grid-template-rows:auto auto 1fr;gap:0.4rem;flex:1;min-height:0">
         <!-- 上排：当前占道 + 今日告警 -->
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.4rem">
           <div id="occupy-card" style="background:linear-gradient(135deg,rgba(255,204,51,0.1),rgba(255,204,51,0.02));border:1px solid rgba(255,204,51,0.25);border-radius:5px;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:0.25rem;position:relative;overflow:hidden;padding:0.5rem">
@@ -431,128 +497,26 @@
             <span style="font-size:0.8rem;color:var(--orange)">含1件超3h</span>
           </div>
         </div>
-        <!-- 下排：今日消防通道占用趋势（双折线） -->
-        <div style="background:linear-gradient(135deg,rgba(0,200,255,0.04),rgba(0,200,255,0.01));border:1px solid var(--border);border-radius:5px;display:flex;flex-direction:column;padding:0.4rem 0.6rem;position:relative;overflow:hidden;min-height:0">
-          <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--accent-cyan),transparent)"></div>
-          <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:0.15rem">
-            <div style="display:flex;align-items:baseline;gap:0.5rem">
-              <span style="font-size:0.65rem;color:var(--text-secondary);letter-spacing:1px;font-weight:500">今日消防通道占用趋势</span>
-              <span style="font-size:0.8rem;color:var(--text-muted)">占道时长（小时）</span>
-            </div>
-            <div style="display:flex;gap:0.8rem;font-size:0.8rem;align-items:center">
-              <span style="display:flex;align-items:center;gap:0.25rem"><span style="display:inline-block;width:0.6rem;height:2px;background:#00c8ff"></span><span style="color:var(--accent-cyan)">今日</span></span>
-              <span style="display:flex;align-items:center;gap:0.25rem"><span style="display:inline-block;width:0.6rem;height:2px;background:#e8c878"></span><span style="color:#e8c878">今年平均</span></span>
-            </div>
-          </div>
-          <div style="flex:1;min-height:0;position:relative;padding:0.1rem 0">
-            <svg viewBox="0 0 280 100" preserveAspectRatio="none" style="width:100%;height:100%;display:block">
-              <!-- 网格线 -->
-              <line x1="20" y1="10" x2="280" y2="10" stroke="rgba(255,255,255,0.05)" stroke-width="0.3"/>
-              <line x1="20" y1="30" x2="280" y2="30" stroke="rgba(255,255,255,0.05)" stroke-width="0.3"/>
-              <line x1="20" y1="50" x2="280" y2="50" stroke="rgba(255,255,255,0.05)" stroke-width="0.3"/>
-              <line x1="20" y1="70" x2="280" y2="70" stroke="rgba(255,255,255,0.05)" stroke-width="0.3"/>
-              <line x1="20" y1="90" x2="280" y2="90" stroke="rgba(255,255,255,0.05)" stroke-width="0.3"/>
-              <!-- Y轴刻度 (2-6h) -->
-              <text x="16" y="13" text-anchor="end" font-family="Oswald" font-size="7" fill="#557089">6</text>
-              <text x="16" y="33" text-anchor="end" font-family="Oswald" font-size="7" fill="#557089">5</text>
-              <text x="16" y="53" text-anchor="end" font-family="Oswald" font-size="7" fill="#557089">4</text>
-              <text x="16" y="73" text-anchor="end" font-family="Oswald" font-size="7" fill="#557089">3</text>
-              <text x="16" y="93" text-anchor="end" font-family="Oswald" font-size="7" fill="#557089">2</text>
-              <!-- 今年平均（黄/米色 平稳线 2-2.5h） -->
-              <!-- Y映射: value 2→y90, 3→y70, 4→y50, 5→y30, 6→y10; Y=90-(v-2)*20 -->
-              <polyline fill="none" stroke="#e8c878" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" points="20,82 36,80 52,78 69,76 85,74 102,72 118,72 135,74 151,76 168,76 184,74 201,72 217,72 234,74 251,76 268,80 280,84"/>
-              <!-- 今日（蓝）从 1.5h→3h→1.5h 弧形 -->
-              <!-- 8:00=1.4, 9:00=1.5, 10:00=1.6, 11:00=1.8, 12:00=2.0, 13:00=2.2, 14:00=2.4, 15:00=2.6, 16:00=2.7, 17:00=2.8, 18:00=3.0(峰), 19:00=2.7, 20:00=2.0, 21:00=1.7, 22:00=1.4 -->
-              <polyline fill="none" stroke="#00c8ff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" points="20,92 36,90 52,88 69,84 85,80 102,76 118,72 135,68 151,64 168,60 184,60 201,66 217,80 234,86 251,90 280,92"/>
-              <!-- X轴刻度 8-22 -->
-              <text x="20" y="99" text-anchor="middle" font-family="Oswald" font-size="6.5" fill="#557089">8</text>
-              <text x="36" y="99" text-anchor="middle" font-family="Oswald" font-size="6.5" fill="#557089">9</text>
-              <text x="52" y="99" text-anchor="middle" font-family="Oswald" font-size="6.5" fill="#557089">10</text>
-              <text x="69" y="99" text-anchor="middle" font-family="Oswald" font-size="6.5" fill="#557089">11</text>
-              <text x="85" y="99" text-anchor="middle" font-family="Oswald" font-size="6.5" fill="#557089">12</text>
-              <text x="102" y="99" text-anchor="middle" font-family="Oswald" font-size="6.5" fill="#557089">13</text>
-              <text x="118" y="99" text-anchor="middle" font-family="Oswald" font-size="6.5" fill="#557089">14</text>
-              <text x="135" y="99" text-anchor="middle" font-family="Oswald" font-size="6.5" fill="#557089">15</text>
-              <text x="151" y="99" text-anchor="middle" font-family="Oswald" font-size="6.5" fill="#557089">16</text>
-              <text x="168" y="99" text-anchor="middle" font-family="Oswald" font-size="6.5" fill="#557089">17</text>
-              <text x="184" y="99" text-anchor="middle" font-family="Oswald" font-size="6.5" fill="#557089">18</text>
-              <text x="201" y="99" text-anchor="middle" font-family="Oswald" font-size="6.5" fill="#557089">19</text>
-              <text x="217" y="99" text-anchor="middle" font-family="Oswald" font-size="6.5" fill="#557089">20</text>
-              <text x="234" y="99" text-anchor="middle" font-family="Oswald" font-size="6.5" fill="#557089">21</text>
-              <text x="251" y="99" text-anchor="middle" font-family="Oswald" font-size="6.5" fill="#557089">22</text>
-            </svg>
+        <!-- 设备管理 -->
+        <div class="section-label" style="margin-top:0.1rem">设备管理</div>
+        <div class="status-bar">
+          <div class="s-node online"><span class="s-dot"></span><div class="s-info"><span class="s-num">11</span><span class="s-label">在线</span></div></div>
+          <div class="s-node offline"><span class="s-dot"></span><div class="s-info"><span class="s-num">1</span><span class="s-label">离线</span></div></div>
+          <div class="s-node suspect"><span class="s-dot"></span><div class="s-info"><span class="s-num">1</span><span class="s-label">疑似故障</span></div></div>
+        </div>
+        <div style="display:flex;flex-direction:column;min-height:0;flex:1;gap:0.4rem">
+          <div class="section-label">▸ 设备预警</div>
+          <div class="alert-list">
+            <div class="alert-row"><span style="color:var(--red)">⚠</span><span class="alert-msg">菜园坝支路·离线超30min</span><span class="alert-time">47m</span></div>
+            <div class="alert-row"><span style="color:var(--orange)">⚠</span><span class="alert-msg">朝天门正街·9天零告警</span><span class="alert-time">9d</span></div>
+            <div class="alert-row"><span style="color:var(--orange)">⚠</span><span class="alert-msg">学田湾·检测量骤降↓62%</span><span class="alert-time">7,020</span></div>
+            <div class="alert-row info"><span style="color:var(--accent-cyan)">ℹ</span><span class="alert-msg">解放碑·心跳延迟异常</span><span class="alert-time">8.4s</span></div>
           </div>
         </div>
       </div>
     </div>
     <div class="grid-cell scroll" data-push="tc">
-      <div class="cell-header"><div class="cell-title"><span class="idx">02</span>实时监测</div><div class="live-badge"><span class="live-dot"></span>LIVE</div></div>
-      <div style="display:flex;align-items:baseline;gap:0.5rem;font-size:0.75rem;color:var(--text-secondary);padding:0.1rem 0">
-        <b style="color:var(--yellow);font-family:Oswald;font-size:1.2rem">2</b> 个通道正在占道
-        <div class="rt-dots" id="rt-dots"><span class="occupy-d on" data-idx="0"></span><span class="occupy-d" data-idx="1"></span></div>
-        <span style="font-size:0.6rem;color:var(--text-muted);margin-left:auto">今日累计 3 件</span>
-      </div>
-      <div id="realtime-card">
-        <div class="event active" data-rt="0" style="border-left:3px solid var(--orange);flex-direction:column;gap:0.3rem;padding:0.45rem 0.55rem">
-          <div style="display:grid;grid-template-columns:0.55fr 1.4fr 0.55fr;gap:0.35rem;flex:1;min-height:0">
-            <div style="display:flex;flex-direction:column;gap:0.35rem;min-height:0">
-              <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:2px;overflow:hidden;display:flex;flex-direction:column;flex:1;min-height:0;min-width:2.8rem">
-                <div style="font-size:0.6rem;color:var(--text-secondary);padding:0.15rem 0.3rem;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);flex-shrink:0"><span style="font-weight:500;letter-spacing:0.5px">开始占道</span><span class="rt-t0" style="font-family:'Oswald',monospace;color:var(--text-muted)">08:00</span></div>
-                <div style="flex:1;position:relative;background:linear-gradient(180deg,#1a2840 0%,#0f1a30 45%,#0a1520 100%);min-height:2.8rem"><div style="position:absolute;bottom:0;left:50%;width:130%;height:35%;background:repeating-linear-gradient(90deg,transparent 0,transparent 6px,rgba(255,255,255,0.05) 6px,rgba(255,255,255,0.05) 10px);transform:translateX(-50%) perspective(30px) rotateX(45deg);transform-origin:bottom"></div><div style="position:absolute;top:35%;left:26%;width:46%;height:22%;border:0.8px solid var(--yellow);background:rgba(255,204,51,0.06)"></div></div>
-                <div style="font-size:0.7rem;color:var(--text-muted);padding:0.1rem 0.3rem;text-align:center;border-top:1px solid var(--border);flex-shrink:0">AI抓拍 · 驶入瞬间</div>
-              </div>
-              <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:2px;overflow:hidden;display:flex;flex-direction:column;flex:1;min-height:0;min-width:2.8rem">
-                <div style="font-size:0.6rem;color:var(--text-secondary);padding:0.15rem 0.3rem;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);flex-shrink:0"><span style="font-weight:500;letter-spacing:0.5px">持续占道</span><span class="rt-t1" style="font-family:'Oswald',monospace;color:var(--text-muted)">08:15</span></div>
-                <div style="flex:1;position:relative;background:linear-gradient(180deg,#1a2840 0%,#0f1a30 45%,#0a1520 100%);min-height:2.8rem"><div style="position:absolute;bottom:0;left:50%;width:130%;height:35%;background:repeating-linear-gradient(90deg,transparent 0,transparent 6px,rgba(255,255,255,0.05) 6px,rgba(255,255,255,0.05) 10px);transform:translateX(-50%) perspective(30px) rotateX(45deg);transform-origin:bottom"></div><div style="position:absolute;top:35%;left:26%;width:46%;height:22%;border:0.8px solid var(--yellow);background:rgba(255,204,51,0.06)"></div></div>
-                <div style="font-size:0.7rem;color:var(--text-muted);padding:0.1rem 0.3rem;text-align:center;border-top:1px solid var(--border);flex-shrink:0">AI抓拍 · 15min持续</div>
-              </div>
-            </div>
-            <div style="background:linear-gradient(180deg,#0d1e20,#051015);border:1px solid var(--border);border-radius:2px;overflow:hidden;display:flex;flex-direction:column;align-self:stretch;flex:1;min-height:0;min-width:2.8rem">
-              <div style="font-size:0.6rem;color:var(--red);padding:0.15rem 0.3rem;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);background:rgba(0,0,0,0.3);flex-shrink:0"><span style="font-weight:500;display:flex;align-items:center;gap:0.2rem"><span class="live-dot"></span>Live</span><span class="rt-t2" style="font-family:'Oswald',monospace;color:var(--text-muted)">08:32</span></div>
-              <div style="flex:1;position:relative;background:linear-gradient(180deg,#0d1e20 0%,#0a1a22 45%,#051015 100%);min-height:2.8rem"><div style="position:absolute;bottom:0;left:50%;width:130%;height:35%;background:repeating-linear-gradient(90deg,transparent 0,transparent 6px,rgba(255,255,255,0.05) 6px,rgba(255,255,255,0.05) 10px);transform:translateX(-50%) perspective(30px) rotateX(45deg);transform-origin:bottom"></div><div style="position:absolute;top:35%;left:26%;width:46%;height:22%;border:0.8px solid var(--yellow);background:rgba(255,204,51,0.06)"></div></div>
-              <div style="font-size:0.7rem;color:var(--red);padding:0.1rem 0.3rem;text-align:center;border-top:1px solid var(--border);flex-shrink:0">实时视频流</div>
-            </div>
-            <div style="background:linear-gradient(135deg,rgba(255,204,51,0.05),rgba(255,204,51,0.01));border:1px solid rgba(255,204,51,0.15);border-radius:3px;padding:0.4rem 0.5rem;display:flex;flex-direction:column;gap:0.2rem">
-              <span class="rt-name" style="font-size:0.85rem;font-weight:500;color:var(--text-primary);line-height:1.2">大溪沟正街12号<br>1F 消防通道</span>
-              <span class="rt-tag" style="align-self:flex-start;font-size:0.6rem;padding:1px 4px;border-radius:1px;background:rgba(255,140,26,0.12);color:var(--or);border:1px solid rgba(255,140,26,0.25)">严重</span>
-              <span class="rt-time" style="font-family:'Oswald',sans-serif;font-size:1.2rem;font-weight:600;color:var(--yellow);line-height:1;text-shadow:0 0 6px rgba(255,204,51,0.4)">03:12:44</span>
-              <span class="rt-state" style="font-size:0.8rem;color:var(--or)">持续占道中</span>
-              <span class="rt-duty" style="font-size:0.8rem;color:var(--text-muted);line-height:1.3">责任：交巡警支队<br>待接单</span>
-            </div>
-          </div>
-        </div>
-        <div class="event entering" data-rt="1" style="border-left:3px solid var(--yellow);flex-direction:column;gap:0.3rem;padding:0.45rem 0.55rem">
-          <div style="display:grid;grid-template-columns:0.55fr 1.4fr 0.55fr;gap:0.35rem;flex:1;min-height:0">
-            <div style="display:flex;flex-direction:column;gap:0.35rem;min-height:0">
-              <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:2px;overflow:hidden;display:flex;flex-direction:column;flex:1;min-height:0;min-width:2.8rem">
-                <div style="font-size:0.6rem;color:var(--text-secondary);padding:0.15rem 0.3rem;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);flex-shrink:0"><span style="font-weight:500;letter-spacing:0.5px">开始占道</span><span class="rt-t0" style="font-family:'Oswald',monospace;color:var(--text-muted)">07:05</span></div>
-                <div style="flex:1;position:relative;background:linear-gradient(180deg,#1a2840 0%,#0f1a30 45%,#0a1520 100%);min-height:2.8rem"><div style="position:absolute;bottom:0;left:50%;width:130%;height:35%;background:repeating-linear-gradient(90deg,transparent 0,transparent 6px,rgba(255,255,255,0.05) 6px,rgba(255,255,255,0.05) 10px);transform:translateX(-50%) perspective(30px) rotateX(45deg);transform-origin:bottom"></div><div style="position:absolute;top:35%;left:26%;width:46%;height:22%;border:0.8px solid var(--yellow);background:rgba(255,204,51,0.06)"></div></div>
-                <div style="font-size:0.55rem;color:var(--text-muted);padding:0.1rem 0.3rem;text-align:center;border-top:1px solid var(--border);flex-shrink:0">AI抓拍 · 驶入瞬间</div>
-              </div>
-              <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:2px;overflow:hidden;display:flex;flex-direction:column;flex:1;min-height:0;min-width:2.8rem">
-                <div style="font-size:0.6rem;color:var(--text-secondary);padding:0.15rem 0.3rem;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);flex-shrink:0"><span style="font-weight:500;letter-spacing:0.5px">持续占道</span><span class="rt-t1" style="font-family:'Oswald',monospace;color:var(--text-muted)">07:20</span></div>
-                <div style="flex:1;position:relative;background:linear-gradient(180deg,#1a2840 0%,#0f1a30 45%,#0a1520 100%);min-height:2.8rem"><div style="position:absolute;bottom:0;left:50%;width:130%;height:35%;background:repeating-linear-gradient(90deg,transparent 0,transparent 6px,rgba(255,255,255,0.05) 6px,rgba(255,255,255,0.05) 10px);transform:translateX(-50%) perspective(30px) rotateX(45deg);transform-origin:bottom"></div><div style="position:absolute;top:35%;left:26%;width:46%;height:22%;border:0.8px solid var(--yellow);background:rgba(255,204,51,0.06)"></div></div>
-                <div style="font-size:0.55rem;color:var(--text-muted);padding:0.1rem 0.3rem;text-align:center;border-top:1px solid var(--border);flex-shrink:0">AI抓拍 · 15min持续</div>
-              </div>
-            </div>
-            <div style="background:linear-gradient(180deg,#0d1e20,#051015);border:1px solid var(--border);border-radius:2px;overflow:hidden;display:flex;flex-direction:column;align-self:stretch;flex:1;min-height:0;min-width:2.8rem">
-              <div style="font-size:0.6rem;color:var(--red);padding:0.15rem 0.3rem;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);background:rgba(0,0,0,0.3);flex-shrink:0"><span style="font-weight:500;display:flex;align-items:center;gap:0.2rem"><span class="live-dot"></span>Live</span><span class="rt-t2" style="font-family:'Oswald',monospace;color:var(--text-muted)">08:32</span></div>
-              <div style="flex:1;position:relative;background:linear-gradient(180deg,#0d1e20 0%,#0a1a22 45%,#051015 100%);min-height:2.8rem"><div style="position:absolute;bottom:0;left:50%;width:130%;height:35%;background:repeating-linear-gradient(90deg,transparent 0,transparent 6px,rgba(255,255,255,0.05) 6px,rgba(255,255,255,0.05) 10px);transform:translateX(-50%) perspective(30px) rotateX(45deg);transform-origin:bottom"></div><div style="position:absolute;top:35%;left:26%;width:46%;height:22%;border:0.8px solid var(--yellow);background:rgba(255,204,51,0.06)"></div></div>
-              <div style="font-size:0.55rem;color:var(--red);padding:0.1rem 0.3rem;text-align:center;border-top:1px solid var(--border);flex-shrink:0">实时视频流</div>
-            </div>
-            <div style="background:linear-gradient(135deg,rgba(255,204,51,0.05),rgba(255,204,51,0.01));border:1px solid rgba(255,204,51,0.15);border-radius:3px;padding:0.4rem 0.5rem;display:flex;flex-direction:column;gap:0.2rem">
-              <span class="rt-name" style="font-size:0.85rem;font-weight:500;color:var(--text-primary);line-height:1.2">学田湾正街65号<br>1F 消防通道</span>
-              <span class="rt-tag" style="align-self:flex-start;font-size:0.6rem;padding:1px 4px;border-radius:1px;background:rgba(255,204,51,0.12);color:var(--yellow);border:1px solid rgba(255,204,51,0.25)">预警</span>
-              <span class="rt-time" style="font-family:'Oswald',sans-serif;font-size:1.2rem;font-weight:600;color:var(--yellow);line-height:1;text-shadow:0 0 6px rgba(255,204,51,0.4)">01:27:30</span>
-              <span class="rt-state" style="font-size:0.8rem;color:var(--yellow)">持续占道中</span>
-              <span class="rt-duty" style="font-size:0.8rem;color:var(--text-muted);line-height:1.3">责任：上清寺街道<br>已交办</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="grid-cell scroll" data-push="tr">
-      <div class="cell-header"><div class="cell-title"><span class="idx">03</span>分级预警交办</div><div class="cell-sub" style="color:var(--orange)">待派单 <b style="font-size:0.95rem">2</b></div></div>
+      <div class="cell-header"><div class="cell-title"><span class="idx">02</span>分级预警交办</div><div class="cell-sub" style="color:var(--orange)">待派单 <b style="font-size:0.95rem">2</b></div></div>
       <div style="font-size:0.6rem;color:var(--text-secondary);display:flex;justify-content:space-between;align-items:center"><span>风险分级 · 派单策略</span><span style="color:var(--accent-cyan);cursor:pointer">配置▸</span></div>
       <div class="rule-bar-h"><div class="rule-seg seg-safe">正常</div><div class="rule-seg seg-smart">智能处置</div><div class="rule-seg seg-warn">预警</div><div class="rule-seg seg-alert">告警</div></div>
       <div class="rule-ticks"><span>0</span><span>30</span><span>45</span><span>60</span></div>
@@ -568,8 +532,8 @@
         <div class="todo"><div class="todo-level lv-alert"><span class="lv-num">L3</span></div><div class="todo-info"><div class="todo-point">学田湾正街65号</div><div class="todo-meta"><span class="tag">87min</span><span class="tag">≥60告警</span></div></div><div class="todo-actions"><button class="btn-move-car done" onclick="toggleMoveCar(this)">已通知挪车</button><button class="btn-dispatch done" onclick="toggleDispatch(this)">已交办</button></div></div>
       </div>
     </div>
-    <div class="grid-cell scroll" data-push="ml">
-      <div class="cell-header"><div class="cell-title"><span class="idx">04</span>交办跟踪</div><div class="cell-sub" style="color:var(--red)">超时 <b>1</b></div></div>
+    <div class="grid-cell scroll" data-push="tr">
+      <div class="cell-header"><div class="cell-title"><span class="idx">03</span>交办跟踪</div><div class="cell-sub" style="color:var(--red)">超时 <b>1</b></div></div>
       <div class="level-bar">
         <div class="level-node"><div class="l-name">处置中</div><div class="l-stat"><span class="l-doing">3</span><span style="color:var(--text-muted)">件</span></div></div>
         <div class="level-node"><div class="l-name">已超时</div><div class="l-stat"><span class="l-over">1</span><span style="color:var(--text-muted)">件</span></div></div>
@@ -596,6 +560,80 @@
         <div class="baseline-row"><span class="b-name">渝中治理</span><div class="b-bar"><div class="b-fill red" style="width:100%"></div><div class="b-baseline" style="left:66.67%"></div></div><span class="b-val">30m</span></div>
       </div>
     </div>
+    <!-- 注销 04 实时监测 -->
+    <!--
+    <div class="grid-cell scroll" data-push="ml">
+      <div class="cell-header"><div class="cell-title"><span class="idx">04</span>实时监测</div><div class="live-badge"><span class="live-dot"></span>LIVE</div></div>
+      <div style="display:flex;align-items:baseline;gap:0.5rem;font-size:0.75rem;color:var(--text-secondary);padding:0.1rem 0">
+        <b style="color:var(--yellow);font-family:Oswald;font-size:1.2rem">2</b> 个通道正在占道
+        <div class="rt-dots" id="rt-dots"><span class="occupy-d on" data-idx="0"></span><span class="occupy-d" data-idx="1"></span></div>
+        <span style="font-size:0.6rem;color:var(--text-muted);margin-left:auto">今日累计 3 件</span>
+      </div>
+      <div id="realtime-card">...[原实时监测内容已注释]...</div>
+    </div>
+    -->
+    <!-- 04 态势分析 · 消防车道难点TOP10 -->
+    <div class="grid-cell" data-push="ml">
+      <div class="cell-header"><div class="cell-title"><span class="idx">04</span>态势分析</div><div class="cell-sub">消防车道难点TOP10 · 近30天</div></div>
+      <div class="kpi-row s2">
+        <div class="kpi-card"><div class="kpi-val" style="color:var(--orange)">3<span style="font-size:0.7rem">处</span></div><div class="kpi-label">本月新增难点</div></div>
+        <div class="kpi-card"><div class="kpi-val">16<span style="font-size:0.7rem">处</span></div><div class="kpi-label">难点总数</div></div>
+      </div>
+      <div class="top10-scroll" id="top10-scroll">
+        <div class="top10-track" id="top10-track">
+          <div class="top10-item" data-loc="daping" onclick="openEventDetail('daping','大坪正街消防通道')">
+            <span class="top10-rank r1">01</span>
+            <div class="top10-info"><span class="top10-name">大坪正街消防通道</span><span class="top10-sub">大坪街道 · 高层住宅集中区</span></div>
+            <div class="top10-meta"><span class="top10-count">187<span class="top10-unit">次</span></span><span class="top10-trend up">↑12</span></div>
+          </div>
+          <div class="top10-item" data-loc="jiefangbei" onclick="openEventDetail('jiefangbei','解放碑民权路消防车道')">
+            <span class="top10-rank r2">02</span>
+            <div class="top10-info"><span class="top10-name">解放碑民权路消防车道</span><span class="top10-sub">解放碑街道 · 商圈核心区</span></div>
+            <div class="top10-meta"><span class="top10-count">165<span class="top10-unit">次</span></span><span class="top10-trend up">↑8</span></div>
+          </div>
+          <div class="top10-item" data-loc="caiyuanba" onclick="openEventDetail('caiyuanba','菜园坝火车站北广场通道')">
+            <span class="top10-rank r3">03</span>
+            <div class="top10-info"><span class="top10-name">菜园坝火车站北广场通道</span><span class="top10-sub">菜园坝街道 · 交通枢纽</span></div>
+            <div class="top10-meta"><span class="top10-count">152<span class="top10-unit">次</span></span><span class="top10-trend down">↓3</span></div>
+          </div>
+          <div class="top10-item" data-loc="jiaochangkou" onclick="openEventDetail('jiaochangkou','较场口得意世界消防通道')">
+            <span class="top10-rank r4">04</span>
+            <div class="top10-info"><span class="top10-name">较场口得意世界消防通道</span><span class="top10-sub">解放碑街道 · 娱乐餐饮密集</span></div>
+            <div class="top10-meta"><span class="top10-count">138<span class="top10-unit">次</span></span><span class="top10-trend up">↑15</span></div>
+          </div>
+          <div class="top10-item" data-loc="shiyoulu" onclick="openEventDetail('shiyoulu','石油路龙湖时代天街通道')">
+            <span class="top10-rank r5">05</span>
+            <div class="top10-info"><span class="top10-name">石油路龙湖时代天街通道</span><span class="top10-sub">石油路街道 · 大型商业体</span></div>
+            <div class="top10-meta"><span class="top10-count">124<span class="top10-unit">次</span></span><span class="top10-trend up">↑5</span></div>
+          </div>
+          <div class="top10-item" data-loc="shangqingsi" onclick="openEventDetail('shangqingsi','上清寺美专校街消防车道')">
+            <span class="top10-rank r6">06</span>
+            <div class="top10-info"><span class="top10-name">上清寺美专校街消防车道</span><span class="top10-sub">上清寺街道 · 老旧小区混合</span></div>
+            <div class="top10-meta"><span class="top10-count">109<span class="top10-unit">次</span></span><span class="top10-trend down">↓2</span></div>
+          </div>
+          <div class="top10-item" data-loc="lianglukou" onclick="openEventDetail('lianglukou','两路口急救中心通道')">
+            <span class="top10-rank r7">07</span>
+            <div class="top10-info"><span class="top10-name">两路口急救中心通道</span><span class="top10-sub">两路口街道 · 医院周边</span></div>
+            <div class="top10-meta"><span class="top10-count">96<span class="top10-unit">次</span></span><span class="top10-trend up">↑7</span></div>
+          </div>
+          <div class="top10-item" data-loc="chaotianmen" onclick="openEventDetail('chaotianmen','朝天门批发市场消防通道')">
+            <span class="top10-rank r8">08</span>
+            <div class="top10-info"><span class="top10-name">朝天门批发市场消防通道</span><span class="top10-sub">朝天门街道 · 批发物流密集</span></div>
+            <div class="top10-meta"><span class="top10-count">83<span class="top10-unit">次</span></span><span class="top10-trend up">↑11</span></div>
+          </div>
+          <div class="top10-item" data-loc="qixinggang" onclick="openEventDetail('qixinggang','七星岗通远门消防车道')">
+            <span class="top10-rank r9">09</span>
+            <div class="top10-info"><span class="top10-name">七星岗通远门消防车道</span><span class="top10-sub">七星岗街道 · 老城区窄巷</span></div>
+            <div class="top10-meta"><span class="top10-count">71<span class="top10-unit">次</span></span><span class="top10-trend down">↓5</span></div>
+          </div>
+          <div class="top10-item" data-loc="nanjimen" onclick="openEventDetail('nanjimen','南纪门十八梯消防通道')">
+            <span class="top10-rank r10">10</span>
+            <div class="top10-info"><span class="top10-name">南纪门十八梯消防通道</span><span class="top10-sub">南纪门街道 · 景区周边</span></div>
+            <div class="top10-meta"><span class="top10-count">58<span class="top10-unit">次</span></span><span class="top10-trend up">↑4</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
     <div class="grid-cell" id="cell-map">
       <div class="cell-header"><div class="cell-title"><span class="idx">05</span>渝中消防通道占用态势</div><button class="btn-expand-map" id="btn-expand-map" title="展开地图全屏">展开 ▸</button><div class="map-stat">告警<b style="color:var(--red)">2</b>·预警<b style="color:var(--orange)">1</b>·智处<b style="color:var(--yellow)">1</b>·离线<b style="color:var(--gray)">1</b></div></div>
       <div id="map-container">
@@ -608,74 +646,28 @@
         </div>
       </div>
     </div>
-    <div class="grid-cell scroll" data-push="mr">
-      <div class="cell-header"><div class="cell-title"><span class="idx">06</span>闭环核验</div><div class="cell-sub">待<b style="color:var(--accent-cyan)">2</b> 恢复<b style="color:var(--green)">8</b> 未<b style="color:var(--red)">1</b></div></div>
-      <div class="verify-list">
-        <div class="verify-card">
-          <div class="v-top"><span class="v-point">菜园坝正街88号</span><span class="v-tag ing">AI重检中</span></div>
-          <div class="compare"><div class="cmp-thumb cmp-before"><div class="c-car"></div><div class="c-road"></div></div><div class="cmp-arrow">→</div><div class="cmp-thumb cmp-after"><div class="c-road"></div></div></div>
-          <div class="recheck-bar"><div class="recheck-fill recheck-ing" style="width:60%"></div></div>
-          <div class="v-status"><span style="color:var(--accent-cyan);font-weight:600">AI</span> 15min窗口 · 未检测到占道 <span style="font-family:Oswald">9/15min</span></div>
-        </div>
-        <div class="verify-card pass">
-          <div class="v-top"><span class="v-point">两路口中山一路</span><span class="v-tag pass">✓已恢复</span></div>
-          <div class="recheck-bar"><div class="recheck-fill recheck-pass" style="width:100%"></div></div>
-          <div class="v-status"><span style="color:var(--green);font-weight:600">AI</span> 15分钟期满 · 无新占道 <span style="color:var(--green)">已恢复</span></div>
-        </div>
-        <div class="verify-card fail">
-          <div class="v-top"><span class="v-point">大坪正街56号</span><span class="v-tag fail">🔴未完成</span></div>
-          <div class="compare"><div class="cmp-thumb cmp-before"><div class="c-car"></div><div class="c-road"></div></div><div class="cmp-arrow">→</div><div class="cmp-thumb cmp-before"><div class="c-car" style="border-color:var(--red);background:rgba(255,71,87,0.04)"></div><div class="c-road"></div></div></div>
-          <div class="recheck-bar"><div class="recheck-fill recheck-fail" style="width:100%"></div></div>
-          <div class="v-status"><span style="color:var(--red);font-weight:600">AI</span> 第10分钟检测到新车辆 <span style="color:var(--red)">已重派</span></div>
-        </div>
-      </div>
-    </div>
-    <div class="grid-cell scroll" data-push="bl">
-      <div class="cell-header"><div class="cell-title"><span class="idx">07</span>设备管理</div><div class="cell-sub">在线<b style="color:var(--green)">11</b> 异常<b style="color:var(--red)">2</b></div></div>
-      <div class="status-bar">
-        <div class="s-node online"><span class="s-dot"></span><div class="s-info"><span class="s-num">11</span><span class="s-label">在线</span></div></div>
-        <div class="s-node offline"><span class="s-dot"></span><div class="s-info"><span class="s-num">1</span><span class="s-label">离线</span></div></div>
-        <div class="s-node suspect"><span class="s-dot"></span><div class="s-info"><span class="s-num">1</span><span class="s-label">疑似故障</span></div></div>
-      </div>
-      <div class="section-label">▸ 系统预警</div>
-      <div class="alert-list">
-        <div class="alert-row"><span style="color:var(--red)">⚠</span><span class="alert-msg">菜园坝支路·离线超30min</span><span class="alert-time">47m</span></div>
-        <div class="alert-row"><span style="color:var(--orange)">⚠</span><span class="alert-msg">朝天门正街·9天零告警</span><span class="alert-time">9d</span></div>
-        <div class="alert-row"><span style="color:var(--orange)">⚠</span><span class="alert-msg">学田湾·检测量骤降↓62%</span><span class="alert-time">7,020</span></div>
-        <div class="alert-row info"><span style="color:var(--accent-cyan)">ℹ</span><span class="alert-msg">解放碑·心跳延迟异常</span><span class="alert-time">8.4s</span></div>
-      </div>
-      <div class="section-label" style="margin-top:0.2rem">▸ 算法配置</div>
-      <div class="algo-row"><div class="algo-item"><span class="algo-label">过滤阈值</span><span class="algo-val">60min</span></div><div class="algo-item"><span class="algo-label">灵敏度</span><span class="algo-val">高</span></div><div class="algo-item"><span class="algo-label">空窗监测</span><span class="algo-val">60min</span></div></div>
-    </div>
-    <div class="grid-cell scroll" data-push="bc">
-      <div class="cell-header"><div class="cell-title"><span class="idx">08</span>态势分析</div><div class="cell-sub">近30天</div></div>
-      <div class="kpi-row s2" style="margin-bottom:0.2rem">
-        <div class="kpi-card active" id="kpi-occ" onclick="switchTrend('occ')"><div class="kpi-val">15.2<span style="font-size:0.7rem">%</span></div><div class="kpi-label">通道占用率</div><div class="kpi-status"><span class="trend down">↓1.8%</span></div></div>
-        <div class="kpi-card" id="kpi-resp" onclick="switchTrend('resp')"><div class="kpi-val" style="color:var(--orange)">197<span style="font-size:0.7rem">min</span></div><div class="kpi-label">处置响应均时</div><div class="kpi-status" style="color:var(--orange)">↑1.2%</div></div>
-      </div>
-      <div style="font-size:0.6rem;color:var(--text-secondary)" id="trend-title"><span id="trend-title-main">通道占用趋势</span> <span style="color:var(--text-muted)" id="trend-title-sub">%/近30天</span></div>
-      <!-- 30天趋势图（ECharts） -->
-      <div class="line-chart" id="trend-echarts" style="height:6.75rem"></div>
-      <div class="section-label" style="margin-top:0.3rem">▸ 驱动指标 <span class="cnt" style="font-size:0.8rem">(本月)</span></div>
-      <div class="dual-metrics">
-        <div class="metric-row"><div class="metric-left"><span class="metric-name">超长占道率</span></div><span class="metric-val">26.4%<span class="metric-trend" style="color:var(--green)">↓2.1%</span></span></div>
-        <div class="metric-row"><div class="metric-left"><span class="metric-name">高峰占比(19-22)</span></div><span class="metric-val">48.9%<span class="metric-trend" style="color:var(--yellow)">↑3.2%</span></span></div>
-        <div class="metric-row"><div class="metric-left"><span class="metric-name">平均占道时长</span></div><span class="metric-val">146min<span class="metric-trend" style="color:var(--green)">↓12m</span></span></div>
-        <div class="metric-row"><div class="metric-left"><span class="metric-name">即停即走比</span></div><span class="metric-val">520:1<span class="metric-trend" style="color:var(--yellow)">↑45</span></span></div>
-      </div>
-    </div>
-    <div class="grid-cell" data-push="br">
-      <div class="cell-header"><div class="cell-title"><span class="idx">09</span>复盘改进</div><div class="cell-sub">2026年</div></div>
+    <div class="grid-cell" data-push="mr">
+      <div class="cell-header"><div class="cell-title"><span class="idx">06</span>复盘改进</div><div class="cell-sub">2026年</div></div>
       <!-- 区域1: 顶部70% KPI同比分析 -->
       <div class="review-kpi-area">
         <div class="review-radar" id="review-radar"></div>
         <div class="review-kpi-right">
           <div class="review-kpi-card">
+            <div class="review-kpi-num">15.2<span class="unit">%</span></div>
+            <div class="review-kpi-label">消防通道占用率</div>
+            <div class="review-kpi-trend down">&#x2193;15%</div>
+          </div>
+          <div class="review-kpi-card orange">
+            <div class="review-kpi-num">188<span class="unit">min</span></div>
+            <div class="review-kpi-label">消防车道响应均时</div>
+            <div class="review-kpi-trend up">&#x2191;15min</div>
+          </div>
+          <div class="review-kpi-card green">
             <div class="review-kpi-num">53<span class="unit">件</span></div>
             <div class="review-kpi-label">年度一件事</div>
             <div class="review-kpi-trend down">&#x2193;1.8%</div>
           </div>
-          <div class="review-kpi-card">
+          <div class="review-kpi-card green">
             <div class="review-kpi-num">0<span class="unit">件</span></div>
             <div class="review-kpi-label">消防通道占堵舆情数</div>
             <div class="review-kpi-trend flat">不变</div>
@@ -725,7 +717,155 @@
         </div>
       </div>
     </div>
+    <!-- 注销 07 设备管理 -->
+    <!-- <div class="grid-cell scroll" data-push="bl">
+      <div class="cell-header"><div class="cell-title"><span class="idx">07</span>设备管理</div><div class="cell-sub">在线<b style="color:var(--green)">11</b> 异常<b style="color:var(--red)">2</b></div></div>
+      <div class="status-bar">
+        <div class="s-node online"><span class="s-dot"></span><div class="s-info"><span class="s-num">11</span><span class="s-label">在线</span></div></div>
+        <div class="s-node offline"><span class="s-dot"></span><div class="s-info"><span class="s-num">1</span><span class="s-label">离线</span></div></div>
+        <div class="s-node suspect"><span class="s-dot"></span><div class="s-info"><span class="s-num">1</span><span class="s-label">疑似故障</span></div></div>
+      </div>
+      <div class="section-label">▸ 系统预警</div>
+      <div class="alert-list">
+        <div class="alert-row"><span style="color:var(--red)">⚠</span><span class="alert-msg">菜园坝支路·离线超30min</span><span class="alert-time">47m</span></div>
+        <div class="alert-row"><span style="color:var(--orange)">⚠</span><span class="alert-msg">朝天门正街·9天零告警</span><span class="alert-time">9d</span></div>
+        <div class="alert-row"><span style="color:var(--orange)">⚠</span><span class="alert-msg">学田湾·检测量骤降↓62%</span><span class="alert-time">7,020</span></div>
+        <div class="alert-row info"><span style="color:var(--accent-cyan)">ℹ</span><span class="alert-msg">解放碑·心跳延迟异常</span><span class="alert-time">8.4s</span></div>
+      </div>
+      <div class="section-label" style="margin-top:0.2rem">▸ 算法配置</div>
+      <div class="algo-row"><div class="algo-item"><span class="algo-label">过滤阈值</span><span class="algo-val">60min</span></div><div class="algo-item"><span class="algo-label">灵敏度</span><span class="algo-val">高</span></div><div class="algo-item"><span class="algo-label">空窗监测</span><span class="algo-val">60min</span></div></div>
+    </div> -->
+    <!-- 注销 07/08/09 独立宫格（已合并为AI智能监测全宽宫格） -->
+    <!--
+    <div class="grid-cell scroll" data-push="bl">
+      <div class="cell-header"><div class="cell-title"><span class="idx">07</span>实时监测</div><div class="live-badge"><span class="live-dot"></span>LIVE</div></div>
+      ...原07实时监测内容...
+    </div>
+    <div class="grid-cell scroll" data-push="bc">
+      <div class="cell-header"><div class="cell-title"><span class="idx">08</span>实时监测</div><div class="live-badge"><span class="live-dot"></span>LIVE</div></div>
+      ...原08实时监测内容...
+    </div>
+    <div class="grid-cell scroll" data-push="br">
+      <div class="cell-header"><div class="cell-title"><span class="idx">09</span>实时监测</div><div class="live-badge"><span class="live-dot"></span>LIVE</div></div>
+      ...原09实时监测内容...
+    </div>
+    -->
+    <!-- AI智能监测 · 三路合并宫格（全宽） -->
+    <div class="grid-cell" data-push="b" style="grid-column:1/-1">
+      <div class="cell-header"><div class="cell-title">AI智能监测</div><div class="live-badge"><span class="live-dot"></span>LIVE</div></div>
+      <div class="monitor-panels">
+        <!-- 监控点1 -->
+        <div class="monitor-panel" id="realtime-card-bl">
+          <div class="panel-label"><span style="color:var(--accent-cyan)">监控点 1 · 大溪沟正街</span><span class="cam-id">CAM-01</span></div>
+          <div class="event active" data-rt="0" style="border-left:3px solid var(--orange);flex-direction:column;gap:0.3rem;padding:0.35rem 0.4rem;flex:1;min-height:0;display:flex">
+            <div style="display:grid;grid-template-columns:0.77fr 1.96fr 0.77fr;gap:0.35rem;flex:1;min-height:0">
+              <div style="display:flex;flex-direction:column;gap:0.35rem;min-height:0">
+                <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:2px;overflow:hidden;display:flex;flex-direction:column;flex:1;min-height:0;min-width:2.8rem">
+                  <div style="font-size:0.6rem;color:var(--text-secondary);padding:0.15rem 0.3rem;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);flex-shrink:0"><span style="font-weight:500;letter-spacing:0.5px">开始占道</span><span class="rt-t0" style="font-family:'Oswald',monospace;color:var(--text-muted)">08:00</span></div>
+                  <div style="flex:1;position:relative;background:linear-gradient(180deg,#1a2840 0%,#0f1a30 45%,#0a1520 100%);min-height:2.8rem"><div style="position:absolute;bottom:0;left:50%;width:130%;height:35%;background:repeating-linear-gradient(90deg,transparent 0,transparent 6px,rgba(255,255,255,0.05) 6px,rgba(255,255,255,0.05) 10px);transform:translateX(-50%) perspective(30px) rotateX(45deg);transform-origin:bottom"></div><div style="position:absolute;top:35%;left:26%;width:46%;height:22%;border:0.8px solid var(--yellow);background:rgba(255,204,51,0.06)"></div></div>
+                  <div style="font-size:0.7rem;color:var(--text-muted);padding:0.1rem 0.3rem;text-align:center;border-top:1px solid var(--border);flex-shrink:0">AI抓拍 · 驶入瞬间</div>
+                </div>
+                <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:2px;overflow:hidden;display:flex;flex-direction:column;flex:1;min-height:0;min-width:2.8rem">
+                  <div style="font-size:0.6rem;color:var(--text-secondary);padding:0.15rem 0.3rem;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);flex-shrink:0"><span style="font-weight:500;letter-spacing:0.5px">持续占道</span><span class="rt-t1" style="font-family:'Oswald',monospace;color:var(--text-muted)">08:15</span></div>
+                  <div style="flex:1;position:relative;background:linear-gradient(180deg,#1a2840 0%,#0f1a30 45%,#0a1520 100%);min-height:2.8rem"><div style="position:absolute;bottom:0;left:50%;width:130%;height:35%;background:repeating-linear-gradient(90deg,transparent 0,transparent 6px,rgba(255,255,255,0.05) 6px,rgba(255,255,255,0.05) 10px);transform:translateX(-50%) perspective(30px) rotateX(45deg);transform-origin:bottom"></div><div style="position:absolute;top:35%;left:26%;width:46%;height:22%;border:0.8px solid var(--yellow);background:rgba(255,204,51,0.06)"></div></div>
+                  <div style="font-size:0.7rem;color:var(--text-muted);padding:0.1rem 0.3rem;text-align:center;border-top:1px solid var(--border);flex-shrink:0">AI抓拍 · 15min持续</div>
+                </div>
+              </div>
+              <div style="background:linear-gradient(180deg,#0d1e20,#051015);border:1px solid var(--border);border-radius:2px;overflow:hidden;display:flex;flex-direction:column;align-self:stretch;flex:1;min-height:0;min-width:2.8rem">
+                <div style="font-size:0.6rem;color:var(--red);padding:0.15rem 0.3rem;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);background:rgba(0,0,0,0.3);flex-shrink:0"><span style="font-weight:500;display:flex;align-items:center;gap:0.2rem"><span class="live-dot"></span>Live</span><span class="rt-t2" style="font-family:'Oswald',monospace;color:var(--text-muted)">08:32</span></div>
+                <div style="flex:1;position:relative;background:linear-gradient(180deg,#0d1e20 0%,#0a1a22 45%,#051015 100%);min-height:2.8rem"><div style="position:absolute;bottom:0;left:50%;width:130%;height:35%;background:repeating-linear-gradient(90deg,transparent 0,transparent 6px,rgba(255,255,255,0.05) 6px,rgba(255,255,255,0.05) 10px);transform:translateX(-50%) perspective(30px) rotateX(45deg);transform-origin:bottom"></div><div style="position:absolute;top:35%;left:26%;width:46%;height:22%;border:0.8px solid var(--yellow);background:rgba(255,204,51,0.06)"></div></div>
+                <div style="font-size:0.7rem;color:var(--red);padding:0.1rem 0.3rem;text-align:center;border-top:1px solid var(--border);flex-shrink:0">实时视频流</div>
+              </div>
+              <div style="background:linear-gradient(135deg,rgba(255,204,51,0.05),rgba(255,204,51,0.01));border:1px solid rgba(255,204,51,0.15);border-radius:3px;padding:0.4rem 0.5rem;display:flex;flex-direction:column;gap:0.2rem">
+                <span class="rt-name" style="font-size:0.85rem;font-weight:500;color:var(--text-primary);line-height:1.2">大溪沟正街12号<br>1F 消防通道</span>
+                <span class="rt-tag" style="align-self:flex-start;font-size:0.6rem;padding:1px 4px;border-radius:1px;background:rgba(255,140,26,0.12);color:var(--or);border:1px solid rgba(255,140,26,0.25)">严重</span>
+                <span class="rt-time" style="font-family:'Oswald',sans-serif;font-size:1.2rem;font-weight:600;color:var(--yellow);line-height:1;text-shadow:0 0 6px rgba(255,204,51,0.4)">03:12:44</span>
+                <span class="rt-state" style="font-size:0.8rem;color:var(--or)">持续占道中</span>
+                <span class="rt-duty" style="font-size:0.8rem;color:var(--text-muted);line-height:1.3">责任：交巡警支队<br>待接单</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- 监控点2 -->
+        <div class="monitor-panel" id="realtime-card-bc">
+          <div class="panel-label"><span style="color:var(--accent-cyan)">监控点 2 · 学田湾正街</span><span class="cam-id">CAM-02</span></div>
+          <div class="event active" data-rt="0" style="border-left:3px solid var(--yellow);flex-direction:column;gap:0.3rem;padding:0.35rem 0.4rem;flex:1;min-height:0;display:flex">
+            <div style="display:grid;grid-template-columns:0.77fr 1.96fr 0.77fr;gap:0.35rem;flex:1;min-height:0">
+              <div style="display:flex;flex-direction:column;gap:0.35rem;min-height:0">
+                <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:2px;overflow:hidden;display:flex;flex-direction:column;flex:1;min-height:0;min-width:2.8rem">
+                  <div style="font-size:0.6rem;color:var(--text-secondary);padding:0.15rem 0.3rem;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);flex-shrink:0"><span style="font-weight:500;letter-spacing:0.5px">开始占道</span><span class="rt-t0" style="font-family:'Oswald',monospace;color:var(--text-muted)">07:05</span></div>
+                  <div style="flex:1;position:relative;background:linear-gradient(180deg,#1a2840 0%,#0f1a30 45%,#0a1520 100%);min-height:2.8rem"><div style="position:absolute;bottom:0;left:50%;width:130%;height:35%;background:repeating-linear-gradient(90deg,transparent 0,transparent 6px,rgba(255,255,255,0.05) 6px,rgba(255,255,255,0.05) 10px);transform:translateX(-50%) perspective(30px) rotateX(45deg);transform-origin:bottom"></div><div style="position:absolute;top:35%;left:26%;width:46%;height:22%;border:0.8px solid var(--yellow);background:rgba(255,204,51,0.06)"></div></div>
+                  <div style="font-size:0.7rem;color:var(--text-muted);padding:0.1rem 0.3rem;text-align:center;border-top:1px solid var(--border);flex-shrink:0">AI抓拍 · 驶入瞬间</div>
+                </div>
+                <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:2px;overflow:hidden;display:flex;flex-direction:column;flex:1;min-height:0;min-width:2.8rem">
+                  <div style="font-size:0.6rem;color:var(--text-secondary);padding:0.15rem 0.3rem;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);flex-shrink:0"><span style="font-weight:500;letter-spacing:0.5px">持续占道</span><span class="rt-t1" style="font-family:'Oswald',monospace;color:var(--text-muted)">07:20</span></div>
+                  <div style="flex:1;position:relative;background:linear-gradient(180deg,#1a2840 0%,#0f1a30 45%,#0a1520 100%);min-height:2.8rem"><div style="position:absolute;bottom:0;left:50%;width:130%;height:35%;background:repeating-linear-gradient(90deg,transparent 0,transparent 6px,rgba(255,255,255,0.05) 6px,rgba(255,255,255,0.05) 10px);transform:translateX(-50%) perspective(30px) rotateX(45deg);transform-origin:bottom"></div><div style="position:absolute;top:35%;left:26%;width:46%;height:22%;border:0.8px solid var(--yellow);background:rgba(255,204,51,0.06)"></div></div>
+                  <div style="font-size:0.7rem;color:var(--text-muted);padding:0.1rem 0.3rem;text-align:center;border-top:1px solid var(--border);flex-shrink:0">AI抓拍 · 15min持续</div>
+                </div>
+              </div>
+              <div style="background:linear-gradient(180deg,#0d1e20,#051015);border:1px solid var(--border);border-radius:2px;overflow:hidden;display:flex;flex-direction:column;align-self:stretch;flex:1;min-height:0;min-width:2.8rem">
+                <div style="font-size:0.6rem;color:var(--red);padding:0.15rem 0.3rem;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);background:rgba(0,0,0,0.3);flex-shrink:0"><span style="font-weight:500;display:flex;align-items:center;gap:0.2rem"><span class="live-dot"></span>Live</span><span class="rt-t2" style="font-family:'Oswald',monospace;color:var(--text-muted)">08:32</span></div>
+                <div style="flex:1;position:relative;background:linear-gradient(180deg,#0d1e20 0%,#0a1a22 45%,#051015 100%);min-height:2.8rem"><div style="position:absolute;bottom:0;left:50%;width:130%;height:35%;background:repeating-linear-gradient(90deg,transparent 0,transparent 6px,rgba(255,255,255,0.05) 6px,rgba(255,255,255,0.05) 10px);transform:translateX(-50%) perspective(30px) rotateX(45deg);transform-origin:bottom"></div><div style="position:absolute;top:35%;left:26%;width:46%;height:22%;border:0.8px solid var(--yellow);background:rgba(255,204,51,0.06)"></div></div>
+                <div style="font-size:0.7rem;color:var(--red);padding:0.1rem 0.3rem;text-align:center;border-top:1px solid var(--border);flex-shrink:0">实时视频流</div>
+              </div>
+              <div style="background:linear-gradient(135deg,rgba(255,204,51,0.05),rgba(255,204,51,0.01));border:1px solid rgba(255,204,51,0.15);border-radius:3px;padding:0.4rem 0.5rem;display:flex;flex-direction:column;gap:0.2rem">
+                <span class="rt-name" style="font-size:0.85rem;font-weight:500;color:var(--text-primary);line-height:1.2">学田湾正街65号<br>1F 消防通道</span>
+                <span class="rt-tag" style="align-self:flex-start;font-size:0.6rem;padding:1px 4px;border-radius:1px;background:rgba(255,204,51,0.12);color:var(--yellow);border:1px solid rgba(255,204,51,0.25)">预警</span>
+                <span class="rt-time" style="font-family:'Oswald',sans-serif;font-size:1.2rem;font-weight:600;color:var(--yellow);line-height:1;text-shadow:0 0 6px rgba(255,204,51,0.4)">01:27:30</span>
+                <span class="rt-state" style="font-size:0.8rem;color:var(--yellow)">持续占道中</span>
+                <span class="rt-duty" style="font-size:0.8rem;color:var(--text-muted);line-height:1.3">责任：上清寺街道<br>已交办</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- 监控点3 -->
+        <div class="monitor-panel" id="realtime-card-br">
+          <div class="panel-label"><span style="color:var(--accent-cyan)">监控点 3 · 解放碑民权路</span><span class="cam-id">CAM-03</span></div>
+          <div class="event active" data-rt="0" style="border-left:3px solid var(--orange);flex-direction:column;gap:0.3rem;padding:0.35rem 0.4rem;flex:1;min-height:0;display:flex">
+            <div style="display:grid;grid-template-columns:0.77fr 1.96fr 0.77fr;gap:0.35rem;flex:1;min-height:0">
+              <div style="display:flex;flex-direction:column;gap:0.35rem;min-height:0">
+                <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:2px;overflow:hidden;display:flex;flex-direction:column;flex:1;min-height:0;min-width:2.8rem">
+                  <div style="font-size:0.6rem;color:var(--text-secondary);padding:0.15rem 0.3rem;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);flex-shrink:0"><span style="font-weight:500;letter-spacing:0.5px">开始占道</span><span class="rt-t0" style="font-family:'Oswald',monospace;color:var(--text-muted)">06:40</span></div>
+                  <div style="flex:1;position:relative;background:linear-gradient(180deg,#1a2840 0%,#0f1a30 45%,#0a1520 100%);min-height:2.8rem"><div style="position:absolute;bottom:0;left:50%;width:130%;height:35%;background:repeating-linear-gradient(90deg,transparent 0,transparent 6px,rgba(255,255,255,0.05) 6px,rgba(255,255,255,0.05) 10px);transform:translateX(-50%) perspective(30px) rotateX(45deg);transform-origin:bottom"></div><div style="position:absolute;top:35%;left:26%;width:46%;height:22%;border:0.8px solid var(--yellow);background:rgba(255,204,51,0.06)"></div></div>
+                  <div style="font-size:0.7rem;color:var(--text-muted);padding:0.1rem 0.3rem;text-align:center;border-top:1px solid var(--border);flex-shrink:0">AI抓拍 · 驶入瞬间</div>
+                </div>
+                <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:2px;overflow:hidden;display:flex;flex-direction:column;flex:1;min-height:0;min-width:2.8rem">
+                  <div style="font-size:0.6rem;color:var(--text-secondary);padding:0.15rem 0.3rem;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);flex-shrink:0"><span style="font-weight:500;letter-spacing:0.5px">持续占道</span><span class="rt-t1" style="font-family:'Oswald',monospace;color:var(--text-muted)">07:02</span></div>
+                  <div style="flex:1;position:relative;background:linear-gradient(180deg,#1a2840 0%,#0f1a30 45%,#0a1520 100%);min-height:2.8rem"><div style="position:absolute;bottom:0;left:50%;width:130%;height:35%;background:repeating-linear-gradient(90deg,transparent 0,transparent 6px,rgba(255,255,255,0.05) 6px,rgba(255,255,255,0.05) 10px);transform:translateX(-50%) perspective(30px) rotateX(45deg);transform-origin:bottom"></div><div style="position:absolute;top:35%;left:26%;width:46%;height:22%;border:0.8px solid var(--yellow);background:rgba(255,204,51,0.06)"></div></div>
+                  <div style="font-size:0.7rem;color:var(--text-muted);padding:0.1rem 0.3rem;text-align:center;border-top:1px solid var(--border);flex-shrink:0">AI抓拍 · 15min持续</div>
+                </div>
+              </div>
+              <div style="background:linear-gradient(180deg,#0d1e20,#051015);border:1px solid var(--border);border-radius:2px;overflow:hidden;display:flex;flex-direction:column;align-self:stretch;flex:1;min-height:0;min-width:2.8rem">
+                <div style="font-size:0.6rem;color:var(--red);padding:0.15rem 0.3rem;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);background:rgba(0,0,0,0.3);flex-shrink:0"><span style="font-weight:500;display:flex;align-items:center;gap:0.2rem"><span class="live-dot"></span>Live</span><span class="rt-t2" style="font-family:'Oswald',monospace;color:var(--text-muted)">08:32</span></div>
+                <div style="flex:1;position:relative;background:linear-gradient(180deg,#0d1e20 0%,#0a1a22 45%,#051015 100%);min-height:2.8rem"><div style="position:absolute;bottom:0;left:50%;width:130%;height:35%;background:repeating-linear-gradient(90deg,transparent 0,transparent 6px,rgba(255,255,255,0.05) 6px,rgba(255,255,255,0.05) 10px);transform:translateX(-50%) perspective(30px) rotateX(45deg);transform-origin:bottom"></div><div style="position:absolute;top:35%;left:26%;width:46%;height:22%;border:0.8px solid var(--yellow);background:rgba(255,204,51,0.06)"></div></div>
+                <div style="font-size:0.7rem;color:var(--red);padding:0.1rem 0.3rem;text-align:center;border-top:1px solid var(--border);flex-shrink:0">实时视频流</div>
+              </div>
+              <div style="background:linear-gradient(135deg,rgba(255,204,51,0.05),rgba(255,204,51,0.01));border:1px solid rgba(255,204,51,0.15);border-radius:3px;padding:0.4rem 0.5rem;display:flex;flex-direction:column;gap:0.2rem">
+                <span class="rt-name" style="font-size:0.85rem;font-weight:500;color:var(--text-primary);line-height:1.2">解放碑民权路<br>商圈消防车道</span>
+                <span class="rt-tag" style="align-self:flex-start;font-size:0.6rem;padding:1px 4px;border-radius:1px;background:rgba(255,140,26,0.12);color:var(--or);border:1px solid rgba(255,140,26,0.25)">严重</span>
+                <span class="rt-time" style="font-family:'Oswald',sans-serif;font-size:1.2rem;font-weight:600;color:var(--yellow);line-height:1;text-shadow:0 0 6px rgba(255,204,51,0.4)">02:05:18</span>
+                <span class="rt-state" style="font-size:0.8rem;color:var(--or)">持续占道中</span>
+                <span class="rt-duty" style="font-size:0.8rem;color:var(--text-muted);line-height:1.3">责任：解放碑街道<br>已交办</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </main>
+  <!-- 事件详情弹窗 -->
+  <div class="evt-detail-overlay" id="evt-detail-overlay" onclick="closeEventDetail(event)">
+    <div class="evt-detail-modal" onclick="event.stopPropagation()">
+      <div class="evt-detail-header">
+        <span class="evt-detail-title">事件处置详情 <span class="evt-loc-badge" id="evt-detail-locname">--</span></span>
+        <span class="evt-detail-close" onclick="closeEventDetail()">&#x2715;</span>
+      </div>
+      <div class="evt-detail-body">
+        <div class="evt-detail-loading"><span class="spinner"></span>加载事件详情中...</div>
+        <iframe src="" frameborder="0"></iframe>
+      </div>
+    </div>
+  </div>
   <!-- AI报告模态框 -->
   <div class="ai-modal-overlay" id="ai-report-modal" onclick="closeReportModal(event)">
     <div class="ai-modal" onclick="event.stopPropagation()">
@@ -1185,6 +1325,70 @@
   function initMap(){
     if(typeof AMap==='undefined'){setTimeout(initMap,300);return;}
     _mapInstance=new AMap.Map('mapid',{center:[106.55,29.56],zoom:_origZoom,mapStyle:'amap://styles/dark',viewMode:'3D',pitch:45,rotation:-12,showBuildingBlock:true,features:['bg','road','building','point']});
+    var _camPopup=null,_camAnimId=null,_activeMarker=null,_camTs=0;
+
+    function createCamPopup(){
+      var el=document.createElement('div');el.className='cam-popup';el.style.display='none';
+      el.innerHTML='<div class="cam-popup-header"><span class="cam-popup-live">LIVE</span><span class="cam-popup-name"></span><span class="cam-popup-close">&#x2715;</span></div>'
+        +'<div class="cam-popup-video"><canvas></canvas><span class="cam-popup-timestamp"></span></div>'
+        +'<div class="cam-popup-footer"><span class="cam-device">IP-7E8A</span><span class="cam-quality">1080P</span></div>';
+      document.getElementById('map-container').appendChild(el);
+      el.querySelector('.cam-popup-close').addEventListener('click',function(e){e.stopPropagation();hideCam();});
+      return el;
+    }
+
+    function startCam(canvas,name,popup){
+      var ctx=canvas.getContext('2d'),W=canvas.width=canvas.parentElement.clientWidth,H=canvas.height=canvas.parentElement.clientHeight;
+      var scanY=0,carX=-30;
+      function draw(){
+        if(!_activeMarker){_camAnimId=null;return;}
+        _camTs++;
+        // Sky gradient
+        var g=ctx.createLinearGradient(0,0,0,H*.55);g.addColorStop(0,'#1a3a5c');g.addColorStop(1,'#2c5a8c');ctx.fillStyle=g;ctx.fillRect(0,0,W,H*.55);
+        // Buildings
+        ctx.fillStyle='#0d1f35';ctx.fillRect(0,H*.46,W,H*.08);ctx.fillRect(10,H*.38,24,H*.16);ctx.fillRect(45,H*.42,30,H*.12);ctx.fillRect(85,H*.35,20,H*.19);ctx.fillRect(115,H*.44,22,H*.10);ctx.fillRect(148,H*.40,28,H*.14);ctx.fillRect(185,H*.46,18,H*.08);
+        var bldgGrad=ctx.createLinearGradient(0,H*.35,0,H*.54);bldgGrad.addColorStop(0,'#152745');bldgGrad.addColorStop(1,'#0a1525');ctx.fillStyle=bldgGrad;ctx.fillRect(0,H*.54,W,H*.07);
+        // Road
+        ctx.fillStyle='#1a1a2e';ctx.fillRect(0,H*.61,W,H*.39);
+        ctx.fillStyle='#333';ctx.fillRect(0,H*.58,W,H*.02);
+        // Fire lane markings
+        ctx.setLineDash([12,8]);ctx.strokeStyle='rgba(255,200,0,0.35)';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(0,H*.78);ctx.lineTo(W,H*.78);ctx.stroke();ctx.setLineDash([]);
+        // Moving car
+        carX+=0.5;if(carX>W+20)carX=-20;
+        ctx.fillStyle='#445';ctx.fillRect(carX,H*.66,14,5);ctx.fillRect(carX+2,H*.62,10,4);ctx.fillStyle='rgba(255,255,200,0.3)';ctx.fillRect(carX+3,H*.66,3,5);
+        // Scan line
+        scanY+=1.2;if(scanY>H)scanY=0;
+        ctx.fillStyle='rgba(0,255,200,0.06)';ctx.fillRect(0,scanY,W,1);
+        // Timestamp
+        var sec=_camTs%60,min=Math.floor(_camTs/60)%60,hr=Math.floor(_camTs/3600)%24;
+        popup.querySelector('.cam-popup-timestamp').textContent=pad(hr)+':'+pad(min)+':'+pad(sec);
+        _camAnimId=requestAnimationFrame(draw);
+      }
+      _camTs=0;draw();
+      popup.querySelector('.cam-popup-name').textContent=name;
+    }
+
+    function showCam(marker,name){
+      if(_activeMarker===marker)return;
+      hideCam();
+      _activeMarker=marker;
+      if(!_camPopup)_camPopup=createCamPopup();
+      var px=_mapInstance.lngLatToContainer(marker.getPosition());
+      _camPopup.style.display='block';
+      var pw=parseFloat(getComputedStyle(_camPopup).width)||200;
+      _camPopup.style.left=Math.max(2,Math.min(px.x-pw/2,document.getElementById('map-container').clientWidth-pw-2))+'px';
+      _camPopup.style.top=Math.max(2,px.y-162)+'px';
+      startCam(_camPopup.querySelector('canvas'),name,_camPopup);
+    }
+
+    function hideCam(){
+      if(_camPopup)_camPopup.style.display='none';
+      _activeMarker=null;
+      if(_camAnimId){cancelAnimationFrame(_camAnimId);_camAnimId=null;}
+    }
+
+    _mapInstance.on('mapmove',function(){if(_activeMarker)hideCam();});
+
     function mkPin(color,label){
       var d=document.createElement('div');d.className='pin-inner pin '+color;
       d.innerHTML='<div class="pin-dot"></div><div class="pin-tri"></div><div class="pin-label">'+label+'</div>';return d;
@@ -1192,6 +1396,8 @@
     function addM(lng,lat,color,label){
       var m=new AMap.Marker({position:[lng,lat],content:mkPin(color,label),offset:new AMap.Pixel(0,-18)});
       _mapInstance.add(m);
+      m.on('click',function(){showCam(m,label);});
+      return m;
     }
     addM(106.550,29.559,'red','学田湾 87min');
     addM(106.558,29.565,'red','大溪沟 192min');
@@ -1203,6 +1409,69 @@
   initTrendChart();
   initReviewRadar();
   initAiBot();
+
+  /* ===== 04 态势分析 TOP10 自动滚动 ===== */
+  var _top10Scroll=null,_top10Track=null,_top10AnimId=null,_top10ScrollY=0,_top10Paused=false;
+  function initTop10Scroll(){
+    _top10Scroll=document.getElementById('top10-scroll');
+    _top10Track=document.getElementById('top10-track');
+    if(!_top10Scroll||!_top10Track){setTimeout(initTop10Scroll,300);return;}
+    var items=_top10Track.querySelectorAll('.top10-item');
+    items.forEach(function(item){
+      var clone=item.cloneNode(true);
+      _top10Track.appendChild(clone);
+    });
+    _top10Scroll.addEventListener('mouseenter',function(){_top10Paused=true;});
+    _top10Scroll.addEventListener('mouseleave',function(){_top10Paused=false;});
+    _top10AnimId=requestAnimationFrame(scrollTop10);
+  }
+  function scrollTop10(){
+    if(!_top10Track)return;
+    if(!_top10Paused){
+      _top10ScrollY+=0.2;
+      var singleH=_top10Track.scrollHeight/2;
+      if(_top10ScrollY>=singleH)_top10ScrollY-=singleH;
+      _top10Track.style.transform='translateY('+(-_top10ScrollY)+'px)';
+    }
+    _top10AnimId=requestAnimationFrame(scrollTop10);
+  }
+
+  /* ===== 事件详情弹窗 ===== */
+  var _evtOverlay=null,_evtLoadTimer=null;
+  function ensureEvtOverlay(){
+    if(_evtOverlay)return _evtOverlay;
+    _evtOverlay=document.getElementById('evt-detail-overlay');
+    return _evtOverlay;
+  }
+  function openEventDetail(locId,locName){
+    var overlay=ensureEvtOverlay();
+    if(!overlay)return;
+    var titleEl=document.getElementById('evt-detail-locname');
+    if(titleEl)titleEl.textContent=locName||locId;
+    var iframe=overlay.querySelector('.evt-detail-body iframe');
+    if(iframe)iframe.src='event-detail.html?location='+encodeURIComponent(locId)+'&name='+encodeURIComponent(locName||locId);
+    var loading=overlay.querySelector('.evt-detail-loading');
+    if(loading)loading.style.display='flex';
+    clearTimeout(_evtLoadTimer);
+    _evtLoadTimer=setTimeout(function(){if(loading)loading.style.display='none';},1300);
+    overlay.classList.add('show');
+    document.body.style.overflow='hidden';
+  }
+  function closeEventDetail(e){
+    if(e&&e.target!==document.getElementById('evt-detail-overlay'))return;
+    var overlay=ensureEvtOverlay();
+    if(overlay){overlay.classList.remove('show');
+      var iframe=overlay.querySelector('.evt-detail-body iframe');
+      if(iframe)iframe.src='';
+      clearTimeout(_evtLoadTimer);
+      var loading=overlay.querySelector('.evt-detail-loading');
+      if(loading)loading.style.display='flex';
+    }
+    document.body.style.overflow='';
+  }
+  window.openEventDetail=openEventDetail;
+  window.closeEventDetail=closeEventDetail;
+  initTop10Scroll();
 })();
 </script>
 </body>
