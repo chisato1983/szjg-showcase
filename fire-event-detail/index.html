@@ -4,8 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>消防通道保畅一件事 — 事件处置详情</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" media="print" onload="this.media='all'">
 <style>
+  @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap');
+
   :root {
     --bg-deep: #081424;
     --bg-card: #0f2138;
@@ -528,21 +529,224 @@
   }
 
   /* ===== RESPONSIVE ===== */
+  /* PAD 横屏 (768-1100px): 两列折行布局 */
   @media (max-width: 1100px) {
+    .topbar {
+      padding: 0 1.2rem;
+    }
+    .topbar-title {
+      max-width: 300px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 0.95rem;
+    }
     .main {
       flex-direction: column;
       gap: 0.6rem;
       padding: 0.8rem;
       overflow-y: auto;
     }
+    .main-top {
+      flex: 0 0 65%;
+      flex-wrap: wrap;
+      gap: 0.8rem;
+    }
+    .main-bottom {
+      flex: 0 0 35%;
+    }
     .node {
-      flex: none;
+      flex: 1 1 calc(50% - 0.4rem);
+      min-width: 0;
       min-height: auto;
+    }
+    /* 第三个节点独占一整行 */
+    .node:last-child {
+      flex: 1 1 100%;
     }
     .node + .node::before { display: none; }
     .node-card.expanded .node-expanded {
       max-height: 40vh;
     }
+  }
+
+  /* PAD 竖屏 (≤768px): 单列纵向布局 */
+  @media (max-width: 768px) {
+    .topbar {
+      height: 52px;
+      padding: 0 0.8rem;
+    }
+    .topbar-title {
+      max-width: 180px;
+      font-size: 0.82rem;
+      letter-spacing: 1px;
+    }
+    .btn-back {
+      font-size: 0.78rem;
+      padding: 0.25rem 0.5rem;
+    }
+    .status-badge {
+      font-size: 0.7rem;
+      padding: 0.15rem 0.55rem;
+    }
+    .main {
+      padding: 0.6rem;
+      gap: 0.5rem;
+      overflow-y: hidden;
+    }
+    .main-top {
+      flex: 1 1 auto;
+      overflow-y: auto;
+      min-height: 0;
+      gap: 0.6rem;
+    }
+    .main-bottom {
+      flex: 0 0 220px;
+      min-height: 180px;
+    }
+    .node {
+      flex: 1 1 100%;
+      min-height: auto;
+    }
+    .node:last-child {
+      flex: 1 1 100%;
+    }
+    .node-card.expanded .node-expanded {
+      max-height: 55vh;
+    }
+    .main::before, .main::after {
+      opacity: 0.3;
+    }
+  }
+
+  /* 手机 (≤480px): 紧凑单列 + 触控优化 */
+  @media (max-width: 480px) {
+    .topbar {
+      height: 48px;
+      padding: 0 0.5rem;
+    }
+    .topbar-title {
+      max-width: 100px;
+      font-size: 0.72rem;
+      letter-spacing: 0.5px;
+    }
+    .btn-back {
+      font-size: 0.7rem;
+      padding: 0.3rem 0.5rem;
+      min-height: 36px;
+      display: flex;
+      align-items: center;
+    }
+    .status-badge {
+      font-size: 0.65rem;
+      padding: 0.15rem 0.45rem;
+    }
+    .main {
+      padding: 0.4rem;
+      gap: 0.4rem;
+    }
+    .main-top {
+      flex: 1 1 auto;
+      overflow-y: auto;
+      min-height: 0;
+      gap: 0.4rem;
+    }
+    .main-bottom {
+      flex: 0 0 180px;
+      min-height: 150px;
+    }
+    .node-collapsed {
+      padding: 0.7rem 0.6rem;
+      gap: 0.35rem;
+    }
+    .nc-time-row {
+      font-size: 0.65rem;
+    }
+    .nc-time-value {
+      font-size: 0.68rem;
+    }
+    .nc-summary {
+      font-size: 0.68rem;
+    }
+    .nc-toggle {
+      font-size: 0.65rem;
+      min-height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .node-card.expanded .node-expanded {
+      max-height: 60vh;
+      padding: 0.6rem;
+      padding-top: 0.2rem;
+    }
+    .info-group {
+      padding: 0.4rem 0.5rem;
+    }
+    .info-row {
+      font-size: 0.68rem;
+      padding: 0.2rem 0;
+    }
+    .info-group-label {
+      font-size: 0.6rem;
+    }
+    .long-text {
+      font-size: 0.68rem;
+    }
+    .flow-view-btn {
+      padding: 0.35rem 0.6rem;
+      font-size: 0.62rem;
+      min-height: 36px;
+      display: flex;
+      align-items: center;
+    }
+    .ne-collapse {
+      font-size: 0.65rem;
+      padding: 0.4rem 0 0.2rem;
+      min-height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .nc-thumb-title {
+      font-size: 0.58rem;
+      padding: 0.2rem 0 0.15rem;
+    }
+    .nc-mini-unit { font-size: 0.55rem; }
+    .nc-mini-tag  { font-size: 0.55rem; }
+    .nc-mini-time { font-size: 0.55rem; }
+    .nc-mini-node-wrap { width: 70px; }
+    .nc-mini-card {
+      padding: 0.2rem 0.1rem;
+      gap: 0.1rem;
+    }
+    .nc-mini-timeline {
+      padding: 0.5rem 0.2rem 0;
+    }
+    .nc-mini-track {
+      height: 150px;
+    }
+    .nc-mini-scrollbar {
+      height: 32px;
+      gap: 6px;
+      margin-top: 12px;
+      padding: 0 0.2rem;
+    }
+    .nc-mini-scrollbar-btn {
+      width: 28px; height: 28px;
+      font-size: 10px;
+    }
+    .flow-time { font-size: 0.62rem; }
+    .flow-unit { font-size: 0.65rem; }
+    .flow-tag  { font-size: 0.55rem; }
+    .flow-desc { font-size: 0.6rem; }
+    .hz-card-unit  { font-size: 0.6rem; }
+    .hz-card-time  { font-size: 0.58rem; }
+    .hz-card-desc  { font-size: 0.55rem; }
+    .hz-node-wrap   { width: 120px; }
+    .tc-title { font-size: 0.55rem; }
+    .tc-header { font-size: 0.72rem; }
+    .main::before, .main::after { display: none; }
   }
 
   /* Tech corner decoration for the main container */
@@ -1926,6 +2130,35 @@ function initMiniScrollbars() {
     });
     document.addEventListener('mouseup', () => {
       if (dragging) { dragging = false; thumb.style.transition = ''; }
+    });
+
+    // --- Touch drag support (PAD / mobile) ---
+    let touchDragging = false, touchStartX = 0, touchStartScroll = 0;
+    thumb.addEventListener('touchstart', e => {
+      e.stopPropagation();
+      touchDragging = true;
+      touchStartX = e.touches[0].clientX;
+      touchStartScroll = timeline.scrollLeft;
+      thumb.style.transition = 'none';
+      e.preventDefault();
+    }, { passive: false });
+    thumb.addEventListener('touchmove', e => {
+      if (!touchDragging) return;
+      e.preventDefault();
+      const maxScroll = timeline.scrollWidth - timeline.clientWidth;
+      if (maxScroll <= 0) return;
+      const dx          = e.touches[0].clientX - touchStartX;
+      const thumbW      = parseFloat(thumb.style.width) || 28;
+      const thumbMaxL   = track.clientWidth - thumbW;
+      if (thumbMaxL <= 0) return;
+      timeline.scrollLeft = Math.max(0, Math.min(maxScroll,
+        touchStartScroll + (dx / thumbMaxL) * maxScroll));
+    }, { passive: false });
+    thumb.addEventListener('touchend', e => {
+      if (touchDragging) { touchDragging = false; thumb.style.transition = ''; }
+    });
+    thumb.addEventListener('touchcancel', () => {
+      if (touchDragging) { touchDragging = false; thumb.style.transition = ''; }
     });
 
     // --- Sync thumb on native scroll ---
