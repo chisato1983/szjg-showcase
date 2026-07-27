@@ -63,7 +63,7 @@
   <p>请输入密码以继续访问此页面</p>
   <div class="field">
     <label for="pwd">密码</label>
-    <input type="password" id="pwd" placeholder="请输入访问密码" autofocus autocomplete="off">
+    <input type="password" id="pwd" placeholder="请输入访问密码" autocomplete="off">
   </div>
   <button class="btn" id="btn">确 认</button>
   <div class="error" id="error"></div>
@@ -109,6 +109,9 @@
       error.classList.add('show');
     });
   }
+
+  // Programmatic focus 不受 Chrome 跨域 autofocus 策略限制
+  setTimeout(function() { if (pwd) pwd.focus(); }, 50);
 </script>
 </body>
 </html>
