@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>高层建筑消防安全综合智管 v3.17</title>
+<title>高层建筑消防安全综合智管 v3.22</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap');
   :root {
@@ -128,6 +128,8 @@
   .ev-card.over{border-color:rgba(255,71,87,0.4);background:rgba(255,71,87,0.04)}
   .ev-card-top{display:flex;justify-content:space-between;align-items:center;gap:0.4rem}
   .ev-pt{font-size:0.7rem;font-weight:500;color:var(--text-primary);display:flex;align-items:center;gap:0.25rem;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .ev-pt-link{cursor:pointer;transition:all .15s}
+  .ev-pt-link:hover{color:var(--accent-cyan);text-decoration:underline;text-underline-offset:3px}
   .belong{font-size:0.8rem;padding:0.05rem 0.3rem;border-radius:2px;flex-shrink:0}
   .belong-street{background:rgba(46,230,166,0.1);color:var(--green);border:1px solid rgba(46,230,166,0.25)}
   .belong-police{background:rgba(0,200,255,0.1);color:var(--accent-cyan);border:1px solid rgba(0,200,255,0.25)}
@@ -276,7 +278,7 @@
   .metric-val{font-family:'Oswald',sans-serif;color:var(--text-primary);white-space:nowrap;font-size:0.65rem}
   .metric-trend{font-family:'Oswald',sans-serif;font-size:0.8rem;margin-left:0.1rem}
   .status-bar{display:grid;grid-template-columns:repeat(3,1fr);gap:0.3rem}
-  .s-node{background:var(--bg-inner);border:1px solid var(--border);border-radius:3px;padding:0.4rem 0.5rem;display:flex;align-items:center;gap:0.4rem}
+  .s-node{background:var(--bg-inner);border:1px solid var(--border);border-radius:3px;padding:0.4rem 0.5rem;display:flex;align-items:center;gap:0.4rem;cursor:pointer;user-select:none}
   .s-dot{width:0.55rem;height:0.55rem;border-radius:50%;flex-shrink:0}
   .s-info{display:flex;flex-direction:column;gap:0}
   .s-num{font-family:'Oswald',sans-serif;font-size:1.1rem;font-weight:600;line-height:1}
@@ -428,12 +430,267 @@
   /* Footer */
   .modal-footer{text-align:center;padding:0.7rem 0 0.3rem;font-size:0.55rem;color:var(--text-muted);border-top:1px solid rgba(0,200,255,0.08);margin-top:0.4rem;letter-spacing:0.3px}
 
+  /* ===== 告警列表弹窗 ===== */
+  .alert-list-overlay{position:fixed;inset:0;z-index:1200;background:rgba(0,0,0,0.65);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center}
+  .alert-list-overlay.show{display:flex}
+  .alert-list-modal{background:var(--bg-card);border:1px solid var(--border-strong);border-radius:8px;width:75vw;height:75vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 0 60px rgba(0,200,255,0.22),0 0 120px rgba(0,100,180,0.1)}
+  .alert-list-header{display:flex;justify-content:space-between;align-items:center;padding:0.7rem 1rem;background:linear-gradient(135deg,rgba(0,150,220,0.18),rgba(0,80,160,0.1));border-bottom:1px solid rgba(0,200,255,0.15);flex-shrink:0}
+  .alert-list-logo{width:1.5rem;height:1.5rem;margin-right:0.5rem;object-fit:contain;flex-shrink:0}
+  .alert-list-title{font-size:0.9rem;font-weight:600;color:var(--accent-cyan);letter-spacing:.02em;display:flex;align-items:center;gap:0.1rem}
+  .alert-list-close{cursor:pointer;font-size:1.1rem;color:var(--text-muted);transition:all .2s;line-height:1;width:1.8rem;height:1.8rem;display:flex;align-items:center;justify-content:center;border-radius:50%;background:rgba(255,255,255,0.05)}
+  .alert-list-close:hover{color:var(--red);background:rgba(255,71,87,0.15)}
+  .alert-list-body{flex:1;overflow-y:auto;overflow-x:hidden;padding:0.85rem 1rem 0.5rem;font-size:0.65rem;color:var(--text-secondary)}
+  /* 标签页 */
+  .alert-tabs{display:flex;gap:0;margin-bottom:0.7rem;border-bottom:1px solid var(--border);flex-shrink:0}
+  .alert-tab{padding:0.4rem 1rem;font-size:0.72rem;color:var(--text-muted);cursor:pointer;border:none;background:transparent;border-bottom:2px solid transparent;transition:all .2s;font-family:'Noto Sans SC',sans-serif;letter-spacing:.02em}
+  .alert-tab:hover{color:var(--text-secondary)}
+  .alert-tab.active{color:var(--accent-cyan);border-bottom-color:var(--accent-cyan);font-weight:600}
+  /* 工具栏 */
+  .alert-toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:0.5rem;margin-bottom:0.6rem}
+  .alert-toolbar-field{display:flex;align-items:center;gap:0.25rem}
+  .alert-toolbar-label{font-size:0.62rem;color:var(--text-muted);white-space:nowrap;min-width:fit-content}
+  .alert-toolbar-field select{border-radius:3px;border:1px solid var(--border);background:var(--bg-inner);color:var(--text-secondary);font-size:0.62rem;padding:0.3rem 0.5rem;font-family:'Noto Sans SC',sans-serif;outline:none;cursor:pointer}
+  .alert-toolbar-field select:focus{border-color:var(--accent-cyan)}
+  .alert-toolbar-field input{flex:1;border-radius:3px;border:1px solid var(--border);background:var(--bg-inner);color:var(--text-secondary);font-size:0.62rem;padding:0.3rem 0.5rem;font-family:'Noto Sans SC',sans-serif;outline:none;min-width:8rem}
+  .alert-toolbar-field input:focus{border-color:var(--accent-cyan)}
+  .alert-toolbar-field input::placeholder{color:var(--text-muted)}
+  .btn{border:none;border-radius:3px;font-size:0.6rem;cursor:pointer;padding:0.3rem 0.7rem;font-family:'Noto Sans SC',sans-serif;transition:all .2s;font-weight:500;letter-spacing:.02em}
+  .btn-primary{background:rgba(0,200,255,0.15);border:1px solid rgba(0,200,255,0.35);color:var(--accent-cyan)}
+  .btn-primary:hover{background:rgba(0,200,255,0.25);border-color:var(--accent-cyan);box-shadow:0 0 8px rgba(0,200,255,0.2)}
+  .btn-ghost{background:transparent;border:1px solid var(--border);color:var(--text-muted)}
+  .btn-ghost:hover{background:rgba(255,255,255,0.04);color:var(--text-secondary)}
+  .alert-result-hint{font-size:0.6rem;color:var(--text-muted);margin-left:auto;white-space:nowrap}
+  /* 表格壳 */
+  .alert-table-shell{background:var(--bg-inner);border:1px solid var(--border);border-radius:4px;overflow:hidden;margin-bottom:0.5rem}
+  .alert-table-wrapper{overflow-x:auto;max-height:56vh;overflow-y:auto}
+  .alert-table{width:100%;border-collapse:collapse;table-layout:auto;min-width:50rem}
+  .alert-table thead{position:sticky;top:0;z-index:2}
+  .alert-table th{background:rgba(0,150,220,0.14);color:var(--text-secondary);font-weight:500;font-size:0.58rem;padding:0.4rem 0.4rem;border-bottom:1px solid var(--border-strong);text-align:left;white-space:nowrap;letter-spacing:.02em}
+  .alert-table td{font-size:0.6rem;color:var(--text-secondary);padding:0.4rem 0.4rem;border-bottom:1px solid rgba(0,200,255,0.06);white-space:nowrap}
+  .alert-table tbody tr:hover{background:rgba(0,200,255,0.04)}
+  .alert-table tbody tr:nth-child(even){background:rgba(0,200,255,0.015)}
+  .alert-table tbody tr:nth-child(even):hover{background:rgba(0,200,255,0.06)}
+  .alert-table .text-center{text-align:center}
+  /* 状态标签 */
+  .alert-status-chip{display:inline-block;padding:0.1rem 0.4rem;border-radius:2px;font-size:0.56rem;font-weight:500;letter-spacing:.02em}
+  .alert-status-chip.online{background:rgba(46,230,166,0.12);color:var(--green);border:1px solid rgba(46,230,166,0.25)}
+  .alert-status-chip.warning{background:rgba(255,204,51,0.12);color:var(--yellow);border:1px solid rgba(255,204,51,0.25)}
+  .alert-status-chip.alarm{background:rgba(255,71,87,0.12);color:var(--red);border:1px solid rgba(255,71,87,0.25)}
+  .alert-status-chip.offline{background:rgba(149,165,166,0.12);color:var(--text-muted);border:1px solid rgba(149,165,166,0.25)}
+  .alert-status-chip.fault{background:rgba(230,126,34,0.12);color:var(--orange);border:1px solid rgba(230,126,34,0.25)}
+  /* 下拉式复选框 */
+  .alert-dropdown{position:relative;min-width:12rem}
+  .alert-dropdown-trigger{
+    display:flex;align-items:center;justify-content:space-between;
+    background:rgba(0,40,80,0.5);border:1px solid var(--border-strong);
+    border-radius:4px;padding:0.35rem 0.6rem;
+    font-size:0.6rem;color:var(--text-muted);cursor:pointer;
+    min-width:10rem;min-height:1.7rem;transition:border-color .2s
+  }
+  .alert-dropdown-trigger:hover{border-color:var(--accent-cyan)}
+  .alert-dropdown-arrow{font-size:0.5rem;color:var(--text-muted);margin-left:0.5rem;transition:transform .2s}
+  .alert-dropdown.open .alert-dropdown-arrow{transform:rotate(180deg)}
+  .alert-dropdown-panel{
+    display:none;position:absolute;top:calc(100% + 4px);left:0;right:0;
+    background:rgba(0,30,60,0.95);border:1px solid var(--border-strong);
+    border-radius:4px;padding:0.5rem 0.7rem;
+    box-shadow:0 4px 20px rgba(0,0,0,0.55);z-index:100;min-width:max-content
+  }
+  .alert-dropdown.open .alert-dropdown-panel{display:flex;flex-direction:column;gap:0.35rem}
+  .alert-dropdown-item{display:flex;align-items:center;gap:0.35rem;font-size:0.6rem;color:var(--text-secondary);cursor:pointer;white-space:nowrap;transition:color .15s}
+  .alert-dropdown-item:hover{color:#e0f0ff}
+  .alert-dropdown-item input[type="checkbox"]{accent-color:var(--accent-cyan);width:0.75rem;height:0.75rem;cursor:pointer}
+  /* 操作链接 */
+  .alert-link{cursor:pointer;color:var(--accent-cyan);font-size:0.6rem;text-decoration:none;transition:all .2s}
+  .alert-link:hover{text-decoration:underline;color:#7ef0ff}
+  /* 分页 */
+  .alert-table-footer{display:flex;justify-content:space-between;align-items:center;padding:0.5rem 0 0.3rem;flex-shrink:0;font-size:0.58rem;color:var(--text-muted);gap:0.5rem;flex-wrap:wrap}
+  .alert-pagination-total{white-space:nowrap}
+  .alert-pagination-controls{display:flex;align-items:center;gap:0.15rem}
+  .alert-pagination-btn{padding:0.2rem 0.45rem;border:1px solid var(--border);background:var(--bg-inner);color:var(--text-muted);border-radius:2px;cursor:pointer;font-family:'Noto Sans SC',sans-serif;font-size:0.56rem;transition:all .2s}
+  .alert-pagination-btn:hover:not(:disabled){background:rgba(0,200,255,0.12);border-color:var(--accent-cyan);color:var(--accent-cyan)}
+  .alert-pagination-btn:disabled{opacity:0.35;cursor:not-allowed}
+  .alert-pagination-current{padding:0.2rem 0.4rem;font-family:'Oswald',sans-serif;font-size:0.65rem;color:var(--accent-cyan)}
+  .alert-pagination-sizes{display:flex;align-items:center;gap:0.2rem;font-size:0.56rem;color:var(--text-muted);white-space:nowrap}
+  .alert-pagination-sizes select{border-radius:2px;border:1px solid var(--border);background:var(--bg-inner);color:var(--text-secondary);font-size:0.55rem;padding:0.1rem 0.3rem;font-family:'Noto Sans SC',sans-serif;outline:none;cursor:pointer}
+  /* 数据来源 */
+  .alert-data-source{text-align:center;color:var(--text-muted);font-size:0.55rem;padding:0.4rem 0 0;border-top:1px solid rgba(0,200,255,0.06);margin-top:0.2rem;letter-spacing:.02em}
   /* 自定义滚动条 */
   ::-webkit-scrollbar{width:4px;height:4px}
   ::-webkit-scrollbar-track{background:transparent}
   ::-webkit-scrollbar-thumb{background:rgba(0,200,255,0.15);border-radius:2px}
   ::-webkit-scrollbar-thumb:hover{background:rgba(0,200,255,0.35)}
   *{scrollbar-width:thin;scrollbar-color:rgba(0,200,255,0.15) transparent}
+
+  /* ===== 研判交办弹窗 ===== */
+  .dispatch-overlay{position:fixed;inset:0;z-index:1300;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center}
+  .dispatch-overlay.show{display:flex}
+  .dispatch-modal{background:var(--bg-card);border:1px solid var(--border-strong);border-radius:8px;width:520px;max-width:92vw;max-height:85vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 0 60px rgba(0,200,255,0.22),0 0 120px rgba(0,100,180,0.1)}
+  .dispatch-header{display:flex;justify-content:space-between;align-items:center;padding:0.65rem 1rem;background:linear-gradient(135deg,rgba(0,150,220,0.25),rgba(0,80,160,0.15));border-bottom:1px solid rgba(0,200,255,0.15);flex-shrink:0}
+  .dispatch-title{font-size:0.9rem;font-weight:600;color:var(--accent-cyan);letter-spacing:.02em}
+  .dispatch-close{cursor:pointer;font-size:1.1rem;color:var(--text-muted);transition:all .2s;line-height:1;width:1.8rem;height:1.8rem;display:flex;align-items:center;justify-content:center;border-radius:50%;background:rgba(255,255,255,0.05)}
+  .dispatch-close:hover{color:var(--red);background:rgba(255,71,87,0.15)}
+  .dispatch-body{flex:1;overflow-y:auto;padding:0.85rem 1rem;font-size:0.65rem;color:var(--text-secondary)}
+  .dispatch-section{margin-bottom:0.8rem}
+  .dispatch-section-title{font-size:0.72rem;font-weight:600;color:var(--accent-cyan);margin-bottom:0.5rem;padding-bottom:0.25rem;border-bottom:1px solid rgba(0,200,255,0.1)}
+  .dispatch-info-grid{display:grid;grid-template-columns:1fr 1fr;gap:0.4rem 1rem}
+  .dispatch-info-item{display:flex;gap:0.3rem;align-items:flex-start}
+  .dispatch-info-item label{color:var(--text-muted);white-space:nowrap;min-width:3.2rem;font-size:0.6rem}
+  .dispatch-info-item span{color:var(--text-primary);word-break:break-all;font-size:0.62rem}
+  .dispatch-form-field{display:flex;align-items:flex-start;gap:0.5rem;margin-bottom:0.55rem}
+  .dispatch-form-field label{color:var(--text-muted);white-space:nowrap;min-width:3.2rem;font-size:0.6rem;padding-top:0.3rem}
+  .dispatch-form-field input[type="text"],
+  .dispatch-form-field textarea{border-radius:3px;border:1px solid var(--border);background:var(--bg-inner);color:var(--text-primary);font-size:0.62rem;padding:0.3rem 0.5rem;font-family:'Noto Sans SC',sans-serif;outline:none;flex:1;resize:vertical}
+  .dispatch-form-field input[type="text"]:focus,
+  .dispatch-form-field textarea:focus{border-color:var(--accent-cyan)}
+  .dispatch-form-field textarea{min-height:5rem}
+  /* 转派单位下拉 */
+  .dispatch-dropdown{position:relative;flex:1}
+  .dispatch-dropdown-trigger{display:flex;align-items:center;justify-content:space-between;border-radius:3px;border:1px solid var(--border);background:var(--bg-inner);color:var(--text-secondary);font-size:0.62rem;padding:0.3rem 0.5rem;cursor:pointer;user-select:none;min-height:1.5rem}
+  .dispatch-dropdown-trigger:hover{border-color:var(--accent-cyan)}
+  .dispatch-dropdown-arrow{font-size:0.5rem;color:var(--text-muted);margin-left:0.3rem}
+  .dispatch-dropdown-panel{display:none;position:absolute;top:100%;left:0;right:0;max-height:12rem;overflow-y:auto;background:var(--bg-card);border:1px solid var(--border-strong);border-radius:3px;z-index:10;margin-top:0.15rem;box-shadow:0 4px 20px rgba(0,0,0,0.5)}
+  .dispatch-dropdown.open .dispatch-dropdown-panel{display:block}
+  .dispatch-dropdown-opt{padding:0.35rem 0.6rem;font-size:0.62rem;color:var(--text-secondary);cursor:pointer;transition:all .15s}
+  .dispatch-dropdown-opt:hover{background:rgba(0,200,255,0.1);color:var(--accent-cyan)}
+  .dispatch-dropdown-opt.selected{background:rgba(0,200,255,0.12);color:var(--accent-cyan);font-weight:600}
+  .dispatch-dropdown-opt.placeholder{color:var(--text-muted)}
+  /* 底部按钮 & Toast */
+  .dispatch-footer{display:flex;justify-content:flex-end;align-items:center;gap:0.6rem;padding:0.6rem 1rem;border-top:1px solid rgba(0,200,255,0.1);flex-shrink:0;position:relative}
+  .dispatch-submit-btn{background:linear-gradient(135deg,var(--accent-cyan),#0098cc);color:#001828;border:none;padding:0.4rem 1.2rem;border-radius:3px;font-size:0.7rem;font-weight:600;cursor:pointer;font-family:'Noto Sans SC',sans-serif;white-space:nowrap;transition:all .2s;letter-spacing:.03em}
+  .dispatch-submit-btn:hover{filter:brightness(1.15);box-shadow:0 0 12px rgba(0,200,255,0.3)}
+  .dispatch-submit-btn:disabled{opacity:0.5;cursor:not-allowed;filter:none}
+  .dispatch-toast{position:absolute;left:1rem;top:50%;transform:translateY(-50%);background:rgba(46,230,166,0.15);border:1px solid rgba(46,230,166,0.4);color:#2ee6a6;padding:0.3rem 0.8rem;border-radius:3px;font-size:0.65rem;font-weight:600;opacity:0;pointer-events:none;transition:opacity .3s}
+  .dispatch-toast.show{opacity:1;pointer-events:auto}
+
+  /* ===== 一键挪车弹窗 ===== */
+  .movecar-overlay{position:fixed;inset:0;z-index:1310;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center}
+  .movecar-overlay.show{display:flex}
+  .movecar-modal{background:var(--bg-card);border:1px solid var(--border-strong);border-radius:8px;width:540px;max-width:92vw;max-height:85vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 0 60px rgba(0,200,255,0.22),0 0 120px rgba(0,100,180,0.1);position:relative}
+  .movecar-header{display:flex;justify-content:space-between;align-items:center;padding:0.65rem 1rem;background:linear-gradient(135deg,rgba(0,150,220,0.25),rgba(0,80,160,0.15));border-bottom:1px solid rgba(0,200,255,0.15);flex-shrink:0}
+  .movecar-title{font-size:0.9rem;font-weight:600;color:var(--accent-cyan);letter-spacing:.02em}
+  .movecar-close{cursor:pointer;font-size:1.1rem;color:var(--text-muted);transition:all .2s;line-height:1;width:1.8rem;height:1.8rem;display:flex;align-items:center;justify-content:center;border-radius:50%;background:rgba(255,255,255,0.05)}
+  .movecar-close:hover{color:var(--red);background:rgba(255,71,87,0.15)}
+  .movecar-body{flex:1;overflow-y:auto;padding:0.85rem 1rem;font-size:0.65rem;color:var(--text-secondary)}
+  .movecar-section{margin-bottom:0.8rem}
+  .movecar-section-title{font-size:0.72rem;font-weight:600;color:var(--accent-cyan);margin-bottom:0.5rem;padding-bottom:0.25rem;border-bottom:1px solid rgba(0,200,255,0.1)}
+  .movecar-info-grid{display:grid;grid-template-columns:1fr 1fr;gap:0.4rem 1rem}
+  .movecar-info-item{display:flex;gap:0.3rem;align-items:flex-start}
+  .movecar-info-item label{color:var(--text-muted);white-space:nowrap;min-width:3.8rem;font-size:0.6rem}
+  .movecar-info-item span{color:var(--text-primary);word-break:break-all;font-size:0.62rem}
+  .movecar-photo-placeholder{width:100%;height:80px;border:1px dashed rgba(255,255,255,0.15);border-radius:4px;display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:0.6rem;background:rgba(255,255,255,0.02)}
+  .movecar-form-field{display:flex;align-items:flex-start;gap:0.5rem;margin-bottom:0.55rem}
+  .movecar-form-field label{color:var(--text-muted);white-space:nowrap;min-width:3.2rem;font-size:0.6rem;padding-top:0.3rem}
+  .movecar-form-field input[type="text"],
+  .movecar-form-field textarea{border-radius:3px;border:1px solid var(--border);background:var(--bg-inner);color:var(--text-primary);font-size:0.62rem;padding:0.3rem 0.5rem;font-family:'Noto Sans SC',sans-serif;outline:none;flex:1;resize:vertical}
+  .movecar-form-field input[type="text"]:focus,
+  .movecar-form-field textarea:focus{border-color:var(--accent-cyan)}
+  .movecar-form-field textarea{min-height:5rem}
+  .movecar-plate-trigger{border-radius:3px;border:1px solid var(--accent-cyan);background:var(--bg-inner);color:var(--accent-cyan);font-size:0.7rem;padding:0.3rem 0.5rem;cursor:pointer;flex:1;text-align:left;font-family:'Noto Sans SC',sans-serif;transition:all .2s;letter-spacing:.05em}
+  .movecar-plate-trigger:hover{background:rgba(0,200,255,0.08);box-shadow:0 0 8px rgba(0,200,255,0.15)}
+  /* 通知方式下拉 */
+  .movecar-dropdown{position:relative;flex:1}
+  .movecar-dropdown-trigger{display:flex;align-items:center;justify-content:space-between;border-radius:3px;border:1px solid var(--border);background:var(--bg-inner);color:var(--text-secondary);font-size:0.62rem;padding:0.3rem 0.5rem;cursor:pointer;user-select:none;min-height:1.5rem}
+  .movecar-dropdown-trigger:hover{border-color:var(--accent-cyan)}
+  .movecar-dropdown-arrow{font-size:0.5rem;color:var(--text-muted);margin-left:0.3rem}
+  .movecar-dropdown-panel{display:none;position:absolute;top:100%;left:0;right:0;max-height:10rem;overflow-y:auto;background:var(--bg-card);border:1px solid var(--border-strong);border-radius:3px;z-index:10;margin-top:0.15rem;box-shadow:0 4px 20px rgba(0,0,0,0.5)}
+  .movecar-dropdown.open .movecar-dropdown-panel{display:block}
+  .movecar-dropdown-opt{padding:0.35rem 0.6rem;font-size:0.62rem;color:var(--text-secondary);cursor:pointer;transition:all .15s}
+  .movecar-dropdown-opt:hover{background:rgba(0,200,255,0.1);color:var(--accent-cyan)}
+  .movecar-dropdown-opt.selected{background:rgba(0,200,255,0.12);color:var(--accent-cyan);font-weight:600}
+  .movecar-footer{display:flex;justify-content:flex-end;align-items:center;gap:0.6rem;padding:0.6rem 1rem;border-top:1px solid rgba(0,200,255,0.1);flex-shrink:0;position:relative}
+  .movecar-submit-btn{background:linear-gradient(135deg,var(--accent-cyan),#0098cc);color:#001828;border:none;padding:0.4rem 1.2rem;border-radius:3px;font-size:0.7rem;font-weight:600;cursor:pointer;font-family:'Noto Sans SC',sans-serif;white-space:nowrap;transition:all .2s;letter-spacing:.03em}
+  .movecar-submit-btn:hover{filter:brightness(1.15);box-shadow:0 0 12px rgba(0,200,255,0.3)}
+  .movecar-submit-btn:disabled{opacity:0.5;cursor:not-allowed;filter:none}
+  .movecar-toast{position:absolute;left:1rem;top:50%;transform:translateY(-50%);background:rgba(46,230,166,0.15);border:1px solid rgba(46,230,166,0.4);color:#2ee6a6;padding:0.3rem 0.8rem;border-radius:3px;font-size:0.65rem;font-weight:600;opacity:0;pointer-events:none;transition:opacity .3s}
+  .movecar-toast.show{opacity:1;pointer-events:auto}
+  .movecar-confirm-overlay{position:absolute;inset:0;z-index:1320;background:rgba(0,0,0,0.75);display:none;align-items:center;justify-content:center;border-radius:8px}
+  .movecar-confirm-overlay.show{display:flex}
+  .movecar-confirm-box{background:var(--bg-card);border:1px solid var(--border-strong);border-radius:6px;padding:1.2rem;width:380px;max-width:90%;text-align:center;box-shadow:0 0 40px rgba(0,200,255,0.2)}
+  .movecar-confirm-icon{font-size:1.5rem;margin-bottom:0.5rem}
+  .movecar-confirm-text{font-size:0.7rem;color:var(--text-primary);line-height:1.6;margin-bottom:0.3rem}
+  .movecar-confirm-info{font-size:0.65rem;color:var(--accent-cyan);margin-bottom:0.8rem;word-break:break-all}
+  .movecar-confirm-btns{display:flex;justify-content:center;gap:0.6rem}
+  .movecar-confirm-cancel{background:transparent;border:1px solid var(--border);color:var(--text-muted);padding:0.35rem 1rem;border-radius:3px;font-size:0.65rem;cursor:pointer;font-family:'Noto Sans SC',sans-serif;transition:all .2s}
+  .movecar-confirm-cancel:hover{border-color:var(--text-secondary);color:var(--text-primary)}
+  .movecar-confirm-ok{background:linear-gradient(135deg,var(--accent-cyan),#0098cc);color:#001828;border:none;padding:0.35rem 1rem;border-radius:3px;font-size:0.65rem;font-weight:600;cursor:pointer;font-family:'Noto Sans SC',sans-serif;transition:all .2s}
+  .movecar-confirm-ok:hover{filter:brightness(1.15)}
+
+  /* ===== 车牌号编辑弹窗 ===== */
+  .plate-editor-overlay{position:fixed;inset:0;z-index:1350;background:rgba(0,0,0,0.8);backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center}
+  .plate-editor-overlay.show{display:flex}
+  .plate-editor-modal{background:var(--bg-card);border:1px solid var(--border-strong);border-radius:8px;width:480px;max-width:92vw;max-height:85vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 0 60px rgba(0,200,255,0.25),0 0 150px rgba(0,100,180,0.12)}
+  .plate-editor-header{display:flex;justify-content:space-between;align-items:center;padding:0.6rem 1rem;background:linear-gradient(135deg,rgba(0,150,220,0.25),rgba(0,80,160,0.15));border-bottom:1px solid rgba(0,200,255,0.15);flex-shrink:0}
+  .plate-editor-title{font-size:0.85rem;font-weight:600;color:var(--accent-cyan);letter-spacing:.02em}
+  .plate-editor-close{cursor:pointer;font-size:1.1rem;color:var(--text-muted);transition:all .2s;line-height:1;width:1.8rem;height:1.8rem;display:flex;align-items:center;justify-content:center;border-radius:50%;background:rgba(255,255,255,0.05)}
+  .plate-editor-close:hover{color:var(--red);background:rgba(255,71,87,0.15)}
+  .plate-editor-body{flex:1;overflow-y:auto;padding:0.8rem 1rem;font-size:0.65rem;color:var(--text-secondary)}
+  .plate-editor-preview{text-align:center;padding:0.4rem 0 0.6rem;font-size:1rem;font-weight:700;color:var(--accent-cyan);letter-spacing:.08em;border-bottom:1px solid rgba(0,200,255,0.1);margin-bottom:0.5rem;text-shadow:0 0 10px rgba(0,200,255,0.3)}
+  .plate-editor-section-title{font-size:0.65rem;font-weight:600;color:var(--text-muted);margin-bottom:0.3rem;margin-top:0.5rem}
+  .plate-editor-btn-grid{display:flex;flex-wrap:wrap;gap:0.2rem}
+  .plate-editor-btn{width:1.8rem;height:1.6rem;border-radius:3px;border:1px solid var(--border);background:var(--bg-inner);color:var(--text-secondary);font-size:0.6rem;cursor:pointer;font-family:'Noto Sans SC',sans-serif;transition:all .15s;display:flex;align-items:center;justify-content:center}
+  .plate-editor-btn:hover{background:rgba(0,200,255,0.12);border-color:var(--accent-cyan);color:var(--accent-cyan)}
+  .plate-editor-btn.selected{background:rgba(0,200,255,0.2);border-color:var(--accent-cyan);color:var(--accent-cyan);font-weight:600;box-shadow:0 0 6px rgba(0,200,255,0.2)}
+  .plate-editor-btn.disabled{background:rgba(255,255,255,0.03);border-color:rgba(255,255,255,0.05);color:rgba(255,255,255,0.12);cursor:not-allowed;text-decoration:line-through}
+  .plate-editor-input{width:100%;border-radius:3px;border:1px solid var(--accent-cyan);background:var(--bg-inner);color:var(--accent-cyan);font-size:0.72rem;padding:0.35rem 0.5rem;font-family:'Courier New',monospace;outline:none;text-align:center;letter-spacing:.15em;text-transform:uppercase;box-sizing:border-box}
+  .plate-editor-input::placeholder{color:var(--text-muted);letter-spacing:0}
+  .plate-editor-footer{display:flex;justify-content:flex-end;align-items:center;gap:0.5rem;padding:0.6rem 1rem;border-top:1px solid rgba(0,200,255,0.1);flex-shrink:0}
+  .plate-editor-cancel{background:transparent;border:1px solid var(--border);color:var(--text-muted);padding:0.35rem 1rem;border-radius:3px;font-size:0.65rem;cursor:pointer;font-family:'Noto Sans SC',sans-serif;transition:all .2s}
+  .plate-editor-cancel:hover{border-color:var(--text-secondary);color:var(--text-primary)}
+  .plate-editor-confirm{background:linear-gradient(135deg,var(--accent-cyan),#0098cc);color:#001828;border:none;padding:0.35rem 1rem;border-radius:3px;font-size:0.65rem;font-weight:600;cursor:pointer;font-family:'Noto Sans SC',sans-serif;transition:all .2s}
+  .plate-editor-confirm:hover{filter:brightness(1.15)}
+  /* 牌型切换 */
+  .plate-type-toggle{display:flex;gap:0.3rem;margin-bottom:0.5rem;justify-content:center}
+  .plate-type-btn{flex:1;padding:0.3rem 0;border-radius:3px;border:1px solid var(--border);background:var(--bg-inner);color:var(--text-muted);font-size:0.62rem;cursor:pointer;font-family:'Noto Sans SC',sans-serif;transition:all .15s;text-align:center}
+  .plate-type-btn:hover{border-color:var(--accent-cyan);color:var(--text-primary)}
+  .plate-type-btn.selected{background:rgba(0,200,255,0.15);border-color:var(--accent-cyan);color:var(--accent-cyan);font-weight:600}
+  .plate-type-btn.green.selected{background:rgba(46,230,166,0.15);border-color:#2ee6a6;color:#2ee6a6}
+
+  /* ===== 交办跟踪二级页面 ===== */
+  .tracking-overlay{position:fixed;inset:0;z-index:3000;background:rgba(0,0,0,0.75);backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center}
+  .tracking-overlay.show{display:flex}
+  .tracking-modal{background:var(--bg-card);border:1px solid var(--border-strong);border-radius:5px;width:96vw;height:94vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 0 60px rgba(0,200,255,0.25),0 0 120px rgba(0,80,160,0.12);animation:trackSlideIn .3s ease-out}
+  @keyframes trackSlideIn{from{opacity:0;transform:scale(0.96) translateY(8px)}to{opacity:1;transform:scale(1) translateY(0)}}
+  .tracking-header{display:flex;justify-content:space-between;align-items:center;padding:0.55rem 1.2rem;background:linear-gradient(135deg,rgba(0,150,220,0.22),rgba(0,80,160,0.1));border-bottom:1px solid rgba(0,200,255,0.2);flex-shrink:0}
+  .tracking-title{font-size:0.95rem;font-weight:600;color:var(--accent-cyan);letter-spacing:.06em}
+  .tracking-title .tracking-title-sub{font-size:0.68rem;color:var(--text-muted);font-weight:400;margin-left:0.5rem}
+  .tracking-close{cursor:pointer;font-size:1.1rem;color:var(--text-muted);transition:all .2s;width:1.8rem;height:1.8rem;display:flex;align-items:center;justify-content:center;border-radius:3px}
+  .tracking-close:hover{color:var(--red);background:rgba(255,71,87,0.15)}
+  .tracking-body{flex:1;display:flex;flex-direction:column;overflow:hidden;padding:0.6rem 1rem 0}
+  .tracking-toolbar{display:flex;flex-wrap:wrap;gap:0.35rem 0.55rem;align-items:center;padding-bottom:0.5rem;border-bottom:1px solid var(--border);flex-shrink:0}
+  .tracking-toolbar-field{display:flex;align-items:center;gap:0.25rem}
+  .tracking-toolbar-label{font-size:0.58rem;color:var(--text-muted);white-space:nowrap}
+  .tracking-toolbar-field select,.tracking-toolbar-field input{border-radius:3px;border:1px solid var(--border);background:var(--bg-inner);color:var(--text-secondary);font-size:0.58rem;padding:0.25rem 0.4rem;font-family:'Noto Sans SC',sans-serif;outline:none}
+  .tracking-toolbar-field select{cursor:pointer;min-width:5.5rem}
+  .tracking-toolbar-field input{min-width:7rem}
+  .tracking-toolbar-field input::placeholder{color:var(--text-muted)}
+  .tracking-result-hint{font-size:0.58rem;color:var(--text-muted);margin-left:auto}
+  .tracking-result-hint b{color:var(--accent-cyan)}
+  .btn-trk{font-size:0.58rem;padding:0.25rem 0.6rem;border-radius:3px;cursor:pointer;font-family:'Noto Sans SC',sans-serif;transition:all .2s;border:1px solid transparent}
+  .btn-trk.primary{background:linear-gradient(135deg,var(--accent-cyan),#0098cc);color:#001828;font-weight:600;border:none}
+  .btn-trk.primary:hover{filter:brightness(1.15)}
+  .btn-trk.ghost{background:transparent;border:1px solid var(--border);color:var(--text-muted)}
+  .btn-trk.ghost:hover{border-color:var(--text-secondary);color:var(--text-primary)}
+  .tracking-table-shell{flex:1;overflow:auto;margin-top:0.4rem;min-height:0;border:1px solid var(--border);border-radius:3px}
+  .tracking-table{width:100%;border-collapse:collapse;white-space:nowrap;min-width:1400px}
+  .tracking-table th{background:rgba(0,150,220,0.14);color:var(--text-secondary);font-weight:500;font-size:0.56rem;padding:0.38rem 0.3rem;border-bottom:1px solid var(--border-strong);text-align:left;position:sticky;top:0;z-index:1}
+  .tracking-table th.text-center{text-align:center}
+  .tracking-table td{font-size:0.57rem;color:var(--text-secondary);padding:0.32rem 0.3rem;border-bottom:1px solid rgba(0,200,255,0.05)}
+  .tracking-table tbody tr{cursor:default;transition:background .15s}
+  .tracking-table tbody tr:hover td{background:rgba(0,200,255,0.04)}
+  .tracking-link{color:var(--accent-cyan);cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+  .tracking-link:hover{color:#5ee0ff}
+  .tracking-status{display:inline-block;padding:0.06rem 0.3rem;border-radius:2px;font-size:0.55rem;font-weight:500}
+  .tracking-status.doing{background:rgba(0,200,255,0.1);color:var(--accent-cyan);border:1px solid rgba(0,200,255,0.25)}
+  .tracking-status.over{background:rgba(255,71,87,0.1);color:var(--red);border:1px solid rgba(255,71,87,0.25)}
+  .tracking-status.done{background:rgba(46,230,166,0.1);color:var(--green);border:1px solid rgba(46,230,166,0.25)}
+  .tracking-pagination{display:flex;justify-content:space-between;align-items:center;padding:0.45rem 0;flex-shrink:0;font-size:0.58rem;color:var(--text-muted)}
+  .tracking-page-btns{display:flex;gap:0.25rem;align-items:center}
+  .tracking-page-btns button{border-radius:3px;border:1px solid var(--border);background:var(--bg-inner);color:var(--text-muted);font-size:0.56rem;padding:0.18rem 0.45rem;cursor:pointer;font-family:'Noto Sans SC',sans-serif;transition:all .15s}
+  .tracking-page-btns button:hover:not(:disabled){border-color:var(--accent-cyan);color:var(--accent-cyan)}
+  .tracking-page-btns button:disabled{opacity:0.35;cursor:default}
+  .tracking-page-btns .page-cur{color:var(--accent-cyan);font-weight:600;font-size:0.62rem;padding:0 0.3rem}
+  .tracking-page-sizes select{border-radius:3px;border:1px solid var(--border);background:var(--bg-inner);color:var(--text-secondary);font-size:0.56rem;padding:0.18rem 0.3rem;font-family:'Noto Sans SC',sans-serif;outline:none;cursor:pointer}
 
   @media (max-width: 768px) {
     .topbar{height:55px;grid-template-columns:1fr 1fr;padding:0 0.8rem}
@@ -488,7 +745,7 @@
       <div style="display:grid;grid-template-rows:auto auto 1fr;gap:0.4rem;flex:1;min-height:0">
         <!-- 上排：当前占道 + 今日告警 -->
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.4rem">
-          <div id="occupy-card" style="background:linear-gradient(135deg,rgba(255,204,51,0.1),rgba(255,204,51,0.02));border:1px solid rgba(255,204,51,0.25);border-radius:5px;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:0.25rem;position:relative;overflow:hidden;padding:0.5rem">
+          <div id="occupy-card" onclick="openAlertList('occupy')" style="cursor:pointer;background:linear-gradient(135deg,rgba(255,204,51,0.1),rgba(255,204,51,0.02));border:1px solid rgba(255,204,51,0.25);border-radius:5px;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:0.25rem;position:relative;overflow:hidden;padding:0.5rem">
             <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--yellow),transparent)"></div>
             <div style="display:flex;flex-direction:column;align-items:center;gap:0">
               <span style="font-size:1rem;font-weight:700;color:#ffe680;letter-spacing:1px">当前占道</span>
@@ -502,7 +759,7 @@
               <span class="occupy-d" data-idx="1"></span>
             </div>
           </div>
-          <div style="background:linear-gradient(135deg,rgba(0,200,255,0.06),rgba(0,200,255,0.01));border:1px solid var(--border);border-radius:5px;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:0.25rem;position:relative;overflow:hidden;padding:0.5rem">
+          <div id="today-alert-card" onclick="openAlertList('today')" style="cursor:pointer;background:linear-gradient(135deg,rgba(0,200,255,0.06),rgba(0,200,255,0.01));border:1px solid var(--border);border-radius:5px;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:0.25rem;position:relative;overflow:hidden;padding:0.5rem">
             <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--accent-cyan),transparent)"></div>
             <div style="display:flex;flex-direction:column;align-items:center;gap:0">
               <span style="font-size:1rem;font-weight:700;color:#66e0ff;letter-spacing:1px">今日告警</span>
@@ -514,9 +771,9 @@
         <!-- 设备管理 -->
         <div class="section-label" style="margin-top:0.1rem">设备管理</div>
         <div class="status-bar">
-          <div class="s-node online"><span class="s-dot"></span><div class="s-info"><span class="s-num">11</span><span class="s-label">在线</span></div></div>
-          <div class="s-node offline"><span class="s-dot"></span><div class="s-info"><span class="s-num">1</span><span class="s-label">离线</span></div></div>
-          <div class="s-node suspect"><span class="s-dot"></span><div class="s-info"><span class="s-num">1</span><span class="s-label">疑似故障</span></div></div>
+          <div class="s-node online" onclick="openAlertList('online')"><span class="s-dot"></span><div class="s-info"><span class="s-num">11</span><span class="s-label">在线</span></div></div>
+          <div class="s-node offline" onclick="openAlertList('offline')"><span class="s-dot"></span><div class="s-info"><span class="s-num">1</span><span class="s-label">离线</span></div></div>
+          <div class="s-node suspect" onclick="openAlertList('fault')"><span class="s-dot"></span><div class="s-info"><span class="s-num">1</span><span class="s-label">疑似故障</span></div></div>
         </div>
         <div style="display:flex;flex-direction:column;min-height:0;flex:1;gap:0.4rem">
           <div class="section-label">▸ 设备预警</div>
@@ -540,28 +797,28 @@
         <div class="tz tz-night" id="tz-night"><span>◐</span>夜间 19-22 <span style="color:var(--text-muted);font-size:0.6rem">+1级</span></div>
         <div class="tz tz-dawn" id="tz-dawn"><span>●</span>凌晨 22-08<span style="color:var(--text-muted);font-size:0.6rem">仅记录</span></div>
       </div>
-      <div class="todo-list">
-        <div class="todo"><div class="todo-level lv-alert"><span class="lv-num">L3</span></div><div class="todo-info"><div class="todo-point">大溪沟正街12号</div><div class="todo-meta"><span class="tag">192min</span><span class="tag">≥60告警</span></div></div><div class="todo-actions"><button class="btn-move-car done" onclick="toggleMoveCar(this)">已通知挪车</button><button class="btn-dispatch" onclick="toggleDispatch(this)">一键交办</button></div></div>
-        <div class="todo"><div class="todo-level lv-warn"><span class="lv-num" style="color:var(--orange)">L2</span></div><div class="todo-info"><div class="todo-point">菜园坝正街88号</div><div class="todo-meta"><span class="tag">48min</span><span class="tag">≥45预警</span></div></div><div class="todo-actions"><button class="btn-move-car" onclick="toggleMoveCar(this)">一键挪车</button><button class="btn-dispatch" onclick="toggleDispatch(this)">一键交办</button></div></div>
-        <div class="todo"><div class="todo-level lv-alert"><span class="lv-num">L3</span></div><div class="todo-info"><div class="todo-point">学田湾正街65号</div><div class="todo-meta"><span class="tag">87min</span><span class="tag">≥60告警</span></div></div><div class="todo-actions"><button class="btn-move-car done" onclick="toggleMoveCar(this)">已通知挪车</button><button class="btn-dispatch done" onclick="toggleDispatch(this)">已交办</button></div></div>
-      </div>
+          <div class="todo-list">
+          <div class="todo"><div class="todo-level lv-alert"><span class="lv-num">L3</span></div><div class="todo-info"><div class="todo-point">大溪沟正街12号</div><div class="todo-meta"><span class="tag">192min</span><span class="tag">≥60告警</span></div></div><div class="todo-actions"><button class="btn-move-car done" onclick="openMoveCarModal(0)">已通知挪车</button><button class="btn-dispatch" onclick="openDispatchModal(0)">一键转派</button></div></div>
+          <div class="todo"><div class="todo-level lv-warn"><span class="lv-num" style="color:var(--orange)">L2</span></div><div class="todo-info"><div class="todo-point">菜园坝正街88号</div><div class="todo-meta"><span class="tag">48min</span><span class="tag">≥45预警</span></div></div><div class="todo-actions"><button class="btn-move-car" onclick="openMoveCarModal(1)">一键挪车</button><button class="btn-dispatch" onclick="openDispatchModal(1)">一键转派</button></div></div>
+          <div class="todo"><div class="todo-level lv-alert"><span class="lv-num">L3</span></div><div class="todo-info"><div class="todo-point">学田湾正街65号</div><div class="todo-meta"><span class="tag">87min</span><span class="tag">≥60告警</span></div></div><div class="todo-actions"><button class="btn-move-car done" onclick="openMoveCarModal(2)">已通知挪车</button><button class="btn-dispatch done" onclick="openDispatchModal(2)">已转派</button></div></div>
+        </div>
     </div>
     <div class="grid-cell scroll" data-push="tr">
       <div class="cell-header"><div class="cell-title"><span class="idx">03</span>交办跟踪</div><div class="cell-sub" style="color:var(--red)">超时 <b>1</b></div></div>
       <div class="level-bar">
-        <div class="level-node"><div class="l-name">处置中</div><div class="l-stat"><span class="l-doing">3</span><span style="color:var(--text-muted)">件</span></div></div>
-        <div class="level-node"><div class="l-name">已超时</div><div class="l-stat"><span class="l-over">1</span><span style="color:var(--text-muted)">件</span></div></div>
-        <div class="level-node"><div class="l-name">已处置</div><div class="l-stat"><span style="color:var(--green)">15</span><span style="color:var(--text-muted)">件</span></div></div>
+        <div class="level-node" style="cursor:pointer" onclick="openTrackingPage('doing')"><div class="l-name">处置中</div><div class="l-stat"><span class="l-doing">3</span><span style="color:var(--text-muted)">件</span></div></div>
+        <div class="level-node" style="cursor:pointer" onclick="openTrackingPage('over')"><div class="l-name">已超时</div><div class="l-stat"><span class="l-over">1</span><span style="color:var(--text-muted)">件</span></div></div>
+        <div class="level-node" style="cursor:pointer" onclick="openTrackingPage('done')"><div class="l-name">已处置</div><div class="l-stat"><span style="color:var(--green)">15</span><span style="color:var(--text-muted)">件</span></div></div>
       </div>
       <div class="ev-card over">
-        <div class="ev-card-top"><span class="ev-pt">大溪沟正街12号 <span class="belong belong-police">交巡警</span></span><span class="ev-flag flag-over">🔴超时</span></div>
+        <div class="ev-card-top"><span class="ev-pt"><span class="ev-pt-link" onclick="openEventDetail('daxigou12','大溪沟正街12号')">大溪沟正街12号</span> <span class="belong belong-police">交巡警</span></span><span class="ev-flag flag-over">🔴超时</span></div>
         <div class="ev-cur"><span style="color:var(--text-muted);font-size:0.8rem">当前</span><span class="cur-dept">渝中公安分局</span><span class="cur-state">业务事项启动</span></div>
         <div class="ev-time-row"><span class="time-used">2h17m</span><span style="color:var(--text-muted);font-size:0.8rem">/均时15min</span><span class="time-diff diff-bad">+2h2m</span></div>
         <div class="toggle-btn">▸ 展开流转线</div>
         <div class="ev-history"><div class="hist-row"><span class="hist-time">13:28</span><span class="hist-text"><span class="hist-dept">渝中公安</span> - 业务启动</span></div><div class="hist-row"><span class="hist-time">13:26</span><span class="hist-text"><span class="hist-dept">渝中治理</span> - 业务启动</span></div><div class="hist-row"><span class="hist-time">13:24</span><span class="hist-text" style="color:var(--red)">隐患上报</span></div></div>
       </div>
       <div class="ev-card">
-        <div class="ev-card-top"><span class="ev-pt">学田湾正街65号 <span class="belong belong-street">街道</span></span><span class="ev-flag flag-warn">⚠均时</span></div>
+        <div class="ev-card-top"><span class="ev-pt"><span class="ev-pt-link" onclick="openEventDetail('xuetianwan65','学田湾正街65号')">学田湾正街65号</span> <span class="belong belong-street">街道</span></span><span class="ev-flag flag-warn">⚠均时</span></div>
         <div class="ev-cur"><span style="color:var(--text-muted);font-size:0.8rem">当前</span><span class="cur-dept">大坪街道</span><span class="cur-state">办理</span></div>
         <div class="ev-time-row"><span class="time-used">35min</span><span style="color:var(--text-muted);font-size:0.8rem">/均时18min</span><span class="time-diff diff-warn">+17min</span></div>
       </div>
@@ -975,7 +1232,389 @@
       </div>
     </div>
   </div>
+  <!-- 告警列表弹窗 -->
+  <div class="alert-list-overlay" id="alert-list-overlay" onclick="closeAlertList(event)">
+    <div class="alert-list-modal" onclick="event.stopPropagation()">
+      <div class="alert-list-header">
+        <div class="alert-list-title">消防车保畅</div>
+        <span class="alert-list-close" onclick="closeAlertList()">&#x2715;</span>
+      </div>
+      <div class="alert-list-body">
+        <div class="alert-tabs" id="alert-tabs">
+          <button class="alert-tab" onclick="switchAlertTab('device')" type="button">设备列表</button>
+          <button class="alert-tab active" onclick="switchAlertTab('alert')" type="button">预警列表</button>
+        </div>
+        <div class="alert-toolbar">
+          <div class="alert-toolbar-field">
+            <label class="alert-toolbar-label">街道:</label>
+            <select id="alert-filter-street" onchange="handleAlertQuery()">
+              <option value="">全部街道</option>
+              <option value="七星岗街道">七星岗街道</option>
+              <option value="解放碑街道">解放碑街道</option>
+              <option value="两路口街道">两路口街道</option>
+              <option value="上清寺街道">上清寺街道</option>
+              <option value="菜园坝街道">菜园坝街道</option>
+              <option value="南纪门街道">南纪门街道</option>
+              <option value="朝天门街道">朝天门街道</option>
+              <option value="大溪沟街道">大溪沟街道</option>
+              <option value="大坪街道">大坪街道</option>
+              <option value="化龙桥街道">化龙桥街道</option>
+              <option value="石油路街道">石油路街道</option>
+            </select>
+          </div>
+          <div class="alert-toolbar-field">
+            <label class="alert-toolbar-label">建筑类型:</label>
+            <div class="alert-dropdown" id="alert-filter-building">
+              <div class="alert-dropdown-trigger" onclick="toggleBuildingDropdown()">
+                <span id="alert-building-trigger-label">请选择建筑类型</span>
+                <span class="alert-dropdown-arrow">&#9660;</span>
+              </div>
+              <div class="alert-dropdown-panel">
+                <label class="alert-dropdown-item"><input type="checkbox" value="超高层公共建筑" onchange="handleBuildingSelection()">超高层公共建筑</label>
+                <label class="alert-dropdown-item"><input type="checkbox" value="超高层住宅建筑" onchange="handleBuildingSelection()">超高层住宅建筑</label>
+              </div>
+            </div>
+          </div>
+          <div class="alert-toolbar-field" id="alert-filter-status-field" style="display:none">
+            <label class="alert-toolbar-label">设备状态:</label>
+            <div class="alert-dropdown" id="alert-filter-status">
+              <div class="alert-dropdown-trigger" onclick="toggleStatusDropdown()">
+                <span id="alert-status-trigger-label">请选择设备状态</span>
+                <span class="alert-dropdown-arrow">&#9660;</span>
+              </div>
+              <div class="alert-dropdown-panel">
+                <label class="alert-dropdown-item"><input type="checkbox" value="online" onchange="handleStatusSelection()">在线</label>
+                <label class="alert-dropdown-item"><input type="checkbox" value="fault" onchange="handleStatusSelection()">疑似故障</label>
+                <label class="alert-dropdown-item"><input type="checkbox" value="offline" onchange="handleStatusSelection()">离线</label>
+              </div>
+            </div>
+          </div>
+          <div class="alert-toolbar-field">
+            <input id="alert-filter-keyword" type="text" placeholder="搜索编号或地址" oninput="handleAlertQuery()">
+          </div>
+          <div class="alert-toolbar-actions" style="display:flex;gap:0.4rem">
+            <button class="btn btn-primary" type="button" onclick="handleAlertQuery()">查询</button>
+            <button class="btn btn-ghost" type="button" onclick="handleAlertReset()">重置</button>
+          </div>
+          <span class="alert-result-hint" id="alert-result-hint">共 1333 条</span>
+        </div>
+        <div class="alert-table-shell">
+          <div class="alert-table-wrapper" id="alert-table-wrapper">
+            <table class="alert-table" id="alert-table">
+              <colgroup>
+                <col width="50"><col width="100"><col width="120"><col width="110"><col width="110">
+                <col width="190"><col width="95"><col width="140"><col width="95">
+                <col width="100"><col width="85"><col width="85"><col width="95">
+              </colgroup>
+              <thead>
+                <tr>
+                  <th class="text-center">序号</th>
+                  <th>乡镇街道</th>
+                  <th>设备编号</th>
+                  <th>设备名称</th>
+                  <th>设备分类</th>
+                  <th>地址</th>
+                  <th>权属</th>
+                  <th>预警时间</th>
+                  <th class="text-center" id="alert-col-status">预警状态</th>
+                  <th>占道时长</th>
+                  <th>现场视频</th>
+                  <th>处置</th>
+                  <th>研判次数</th>
+                </tr>
+              </thead>
+              <tbody id="alert-table-body"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="alert-table-footer">
+          <div class="alert-pagination-total" id="alert-pagination-total">共 1333 条，第 1 / 67 页</div>
+          <div class="alert-pagination-controls">
+            <button class="alert-pagination-btn" type="button" id="alert-btn-first" onclick="changeAlertPage('first')" disabled>首页</button>
+            <button class="alert-pagination-btn" type="button" id="alert-btn-prev" onclick="changeAlertPage('prev')" disabled>上一页</button>
+            <span class="alert-pagination-current" id="alert-page-current">1</span>
+            <button class="alert-pagination-btn" type="button" id="alert-btn-next" onclick="changeAlertPage('next')">下一页</button>
+            <button class="alert-pagination-btn" type="button" id="alert-btn-last" onclick="changeAlertPage('last')">尾页</button>
+          </div>
+          <div class="alert-pagination-sizes">
+            <span>每页</span>
+            <select id="alert-page-size" onchange="changeAlertPageSize(this.value)">
+              <option value="10">10</option>
+              <option value="20" selected>20</option>
+              <option value="30">30</option>
+              <option value="50">50</option>
+            </select>
+          </div>
+        </div>
+        <div class="alert-data-source">数据来源：渝中区消防物联网管理信息系统终端建设项目</div>
+      </div>
+    </div>
+  </div>
+  <!-- 研判交办弹窗 -->
+  <div class="dispatch-overlay" id="dispatch-overlay" onclick="closeDispatchModal(event)">
+    <div class="dispatch-modal" onclick="event.stopPropagation()">
+      <div class="dispatch-header">
+        <div class="dispatch-title">▶ 研判交办</div>
+        <span class="dispatch-close" onclick="closeDispatchModal()">✕</span>
+      </div>
+      <div class="dispatch-body">
+        <!-- 设备信息区 -->
+        <div class="dispatch-section">
+          <div class="dispatch-section-title">设备信息</div>
+          <div class="dispatch-info-grid">
+            <div class="dispatch-info-item"><label>设备编号</label><span id="dispatch-dev-code">--</span></div>
+            <div class="dispatch-info-item"><label>设备名称</label><span id="dispatch-dev-name">--</span></div>
+            <div class="dispatch-info-item"><label>街道</label><span id="dispatch-street">--</span></div>
+            <div class="dispatch-info-item"><label>安装地址</label><span id="dispatch-install-addr">--</span></div>
+            <div class="dispatch-info-item"><label>建筑名称</label><span id="dispatch-bld-name">--</span></div>
+            <div class="dispatch-info-item"><label>建筑地址</label><span id="dispatch-bld-addr">--</span></div>
+          </div>
+        </div>
+        <!-- 转派表单区 -->
+        <div class="dispatch-section">
+          <div class="dispatch-form-field">
+            <label>转派单位</label>
+            <div class="dispatch-dropdown" id="dispatch-unit-dropdown">
+              <div class="dispatch-dropdown-trigger" onclick="toggleDispatchFormDropdown()">
+                <span id="dispatch-unit-label">请选择</span>
+                <span class="dispatch-dropdown-arrow">▼</span>
+              </div>
+              <div class="dispatch-dropdown-panel" id="dispatch-dropdown-panel">
+                <div class="dispatch-dropdown-opt placeholder" onclick="selectDispatchUnit('','请选择')">请选择</div>
+                <div class="dispatch-dropdown-opt" onclick="selectDispatchUnit('七星岗街道','七星岗街道')">七星岗街道</div>
+                <div class="dispatch-dropdown-opt" onclick="selectDispatchUnit('解放碑街道','解放碑街道')">解放碑街道</div>
+                <div class="dispatch-dropdown-opt" onclick="selectDispatchUnit('两路口街道','两路口街道')">两路口街道</div>
+                <div class="dispatch-dropdown-opt" onclick="selectDispatchUnit('上清寺街道','上清寺街道')">上清寺街道</div>
+                <div class="dispatch-dropdown-opt" onclick="selectDispatchUnit('菜园坝街道','菜园坝街道')">菜园坝街道</div>
+                <div class="dispatch-dropdown-opt" onclick="selectDispatchUnit('南纪门街道','南纪门街道')">南纪门街道</div>
+                <div class="dispatch-dropdown-opt" onclick="selectDispatchUnit('朝天门街道','朝天门街道')">朝天门街道</div>
+                <div class="dispatch-dropdown-opt" onclick="selectDispatchUnit('大溪沟街道','大溪沟街道')">大溪沟街道</div>
+                <div class="dispatch-dropdown-opt" onclick="selectDispatchUnit('大坪街道','大坪街道')">大坪街道</div>
+                <div class="dispatch-dropdown-opt" onclick="selectDispatchUnit('化龙桥街道','化龙桥街道')">化龙桥街道</div>
+                <div class="dispatch-dropdown-opt" onclick="selectDispatchUnit('石油路街道','石油路街道')">石油路街道</div>
+                <div class="dispatch-dropdown-opt" onclick="selectDispatchUnit('渝中区交巡警支队','渝中区交巡警支队')">渝中区交巡警支队</div>
+                <div class="dispatch-dropdown-opt" onclick="selectDispatchUnit('渝中区消防救援支队','渝中区消防救援支队')">渝中区消防救援支队</div>
+              </div>
+            </div>
+          </div>
+          <div class="dispatch-form-field">
+            <label>日期</label>
+            <input type="text" id="dispatch-date" readonly>
+          </div>
+          <div class="dispatch-form-field">
+            <label>研判内容</label>
+            <textarea id="dispatch-content" rows="4">事件类型: 消防车通道</textarea>
+          </div>
+        </div>
+      </div>
+      <div class="dispatch-footer">
+        <div class="dispatch-toast" id="dispatch-toast">转派成功</div>
+        <button class="dispatch-submit-btn" id="dispatch-submit-btn" onclick="submitDispatch()">一键转派</button>
+      </div>
+    </div>
+  </div>
+  <!-- 一键挪车弹窗 -->
+  <div class="movecar-overlay" id="movecar-overlay" onclick="closeMoveCarModal(event)">
+    <div class="movecar-modal" onclick="event.stopPropagation()">
+      <div class="movecar-header">
+        <div class="movecar-title">▶ 一键挪车</div>
+        <span class="movecar-close" onclick="closeMoveCarModal()">✕</span>
+      </div>
+      <div class="movecar-body">
+        <div class="movecar-section">
+          <div class="movecar-section-title">占道信息</div>
+          <div class="movecar-info-grid">
+            <div class="movecar-info-item"><label>占道时间</label><span id="mc-occupancy-time">--</span></div>
+            <div class="movecar-info-item"><label>违法地点</label><span id="mc-addr">--</span></div>
+            <div class="movecar-info-item"><label>车主姓名</label><span id="mc-owner">--</span></div>
+            <div class="movecar-info-item"><label>车主联系方式</label><span id="mc-contact">--</span></div>
+            <div class="movecar-info-item">
+              <label>通知方式</label>
+              <div class="movecar-dropdown" id="mc-notify-dropdown">
+                <div class="movecar-dropdown-trigger" onclick="toggleMoveCarNotifyDropdown()">
+                  <span id="mc-notify-label">短信通知</span>
+                  <span class="movecar-dropdown-arrow">▼</span>
+                </div>
+                <div class="movecar-dropdown-panel">
+                  <div class="movecar-dropdown-opt selected" onclick="selectMoveCarNotify('短信通知','短信通知')">短信通知</div>
+                </div>
+              </div>
+            </div>
+            <div class="movecar-info-item">
+              <label>现场照片</label>
+              <div class="movecar-photo-placeholder">占道取证</div>
+            </div>
+          </div>
+        </div>
+        <div class="movecar-section">
+          <div class="movecar-section-title">短信通知</div>
+          <div class="movecar-form-field">
+            <label>日期</label>
+            <input type="text" id="mc-date" readonly>
+          </div>
+          <div class="movecar-form-field">
+            <label>车牌号</label>
+            <div class="movecar-plate-trigger" id="mc-plate" onclick="openPlateEditor()">--</div>
+          </div>
+          <div class="movecar-form-field">
+            <label>短信内容</label>
+            <textarea id="mc-content" rows="5"></textarea>
+          </div>
+        </div>
+      </div>
+      <div class="movecar-footer">
+        <div class="movecar-toast" id="mc-toast">挪车通知已发送</div>
+        <button class="movecar-submit-btn" id="mc-submit-btn" onclick="submitMoveCar()">一键通知挪车</button>
+      </div>
+      <div class="movecar-confirm-overlay" id="mc-confirm-overlay">
+        <div class="movecar-confirm-box" onclick="event.stopPropagation()">
+          <div class="movecar-confirm-icon">⚠</div>
+          <div class="movecar-confirm-text" id="mc-confirm-text"></div>
+          <div class="movecar-confirm-info" id="mc-confirm-info"></div>
+          <div class="movecar-confirm-btns">
+            <button class="movecar-confirm-cancel" onclick="hideMoveCarConfirm()">取消</button>
+            <button class="movecar-confirm-ok" onclick="submitMoveCarConfirm()">确认发送</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- 车牌号编辑弹窗 -->
+  <div class="plate-editor-overlay" id="plate-editor-overlay" onclick="closePlateEditor()">
+    <div class="plate-editor-modal" onclick="event.stopPropagation()">
+      <div class="plate-editor-header">
+        <div class="plate-editor-title">▶ 编辑车牌号</div>
+        <span class="plate-editor-close" onclick="closePlateEditor()">✕</span>
+      </div>
+      <div class="plate-editor-body">
+        <div class="plate-editor-preview" id="plate-preview">--</div>
+        <div class="plate-type-toggle" id="plate-type-toggle">
+          <div class="plate-type-btn selected" onclick="selectPlateType('blue')" id="plate-type-blue">蓝牌·7位</div>
+          <div class="plate-type-btn green" onclick="selectPlateType('green')" id="plate-type-green">绿牌·8位</div>
+        </div>
+        <div class="plate-editor-section-title">省份简称</div>
+        <div class="plate-editor-btn-grid" id="plate-province-grid"></div>
+        <div class="plate-editor-section-title">城市字母</div>
+        <div class="plate-editor-btn-grid" id="plate-city-grid"></div>
+        <div class="plate-editor-section-title" id="plate-num-label">号牌号码（5位，字母/数字不含I/O）</div>
+        <input class="plate-editor-input" id="plate-num" type="text" maxlength="5" placeholder="请输入号码" autocomplete="off">
+      </div>
+      <div class="plate-editor-footer">
+        <button class="plate-editor-cancel" onclick="closePlateEditor()">取消</button>
+        <button class="plate-editor-confirm" onclick="confirmPlateEditor()">确认</button>
+      </div>
+    </div>
+  </div>
   <div class="map-backdrop" id="map-backdrop"></div>
+  <!-- 交办跟踪二级页面 -->
+  <div class="tracking-overlay" id="tracking-overlay" onclick="closeTrackingPage(event)">
+    <div class="tracking-modal" onclick="event.stopPropagation()">
+      <div class="tracking-header">
+        <span class="tracking-title">消防车道保畅交办跟踪<span class="tracking-title-sub" id="tracking-filter-hint"></span></span>
+        <span class="tracking-close" onclick="closeTrackingPage()">&#x2715;</span>
+      </div>
+      <div class="tracking-body">
+        <div class="tracking-toolbar">
+          <div class="tracking-toolbar-field">
+            <label class="tracking-toolbar-label">街道:</label>
+            <select id="trk-filter-street" onchange="handleTrackingQuery()">
+              <option value="">全部街道</option>
+              <option value="七星岗街道">七星岗街道</option>
+              <option value="解放碑街道">解放碑街道</option>
+              <option value="两路口街道">两路口街道</option>
+              <option value="上清寺街道">上清寺街道</option>
+              <option value="菜园坝街道">菜园坝街道</option>
+              <option value="南纪门街道">南纪门街道</option>
+              <option value="朝天门街道">朝天门街道</option>
+              <option value="大溪沟街道">大溪沟街道</option>
+              <option value="大坪街道">大坪街道</option>
+              <option value="化龙桥街道">化龙桥街道</option>
+              <option value="石油路街道">石油路街道</option>
+            </select>
+          </div>
+          <div class="tracking-toolbar-field">
+            <label class="tracking-toolbar-label">事件类型:</label>
+            <select id="trk-filter-event-type" onchange="handleTrackingQuery()">
+              <option value="">全部类型</option>
+              <option value="消防车通行保畅">消防车通行保畅</option>
+              <option value="消防车道占用">消防车道占用</option>
+              <option value="消防设施损坏">消防设施损坏</option>
+              <option value="疏散通道堵塞">疏散通道堵塞</option>
+            </select>
+          </div>
+          <div class="tracking-toolbar-field">
+            <label class="tracking-toolbar-label">事件状态:</label>
+            <select id="trk-filter-status" onchange="handleTrackingQuery()">
+              <option value="">全部状态</option>
+              <option value="doing">处置中</option>
+              <option value="over">已超时</option>
+              <option value="done">已处置</option>
+            </select>
+          </div>
+          <div class="tracking-toolbar-field">
+            <label class="tracking-toolbar-label">建筑名称:</label>
+            <input id="trk-filter-bld" type="text" placeholder="搜索建筑名称" oninput="handleTrackingQuery()">
+          </div>
+          <div class="tracking-toolbar-field">
+            <label class="tracking-toolbar-label">设备编号:</label>
+            <input id="trk-filter-dev" type="text" placeholder="搜索设备编号" oninput="handleTrackingQuery()">
+          </div>
+          <button class="btn-trk primary" type="button" onclick="handleTrackingQuery()">查询</button>
+          <button class="btn-trk ghost" type="button" onclick="handleTrackingReset()">重置</button>
+          <span class="tracking-result-hint" id="tracking-result-hint">共 <b>0</b> 条</span>
+        </div>
+        <div class="tracking-table-shell">
+          <table class="tracking-table" id="tracking-table">
+            <colgroup>
+              <col width="48"><col width="75"><col width="95"><col width="80"><col width="100">
+              <col width="70"><col width="160"><col width="130"><col width="110"><col width="105">
+              <col width="95"><col width="95"><col width="80"><col width="100"><col width="80">
+              <col width="105">
+            </colgroup>
+            <thead>
+              <tr>
+                <th class="text-center">序号</th>
+                <th>隐患ID</th>
+                <th>乡镇街道</th>
+                <th>处置层级</th>
+                <th>事件类型</th>
+                <th>来源</th>
+                <th>事件内容</th>
+                <th>建筑名称</th>
+                <th>管理单位</th>
+                <th>上报时间</th>
+                <th>特色研判</th>
+                <th>研判时间</th>
+                <th>事件状态</th>
+                <th>办结时间</th>
+                <th>处置时长</th>
+                <th>设备编号</th>
+              </tr>
+            </thead>
+            <tbody id="tracking-table-body"></tbody>
+          </table>
+        </div>
+        <div class="tracking-pagination">
+          <div class="tracking-page-sizes">
+            每页
+            <select id="trk-page-size" onchange="handleTrackingPageSize()">
+              <option value="10">10</option>
+              <option value="20">20</option>
+              <option value="50">50</option>
+            </select>
+            条
+          </div>
+          <div class="tracking-page-btns" id="tracking-page-btns">
+            <button onclick="goTrackingPage('first')" id="trk-btn-first">首页</button>
+            <button onclick="goTrackingPage('prev')" id="trk-btn-prev">上一页</button>
+            <span class="page-cur" id="trk-page-cur"></span>
+            <button onclick="goTrackingPage('next')" id="trk-btn-next">下一页</button>
+            <button onclick="goTrackingPage('last')" id="trk-btn-last">尾页</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 <script src="https://webapi.amap.com/maps?v=2.0&key=7ee14ec4e8ec1bc26ad5ad26625c3b28"></script>
 <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
@@ -1047,25 +1686,388 @@
   highlightTz();
   setInterval(highlightTz,60000);
 
-  /* ===== 04 一键挪车 / 一键交办 状态切换 ===== */
+  /* ===== 车牌-车主轮流预设池 ===== */
+  var _bluePlatePresets=[
+    {owner:'张XX',contact:'138****8888'},
+    {owner:'李XX',contact:'139****9999'},
+    {owner:'王XX',contact:'137****6666'},
+    {owner:'赵XX',contact:'136****5555'}
+  ];
+  var _greenPlatePresets=[
+    {owner:'钱XX',contact:'135****7777'},
+    {owner:'周XX',contact:'133****3333'},
+    {owner:'吴XX',contact:'131****1111'},
+    {owner:'陈XX',contact:'132****2222'}
+  ];
+  var _bluePresetIdx=0;
+  var _greenPresetIdx=0;
+
+  /* ===== 一键挪车数据 ===== */
+  var _moveCarTodoData=[
+    {addr:'大溪沟正街12号',owner:'张XX',plate:'渝AMD225',contact:'138****8888',duration:192,level:'L3'},
+    {addr:'菜园坝正街88号',owner:'李XX',plate:'渝BNF668',contact:'139****9999',duration:48,level:'L2'},
+    {addr:'学田湾正街65号',owner:'王XX',plate:'渝CPG512',contact:'137****6666',duration:87,level:'L3'}
+  ];
+  var _moveCarCurrentIdx=-1;
+  var _mcToastTimer=null;
+
+  function formatOccupancyTime(durationMin){
+    var d=new Date(Date.now()-durationMin*60000);
+    return d.getFullYear()+'年'+pad(d.getMonth()+1)+'月'+pad(d.getDate())+'日 '+pad(d.getHours())+'时'+pad(d.getMinutes())+'分'+pad(d.getSeconds())+'秒';
+  }
+
+  function formatMcDate(){
+    var d=new Date();
+    return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())+' '+pad(d.getHours())+':'+pad(d.getMinutes())+':'+pad(d.getSeconds());
+  }
+
+  /* ===== 一键挪车 状态切换 ===== */
   function toggleMoveCar(btn){
     if(btn.classList.contains('done')){
       btn.classList.remove('done');
       btn.textContent='一键挪车';
+      return;
+    }
+    var todo=btn.closest('.todo');
+    var todos=document.querySelectorAll('.todo-list .todo');
+    var idx=Array.prototype.indexOf.call(todos,todo);
+    if(idx<0)idx=0;
+    openMoveCarModal(idx);
+  }
+
+  function updateMcContent(){
+    var plate=document.getElementById('mc-plate').textContent||'--';
+    var addr=document.getElementById('mc-addr').textContent||'--';
+    var time=document.getElementById('mc-occupancy-time').textContent||'--';
+    var content='您的'+plate+'于'+time+'停放在 '+addr+' 消防车通道，该行为涉嫌违反了《中华人民共和国消防法》第六十条之规定，请于尽快驶离。(5分钟内驶离的，属于违法行为轻微依法可以不予行政处罚。)';
+    document.getElementById('mc-content').value=content;
+  }
+
+  function openMoveCarModal(idx){
+    if(idx<0||idx>=_moveCarTodoData.length)return;
+    _moveCarCurrentIdx=idx;
+    var d=_moveCarTodoData[idx];
+    document.getElementById('mc-occupancy-time').textContent=formatOccupancyTime(d.duration);
+    document.getElementById('mc-addr').textContent=d.addr;
+    document.getElementById('mc-owner').textContent=d.owner;
+    document.getElementById('mc-contact').textContent=d.contact;
+    document.getElementById('mc-notify-label').textContent='短信通知';
+    document.getElementById('mc-plate').textContent=d.plate;
+    document.getElementById('mc-date').value=formatMcDate();
+    document.getElementById('mc-notify-dropdown').dataset.value='短信通知';
+    updateMcContent();
+    document.getElementById('mc-toast').classList.remove('show');
+    document.getElementById('mc-confirm-overlay').classList.remove('show');
+    document.getElementById('mc-submit-btn').disabled=false;
+    if(_mcToastTimer){clearTimeout(_mcToastTimer);_mcToastTimer=null;}
+    document.getElementById('movecar-overlay').classList.add('show');
+    document.body.style.overflow='hidden';
+  }
+
+  function closeMoveCarModal(e){
+    if(e&&e.target!==document.getElementById('movecar-overlay'))return;
+    document.getElementById('movecar-overlay').classList.remove('show');
+    document.body.style.overflow='';
+    var dd=document.getElementById('mc-notify-dropdown');
+    if(dd)dd.classList.remove('open');
+    document.getElementById('mc-confirm-overlay').classList.remove('show');
+    if(_mcToastTimer){clearTimeout(_mcToastTimer);_mcToastTimer=null;}
+  }
+
+  function toggleMoveCarNotifyDropdown(){
+    document.getElementById('mc-notify-dropdown').classList.toggle('open');
+  }
+
+  function selectMoveCarNotify(val,label){
+    document.getElementById('mc-notify-label').textContent=label;
+    document.getElementById('mc-notify-dropdown').dataset.value=val;
+    document.getElementById('mc-notify-dropdown').classList.remove('open');
+    var opts=document.querySelectorAll('.movecar-dropdown-opt');
+    opts.forEach(function(o){o.classList.remove('selected');});
+    event.target.classList.add('selected');
+  }
+
+  function submitMoveCar(){
+    var plate=document.getElementById('mc-plate').textContent||'';
+    var owner=document.getElementById('mc-owner').textContent||'';
+    var contact=document.getElementById('mc-contact').textContent||'';
+    document.getElementById('mc-confirm-text').textContent='即将给 '+plate+' 车主 '+owner+' 车主手机号 '+contact+' 发送挪车短信，请确认信息正确。';
+    document.getElementById('mc-confirm-overlay').classList.add('show');
+  }
+
+  function hideMoveCarConfirm(){
+    document.getElementById('mc-confirm-overlay').classList.remove('show');
+  }
+
+  function submitMoveCarConfirm(){
+    hideMoveCarConfirm();
+    document.getElementById('mc-submit-btn').disabled=true;
+    var toast=document.getElementById('mc-toast');
+    if(toast)toast.classList.add('show');
+    _mcToastTimer=setTimeout(function(){
+      var btns=document.querySelectorAll('.btn-move-car');
+      if(btns[_moveCarCurrentIdx]){
+        btns[_moveCarCurrentIdx].classList.add('done');
+        btns[_moveCarCurrentIdx].textContent='已通知挪车';
+      }
+      closeMoveCarModal();
+      _mcToastTimer=null;
+    },3000);
+  }
+
+  /* ===== 车牌号编辑弹窗 ===== */
+  var PLATE_PROVINCES=['京','津','沪','渝','冀','晋','辽','吉','黑','苏','浙','皖','闽','赣','鲁','豫','鄂','湘','粤','桂','琼','川','贵','云','藏','陕','甘','青','宁','蒙','新'];
+  var PLATE_CITIES=['A','B','C','D','E','F','G','H','J','K','L','M','N','P','Q','R','S','T','U','V','W','X','Y','Z'];
+  var PLATE_NUM_FILTER=/[^0-9A-HJ-NP-Z]/g;
+  var _plateProvince='';
+  var _plateCity='';
+  var _plateType='blue';
+
+  function openPlateEditor(){
+    var currentPlate=document.getElementById('mc-plate').textContent||'';
+    // 自动识别牌型：8位=绿牌，7位=蓝牌
+    if(currentPlate.length>=8){
+      _plateType='green';
+      _plateProvince=currentPlate.charAt(0);
+      _plateCity=currentPlate.charAt(1);
+      var numPart=currentPlate.substring(2).replace(/[·\s]/g,'');
+      document.getElementById('plate-num').value=numPart;
+    }else if(currentPlate.length>=2){
+      _plateType='blue';
+      _plateProvince=currentPlate.charAt(0);
+      _plateCity=currentPlate.charAt(1);
+      var numPart=currentPlate.substring(2).replace(/[·\s]/g,'');
+      document.getElementById('plate-num').value=numPart;
     }else{
-      btn.classList.add('done');
-      btn.textContent='已通知挪车';
+      _plateType='blue';
+      _plateProvince='';
+      _plateCity='';
+      document.getElementById('plate-num').value='';
+    }
+    // 更新牌型切换UI
+    var blueBtn=document.getElementById('plate-type-blue');
+    var greenBtn=document.getElementById('plate-type-green');
+    if(_plateType==='green'){
+      blueBtn.classList.remove('selected');greenBtn.classList.add('selected');
+    }else{
+      blueBtn.classList.add('selected');greenBtn.classList.remove('selected');
+    }
+    updatePlateNumInput();
+    var pg=document.getElementById('plate-province-grid');
+    pg.innerHTML='';
+    for(var i=0;i<PLATE_PROVINCES.length;i++){
+      var p=PLATE_PROVINCES[i];
+      var btn=document.createElement('button');
+      btn.className='plate-editor-btn'+(p===_plateProvince?' selected':'');
+      btn.textContent=p;
+      btn.onclick=(function(prov){return function(){selectPlateProvince(prov);};})(p);
+      pg.appendChild(btn);
+    }
+    var cg=document.getElementById('plate-city-grid');
+    cg.innerHTML='';
+    for(var j=0;j<26;j++){
+      var letter=String.fromCharCode(65+j);
+      var isDisabled=(letter==='I'||letter==='O');
+      var btn2=document.createElement('button');
+      btn2.className='plate-editor-btn'+(isDisabled?' disabled':'')+(letter===_plateCity?' selected':'');
+      btn2.textContent=letter;
+      if(!isDisabled){
+        btn2.onclick=(function(l){return function(){selectPlateCity(l);};})(letter);
+      }
+      cg.appendChild(btn2);
+    }
+    updatePlatePreview();
+    var numInput=document.getElementById('plate-num');
+    numInput.oninput=function(){
+      this.value=this.value.toUpperCase().replace(PLATE_NUM_FILTER,'');
+      var maxLen=_plateType==='green'?6:5;
+      if(this.value.length>maxLen)this.value=this.value.substring(0,maxLen);
+      updatePlatePreview();
+    };
+    document.getElementById('plate-editor-overlay').classList.add('show');
+  }
+
+  function selectPlateProvince(prov){
+    _plateProvince=prov;
+    var btns=document.querySelectorAll('#plate-province-grid .plate-editor-btn');
+    btns.forEach(function(b){b.classList.toggle('selected',b.textContent===prov);});
+    updatePlatePreview();
+  }
+
+  function selectPlateCity(city){
+    _plateCity=city;
+    var btns=document.querySelectorAll('#plate-city-grid .plate-editor-btn:not(.disabled)');
+    btns.forEach(function(b){b.classList.toggle('selected',b.textContent===city);});
+    updatePlatePreview();
+  }
+
+  function updatePlatePreview(){
+    var num=document.getElementById('plate-num').value||'';
+    var base=(_plateProvince||'?')+(_plateCity||'?');
+    var preview;
+    if(_plateType==='green'){
+      preview=base+'·'+num;
+      if(!num)preview=base+'·______';
+    }else{
+      preview=base+'·'+num;
+      if(!num)preview=base+'·_____';
+    }
+    document.getElementById('plate-preview').textContent=preview;
+  }
+
+  function closePlateEditor(){
+    document.getElementById('plate-editor-overlay').classList.remove('show');
+  }
+
+  function confirmPlateEditor(){
+    var num=document.getElementById('plate-num').value||'';
+    if(!_plateProvince||!_plateCity||num.length===0){
+      alert('请选择完整的车牌号（省份简称+城市字母+号牌号码）');
+      return;
+    }
+    var newPlate=_plateProvince+_plateCity+num;
+    document.getElementById('mc-plate').textContent=newPlate;
+    // 轮流预设：按牌型从对应池取下一组
+    if(_plateType==='green'){
+      var preset=_greenPlatePresets[_greenPresetIdx];
+      document.getElementById('mc-owner').textContent=preset.owner;
+      document.getElementById('mc-contact').textContent=preset.contact;
+      _greenPresetIdx=(_greenPresetIdx+1)%_greenPlatePresets.length;
+    }else{
+      var preset=_bluePlatePresets[_bluePresetIdx];
+      document.getElementById('mc-owner').textContent=preset.owner;
+      document.getElementById('mc-contact').textContent=preset.contact;
+      _bluePresetIdx=(_bluePresetIdx+1)%_bluePlatePresets.length;
+    }
+    updateMcContent();
+    closePlateEditor();
+  }
+
+  function selectPlateType(type){
+    _plateType=type;
+    var blueBtn=document.getElementById('plate-type-blue');
+    var greenBtn=document.getElementById('plate-type-green');
+    if(type==='green'){
+      blueBtn.classList.remove('selected');greenBtn.classList.add('selected');
+    }else{
+      blueBtn.classList.add('selected');greenBtn.classList.remove('selected');
+    }
+    updatePlateNumInput();
+    updatePlatePreview();
+  }
+
+  function updatePlateNumInput(){
+    var input=document.getElementById('plate-num');
+    var label=document.getElementById('plate-num-label');
+    if(_plateType==='green'){
+      input.maxLength=6;
+      input.placeholder='请输入6位号码';
+      if(label)label.textContent='号牌号码（6位，字母/数字不含I/O）';
+    }else{
+      input.maxLength=5;
+      input.placeholder='请输入5位号码';
+      if(label)label.textContent='号牌号码（5位，字母/数字不含I/O）';
+      if(input.value.length>5)input.value=input.value.substring(0,5);
     }
   }
-  function toggleDispatch(btn){
-    if(btn.classList.contains('done')){
-      btn.classList.remove('done');
-      btn.textContent='一键交办';
-    }else{
-      btn.classList.add('done');
-      btn.textContent='已交办';
-    }
+
+  /* ===== 研判交办数据 ===== */
+  var _dispatchTodoData=[
+    {devCode:'50010308001310000195',devName:'--',street:'大溪沟街道',installAddr:'大溪沟正街12号',bldName:'--',bldAddr:'--',lv:'L3',duration:'192min',threshold:'≥60告警'},
+    {devCode:'50010308001310000203',devName:'--',street:'菜园坝街道',installAddr:'菜园坝正街88号',bldName:'--',bldAddr:'--',lv:'L2',duration:'48min',threshold:'≥45预警'},
+    {devCode:'50010308001310000312',devName:'--',street:'大溪沟街道',installAddr:'学田湾正街65号',bldName:'--',bldAddr:'--',lv:'L3',duration:'87min',threshold:'≥60告警'}
+  ];
+  var _dispatchCurrentIdx=0;
+  var _dispatchToastTimer=null;
+
+  function formatDispatchDate(){
+    var d=new Date();
+    return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())+' '+pad(d.getHours())+':'+pad(d.getMinutes())+':'+pad(d.getSeconds());
   }
+
+  function openDispatchModal(idx){
+    _dispatchCurrentIdx=idx;
+    var item=_dispatchTodoData[idx];
+    if(!item)return;
+    // 填充设备信息
+    document.getElementById('dispatch-dev-code').textContent=item.devCode;
+    document.getElementById('dispatch-dev-name').textContent=item.devName;
+    document.getElementById('dispatch-street').textContent=item.street;
+    document.getElementById('dispatch-install-addr').textContent=item.installAddr;
+    document.getElementById('dispatch-bld-name').textContent=item.bldName;
+    document.getElementById('dispatch-bld-addr').textContent=item.bldAddr;
+    // 重置表单
+    document.getElementById('dispatch-date').value=formatDispatchDate();
+    document.getElementById('dispatch-content').value='事件类型: 消防车通道||设备地址: '+item.installAddr;
+    selectDispatchUnit('','请选择');
+    // 隐藏toast
+    var toast=document.getElementById('dispatch-toast');
+    if(toast)toast.classList.remove('show');
+    if(_dispatchToastTimer){clearTimeout(_dispatchToastTimer);_dispatchToastTimer=null;}
+    document.getElementById('dispatch-submit-btn').disabled=false;
+    // 显示弹窗
+    document.getElementById('dispatch-overlay').classList.add('show');
+    document.body.style.overflow='hidden';
+  }
+
+  function closeDispatchModal(e){
+    if(e&&e.target!==document.getElementById('dispatch-overlay'))return;
+    document.getElementById('dispatch-overlay').classList.remove('show');
+    document.body.style.overflow='';
+    document.getElementById('dispatch-unit-dropdown').classList.remove('open');
+    if(_dispatchToastTimer){clearTimeout(_dispatchToastTimer);_dispatchToastTimer=null;}
+  }
+
+  function toggleDispatchFormDropdown(){
+    document.getElementById('dispatch-unit-dropdown').classList.toggle('open');
+  }
+
+  function selectDispatchUnit(val,label){
+    document.getElementById('dispatch-unit-label').textContent=label;
+    document.getElementById('dispatch-unit-label').style.color=(val==='')?'var(--text-muted)':'var(--text-primary)';
+    document.getElementById('dispatch-unit-dropdown').dataset.value=val;
+    document.getElementById('dispatch-unit-dropdown').classList.remove('open');
+    // 高亮选中项
+    var opts=document.querySelectorAll('.dispatch-dropdown-opt');
+    opts.forEach(function(o){o.classList.remove('selected');});
+    event.target.classList.add('selected');
+  }
+
+  function submitDispatch(){
+    var unitVal=document.getElementById('dispatch-unit-dropdown').dataset.value||'';
+    if(!unitVal){
+      alert('请选择转派单位');
+      return;
+    }
+    // 更新按钮状态
+    var btns=document.querySelectorAll('.btn-dispatch');
+    if(btns[_dispatchCurrentIdx]){
+      btns[_dispatchCurrentIdx].classList.add('done');
+      btns[_dispatchCurrentIdx].textContent='已转派';
+    }
+    // 禁用提交按钮
+    document.getElementById('dispatch-submit-btn').disabled=true;
+    // 显示toast
+    var toast=document.getElementById('dispatch-toast');
+    if(toast)toast.classList.add('show');
+    // 3秒后关闭
+    _dispatchToastTimer=setTimeout(function(){
+      closeDispatchModal();
+      _dispatchToastTimer=null;
+    },3000);
+  }
+
+  // 点击弹窗外部关闭下拉
+  document.addEventListener('click',function(e){
+    var dd=document.getElementById('dispatch-unit-dropdown');
+    if(dd&&dd.classList.contains('open')&&!dd.contains(e.target)){
+      dd.classList.remove('open');
+    }
+    var mdd=document.getElementById('mc-notify-dropdown');
+    if(mdd&&mdd.classList.contains('open')&&!mdd.contains(e.target)){
+      mdd.classList.remove('open');
+    }
+  });
 
   /* ===== 05 地图展开/收起 ===== */
   var _expandTimers=[];
@@ -1329,6 +2331,281 @@
   window.openReportModal=openReportModal;
   window.closeReportModal=closeReportModal;
 
+  /* ===== 告警列表弹窗 ===== */
+  // 设备列表数据（12条，状态：在线/离线/疑似故障）
+  var _alertDeviceData=[
+    {street:'大溪沟街道',devCode:'50010301100100001',devName:'大溪沟正街消防通道摄像头',devType:'视频监控',addr:'大溪沟正街12号1F消防通道',belong:'渝中区消防救援支队',time:'2026-07-27 08:00:15',status:'online',duration:'87min',video:'查看',handle:'待派单',judge:'2次',btype:'超高层住宅建筑'},
+    {street:'上清寺街道',devCode:'50010300500100002',devName:'学田湾正街消防通道摄像头',devType:'视频监控',addr:'学田湾正街65号1F消防通道',belong:'渝中区消防救援支队',time:'2026-07-27 07:05:30',status:'fault',duration:'192min',video:'查看',handle:'待派单',judge:'5次',btype:'超高层住宅建筑'},
+    {street:'解放碑街道',devCode:'50010300300100003',devName:'民权路消防通道摄像头',devType:'视频监控',addr:'解放碑民权路商圈消防车道',belong:'渝中区消防救援支队',time:'2026-07-27 06:40:12',status:'offline',duration:'167min',video:'查看',handle:'已交办',judge:'3次',btype:'超高层公共建筑'},
+    {street:'菜园坝街道',devCode:'50010300700100004',devName:'火车站北广场消防通道摄像头',devType:'视频监控',addr:'菜园坝火车站北广场通道',belong:'渝中区消防救援支队',time:'2026-07-27 09:12:08',status:'online',duration:'45min',video:'查看',handle:'待接单',judge:'1次',btype:'超高层公共建筑'},
+    {street:'两路口街道',devCode:'50010300400100005',devName:'急救中心通道摄像头',devType:'视频监控',addr:'两路口急救中心消防通道',belong:'渝中区消防救援支队',time:'2026-07-27 10:25:40',status:'offline',duration:'52min',video:'查看',handle:'已交办',judge:'2次',btype:'超高层公共建筑'},
+    {street:'朝天门街道',devCode:'50010301000100006',devName:'批发市场消防通道摄像头',devType:'视频监控',addr:'朝天门批发市场消防通道',belong:'渝中区消防救援支队',time:'2026-07-27 11:03:22',status:'online',duration:'38min',video:'查看',handle:'待派单',judge:'1次',btype:'超高层公共建筑'},
+    {street:'南纪门街道',devCode:'50010300800100007',devName:'十八梯消防通道摄像头',devType:'视频监控',addr:'南纪门十八梯消防通道',belong:'渝中区消防救援支队',time:'2026-07-27 12:18:55',status:'online',duration:'28min',video:'查看',handle:'已处置',judge:'0次',btype:'超高层住宅建筑'},
+    {street:'大坪街道',devCode:'50010301200100008',devName:'大坪正街消防通道摄像头',devType:'视频监控',addr:'大坪正街消防通道高层住宅区',belong:'渝中区消防救援支队',time:'2026-07-27 08:45:30',status:'offline',duration:'215min',video:'查看',handle:'已交办',judge:'8次',btype:'超高层住宅建筑'},
+    {street:'石油路街道',devCode:'50010301400100009',devName:'时代天街消防通道摄像头',devType:'视频监控',addr:'石油路龙湖时代天街通道',belong:'渝中区消防救援支队',time:'2026-07-27 09:33:10',status:'fault',duration:'58min',video:'查看',handle:'待接单',judge:'2次',btype:'超高层公共建筑'},
+    {street:'化龙桥街道',devCode:'50010301300100010',devName:'嘉陵天地消防通道摄像头',devType:'视频监控',addr:'化龙桥嘉陵天地消防车道',belong:'渝中区消防救援支队',time:'2026-07-27 10:55:00',status:'online',duration:'33min',video:'查看',handle:'待派单',judge:'1次',btype:'超高层公共建筑'},
+    {street:'七星岗街道',devCode:'50010300100100011',devName:'通远门消防通道摄像头',devType:'视频监控',addr:'七星岗通远门消防车道',belong:'渝中区消防救援支队',time:'2026-07-27 14:22:18',status:'online',duration:'22min',video:'查看',handle:'已处置',judge:'0次',btype:'超高层住宅建筑'},
+    {street:'大溪沟街道',devCode:'50010301100100012',devName:'人民路消防通道摄像头',devType:'视频监控',addr:'大溪沟人民路消防通道',belong:'渝中区消防救援支队',time:'2026-07-27 15:08:45',status:'fault',duration:'61min',video:'查看',handle:'待派单',judge:'3次',btype:'超高层住宅建筑'}
+  ];
+  // 预警列表数据（3条，与页面整体数据一致）
+  var _alertWarnData=[
+    {street:'大溪沟街道',devCode:'50010301100100001',devName:'大溪沟正街消防通道摄像头',devType:'视频监控',addr:'大溪沟正街12号1F消防通道',belong:'渝中区消防救援支队',time:'2026-07-27 08:00:15',status:'alarm',duration:'192min',video:'查看',handle:'已通知挪车',judge:'2次'},
+    {street:'上清寺街道',devCode:'50010300500100002',devName:'学田湾正街消防通道摄像头',devType:'视频监控',addr:'学田湾正街65号1F消防通道',belong:'渝中区消防救援支队',time:'2026-07-27 07:05:30',status:'warning',duration:'87min',video:'查看',handle:'已交办',judge:'5次'},
+    {street:'解放碑街道',devCode:'50010300300100003',devName:'民权路消防通道摄像头',devType:'视频监控',addr:'解放碑民权路商圈消防车道',belong:'渝中区消防救援支队',time:'2026-07-27 06:40:12',status:'alarm',duration:'167min',video:'查看',handle:'待派单',judge:'3次'}
+  ];
+  // 获取当前标签页对应的原始数据源
+  function _getAlertSource(){return _alertActiveTab==='device'?_alertDeviceData:_alertWarnData;}
+  var _alertFilteredData=_getAlertSource().slice();
+  var _alertPage=1,_alertPageSize=20,_alertActiveTab='alert';
+
+  function openAlertList(type){
+    var overlay=document.getElementById('alert-list-overlay');
+    if(!overlay)return;
+    var isDeviceType=(type==='online'||type==='offline'||type==='fault');
+    if(isDeviceType){
+      // 设备管理入口：切到设备列表TAB，预选对应状态
+      switchAlertTab('device');
+      handleAlertReset();
+      var cb=document.querySelector('#alert-filter-status input[value="'+type+'"]');
+      if(cb){cb.checked=true;handleStatusSelection();}
+    }else{
+      // 原有入口：占道/今日告警，保持预警列表
+      switchAlertTab('alert');
+      handleAlertReset();
+    }
+    overlay.classList.add('show');
+    document.body.style.overflow='hidden';
+  }
+  function closeAlertList(e){
+    if(e&&e.target!==document.getElementById('alert-list-overlay'))return;
+    var overlay=document.getElementById('alert-list-overlay');
+    if(overlay){overlay.classList.remove('show');}
+    document.body.style.overflow='';
+  }
+  function switchAlertTab(name){
+    _alertActiveTab=name;
+    var tabs=document.querySelectorAll('#alert-tabs .alert-tab');
+    tabs.forEach(function(t,j){
+      var idx=(j===0)?'device':'alert';
+      t.classList.toggle('active',idx===name);
+    });
+    // 设备状态下拉仅在设备列表TAB可见
+    var statusField=document.getElementById('alert-filter-status-field');
+    if(statusField)statusField.style.display=(name==='device')?'':'none';
+    // 切换标签页时重新从各自数据源过滤
+    _alertFilteredData=_getAlertSource().slice();
+    handleAlertQuery();
+  }
+  // 获取已选的设备状态值
+  function _getCheckedStatuses(){
+    var cbs=document.querySelectorAll('#alert-filter-status input[type="checkbox"]:checked');
+    var vals=[];
+    cbs.forEach(function(cb){vals.push(cb.value);});
+    return vals;
+  }
+  // 切换设备状态下拉面板
+  function toggleStatusDropdown(){
+    document.getElementById('alert-filter-status').classList.toggle('open');
+  }
+  // 设备状态选择变化处理
+  function handleStatusSelection(){
+    var vals=_getCheckedStatuses();
+    var triggerLabel=document.getElementById('alert-status-trigger-label');
+    var labelMap={online:'在线',offline:'离线',fault:'疑似故障'};
+    if(vals.length===0){
+      triggerLabel.textContent='请选择设备状态';
+      triggerLabel.style.color='var(--text-muted)';
+    }else if(vals.length===1){
+      triggerLabel.textContent=labelMap[vals[0]]||vals[0];
+      triggerLabel.style.color='var(--text-secondary)';
+    }else{
+      triggerLabel.textContent='已选 '+vals.length+' 项';
+      triggerLabel.style.color='var(--accent-cyan)';
+    }
+    handleAlertQuery();
+  }
+  function _getCheckedBuildings(){
+    var cbs=document.querySelectorAll('#alert-filter-building input[type="checkbox"]:checked');
+    var vals=[];
+    cbs.forEach(function(cb){vals.push(cb.value);});
+    return vals;
+  }
+  function toggleBuildingDropdown(){
+    document.getElementById('alert-filter-building').classList.toggle('open');
+  }
+  function handleBuildingSelection(){
+    var vals=_getCheckedBuildings();
+    var triggerLabel=document.getElementById('alert-building-trigger-label');
+    if(vals.length===0){
+      triggerLabel.textContent='请选择建筑类型';
+      triggerLabel.style.color='var(--text-muted)';
+    } else if(vals.length===1){
+      triggerLabel.textContent=vals[0];
+      triggerLabel.style.color='var(--text-secondary)';
+    } else {
+      triggerLabel.textContent='已选 '+vals.length+' 项';
+      triggerLabel.style.color='var(--accent-cyan)';
+    }
+    handleAlertQuery();
+  }
+  function handleAlertQuery(){
+    var street=document.getElementById('alert-filter-street').value;
+    var buildings=_getCheckedBuildings();
+    var statuses=_getCheckedStatuses();
+    var keyword=(document.getElementById('alert-filter-keyword').value||'').toLowerCase();
+    _alertFilteredData=_getAlertSource().filter(function(r){
+      if(street&&r.street!==street)return false;
+      if(buildings.length>0&&buildings.indexOf(r.btype)===-1)return false;
+      if(statuses.length>0&&statuses.indexOf(r.status)===-1)return false;
+      if(keyword&&r.devCode.toLowerCase().indexOf(keyword)===-1&&r.addr.toLowerCase().indexOf(keyword)===-1)return false;
+      return true;
+    });
+    _alertPage=1;
+    renderAlertTable();
+  }
+  function handleAlertReset(){
+    document.getElementById('alert-filter-street').value='';
+    var cbs=document.querySelectorAll('#alert-filter-building input[type="checkbox"]');
+    cbs.forEach(function(cb){cb.checked=false;});
+    document.getElementById('alert-filter-building').classList.remove('open');
+    var triggerLabel=document.getElementById('alert-building-trigger-label');
+    triggerLabel.textContent='请选择建筑类型';
+    triggerLabel.style.color='var(--text-muted)';
+    // 重置设备状态筛选
+    var scbs=document.querySelectorAll('#alert-filter-status input[type="checkbox"]');
+    scbs.forEach(function(cb){cb.checked=false;});
+    document.getElementById('alert-filter-status').classList.remove('open');
+    var sTriggerLabel=document.getElementById('alert-status-trigger-label');
+    if(sTriggerLabel){sTriggerLabel.textContent='请选择设备状态';sTriggerLabel.style.color='var(--text-muted)';}
+    document.getElementById('alert-filter-keyword').value='';
+    _alertFilteredData=_getAlertSource().slice();
+    _alertPage=1;
+    renderAlertTable();
+  }
+  function changeAlertPage(dir){
+    var totalPages=Math.ceil(_alertFilteredData.length/_alertPageSize)||1;
+    if(dir==='first')_alertPage=1;
+    else if(dir==='prev')_alertPage=Math.max(1,_alertPage-1);
+    else if(dir==='next')_alertPage=Math.min(totalPages,_alertPage+1);
+    else if(dir==='last')_alertPage=totalPages;
+    renderAlertTable();
+  }
+  function changeAlertPageSize(size){
+    _alertPageSize=parseInt(size);
+    _alertPage=1;
+    renderAlertTable();
+  }
+  function renderAlertTable(){
+    var total=_alertFilteredData.length;
+    var totalPages=Math.ceil(total/_alertPageSize)||1;
+    if(_alertPage>totalPages)_alertPage=totalPages;
+    var start=(_alertPage-1)*_alertPageSize;
+    var pageData=_alertFilteredData.slice(start,start+_alertPageSize);
+    // 动态第9列表头：设备列表「设备状态」，预警列表「预警状态」
+    var isDevice=_alertActiveTab==='device';
+    var colStatus=document.getElementById('alert-col-status');
+    if(colStatus)colStatus.textContent=isDevice?'设备状态':'预警状态';
+
+    var tbody=document.getElementById('alert-table-body');
+    if(!tbody)return;
+    tbody.innerHTML=pageData.map(function(r,i){
+      var idx=start+i+1;
+      var statusText,chipCls;
+      if(isDevice){
+        // 设备状态：在线/离线/疑似故障
+        chipCls=r.status;
+        statusText=r.status==='online'?'在线':r.status==='offline'?'离线':'疑似故障';
+      }else{
+        // 预警状态：在线/预警/告警
+        chipCls=r.status;
+        statusText=r.status==='online'?'在线':r.status==='warning'?'预警':'告警';
+      }
+      var statusHtml='<span class="alert-status-chip '+chipCls+'">'+statusText+'</span>';
+      return '<tr>'+
+        '<td class="text-center">'+idx+'</td>'+
+        '<td>'+r.street+'</td>'+
+        '<td>'+r.devCode+'</td>'+
+        '<td>'+r.devName+'</td>'+
+        '<td>'+r.devType+'</td>'+
+        '<td>'+r.addr+'</td>'+
+        '<td>'+r.belong+'</td>'+
+        '<td>'+r.time+'</td>'+
+        '<td class="text-center">'+statusHtml+'</td>'+
+        '<td>'+r.duration+'</td>'+
+        '<td><span class="alert-link">'+r.video+'</span></td>'+
+        '<td><span class="alert-link">'+r.handle+'</span></td>'+
+        '<td>'+(function(){var n=parseInt(r.judge)||0;return n>0?'<span class="alert-link" onclick="openEventDetail(\''+r.devCode+'\',\''+r.devName+'\')">'+r.judge+'</span>':r.judge;})()+'</td>'+
+        '</tr>';
+    }).join('');
+
+    // 更新统计
+    var hint=document.getElementById('alert-result-hint');
+    if(hint)hint.textContent='共 '+total+' 条';
+    var pagTotal=document.getElementById('alert-pagination-total');
+    if(pagTotal)pagTotal.textContent='共 '+total+' 条，第 '+_alertPage+' / '+totalPages+' 页';
+    var pageCur=document.getElementById('alert-page-current');
+    if(pageCur)pageCur.textContent=_alertPage;
+
+    document.getElementById('alert-btn-first').disabled=(_alertPage<=1);
+    document.getElementById('alert-btn-prev').disabled=(_alertPage<=1);
+    document.getElementById('alert-btn-next').disabled=(_alertPage>=totalPages);
+    document.getElementById('alert-btn-last').disabled=(_alertPage>=totalPages);
+  }
+
+  // ESC 键关闭弹窗
+  document.addEventListener('keydown',function(e){
+    if(e.key==='Escape'){
+      var alertOverlay=document.getElementById('alert-list-overlay');
+      if(alertOverlay&&alertOverlay.classList.contains('show')){closeAlertList();return;}
+      var trkOverlay=document.getElementById('tracking-overlay');
+      if(trkOverlay&&trkOverlay.classList.contains('show')){closeTrackingPage();return;}
+      var evtOverlay=document.getElementById('evt-detail-overlay');
+      if(evtOverlay&&evtOverlay.classList.contains('show')){closeEventDetail();return;}
+    }
+  });
+  // 点击下拉面板外部时自动关闭
+  document.addEventListener('click',function(e){
+    var dd=document.getElementById('alert-filter-building');
+    if(dd&&dd.classList.contains('open')&&!dd.contains(e.target)){
+      dd.classList.remove('open');
+    }
+    var sd=document.getElementById('alert-filter-status');
+    if(sd&&sd.classList.contains('open')&&!sd.contains(e.target)){
+      sd.classList.remove('open');
+    }
+  });
+
+  window.openAlertList=openAlertList;
+  window.closeAlertList=closeAlertList;
+  window.switchAlertTab=switchAlertTab;
+  window.toggleBuildingDropdown=toggleBuildingDropdown;
+  window.handleBuildingSelection=handleBuildingSelection;
+  window.handleAlertQuery=handleAlertQuery;
+  window.handleAlertReset=handleAlertReset;
+  window.changeAlertPage=changeAlertPage;
+  window.changeAlertPageSize=changeAlertPageSize;
+  window.toggleStatusDropdown=toggleStatusDropdown;
+  window.handleStatusSelection=handleStatusSelection;
+  window.openDispatchModal=openDispatchModal;
+  window.closeDispatchModal=closeDispatchModal;
+  window.toggleDispatchFormDropdown=toggleDispatchFormDropdown;
+  window.selectDispatchUnit=selectDispatchUnit;
+  window.submitDispatch=submitDispatch;
+  window.toggleMoveCar=toggleMoveCar;
+  window.openMoveCarModal=openMoveCarModal;
+  window.closeMoveCarModal=closeMoveCarModal;
+  window.toggleMoveCarNotifyDropdown=toggleMoveCarNotifyDropdown;
+  window.selectMoveCarNotify=selectMoveCarNotify;
+  window.submitMoveCar=submitMoveCar;
+  window.hideMoveCarConfirm=hideMoveCarConfirm;
+  window.submitMoveCarConfirm=submitMoveCarConfirm;
+  window.openPlateEditor=openPlateEditor;
+  window.closePlateEditor=closePlateEditor;
+  window.confirmPlateEditor=confirmPlateEditor;
+  window.selectPlateType=selectPlateType;
+  window.selectPlateProvince=selectPlateProvince;
+  window.selectPlateCity=selectPlateCity;
+
   /* ===== AI机器人悬浮动画 ===== */
   function initAiBot(){
     var svg=document.getElementById('ai-bot-svg');
@@ -1486,6 +2763,145 @@
   window.openEventDetail=openEventDetail;
   window.closeEventDetail=closeEventDetail;
   initTop10Scroll();
+
+  /* ===== 交办跟踪二级页面 ===== */
+  var _trackingData=[
+    {hazardId:'SPGXF20260727001',street:'大溪沟街道',level:'区县级',eventType:'消防车通行保畅',source:'AI视频巡检',content:'大溪沟正街12号消防车道被车辆长时间占用，AI持续抓拍超过192分钟，已触发告警阈值',bldName:'大溪沟正街12号',mgmtUnit:'渝中区消防救援支队',reportTime:'2026-07-27 07:05:30',judge:'需立即交办至交巡警支队',judgeTime:'2026-07-27 07:20:15',status:'over',closeTime:'--',duration:'192min',devCode:'50010308001310000195'},
+    {hazardId:'SPGXF20260727002',street:'菜园坝街道',level:'区县级',eventType:'消防车道占用',source:'单位巡查发现',content:'菜园坝正街88号消防车通行受阻，社会车辆违规停放超过48分钟',bldName:'菜园坝正街88号',mgmtUnit:'菜园坝街道办',reportTime:'2026-07-27 08:12:40',judge:'转菜园坝街道属地处置',judgeTime:'2026-07-27 08:30:00',status:'doing',closeTime:'--',duration:'48min',devCode:'50010308001310000203'},
+    {hazardId:'SPGXF20260727003',street:'上清寺街道',level:'乡镇级',eventType:'消防车通行保畅',source:'AI视频巡检',content:'学田湾正街65号1F消防通道发现占道，AI检测系统自动记录',bldName:'学田湾正街65号',mgmtUnit:'上清寺街道办',reportTime:'2026-07-27 06:40:00',judge:'属地街道先行处置，视情况升级',judgeTime:'2026-07-27 06:55:10',status:'doing',closeTime:'--',duration:'87min',devCode:'50010308001310000115'},
+    {hazardId:'SPGXF20260726004',street:'解放碑街道',level:'区县级',eventType:'消防车道占用',source:'市民热线举报',content:'解放碑民权路商圈消防车道被临时卸货车队占用，影响消防车通行',bldName:'解放碑民权路消防车道',mgmtUnit:'解放碑街道办',reportTime:'2026-07-26 14:22:18',judge:'商圈核心区优先处置，安排交巡警引导',judgeTime:'2026-07-26 14:40:30',status:'done',closeTime:'2026-07-26 16:05:00',duration:'103min',devCode:'50010300300100003'},
+    {hazardId:'SPGXF20260726005',street:'两路口街道',level:'乡镇级',eventType:'消防设施损坏',source:'AI视频巡检',content:'急救中心通道消防设施标识损坏，摄像头检测到异常',bldName:'急救中心消防通道',mgmtUnit:'两路口街道办',reportTime:'2026-07-26 10:25:40',judge:'通知物业维修消防标识',judgeTime:'2026-07-26 10:40:00',status:'done',closeTime:'2026-07-26 14:30:00',duration:'244min',devCode:'50010300400100005'},
+    {hazardId:'SPGXF20260726006',street:'朝天门街道',level:'区县级',eventType:'消防车通行保畅',source:'AI视频巡检',content:'朝天门批发市场消防通道被大量货物临时堆放占用',bldName:'朝天门批发市场消防通道',mgmtUnit:'朝天门街道办',reportTime:'2026-07-26 09:15:00',judge:'批发市场高峰时段，协调市场管理方清理',judgeTime:'2026-07-26 09:30:00',status:'done',closeTime:'2026-07-26 11:00:00',duration:'105min',devCode:'50010301000100009'},
+    {hazardId:'SPGXF20260727007',street:'石油路街道',level:'区县级',eventType:'消防车道占用',source:'市民热线举报',content:'龙湖时代天街消防通道被外卖电动车大量聚集停放',bldName:'龙湖时代天街消防通道',mgmtUnit:'石油路街道办',reportTime:'2026-07-27 11:30:00',judge:'通知商场物业设置外卖车专用停放区',judgeTime:'2026-07-27 11:45:00',status:'doing',closeTime:'--',duration:'65min',devCode:'50010301300100010'},
+    {hazardId:'SPGXF20260725008',street:'化龙桥街道',level:'乡镇级',eventType:'疏散通道堵塞',source:'单位巡查发现',content:'嘉陵天地小区疏散通道被装修材料临时堆放堵塞',bldName:'嘉陵天地消防通道',mgmtUnit:'化龙桥街道办',reportTime:'2026-07-25 15:40:00',judge:'通知物业限期清理，加强日常巡查',judgeTime:'2026-07-25 16:00:00',status:'done',closeTime:'2026-07-26 10:00:00',duration:'18h',devCode:'50010301100100011'},
+    {hazardId:'SPGXF20260727009',street:'南纪门街道',level:'乡镇级',eventType:'消防车通行保畅',source:'AI视频巡检',content:'十八梯景区消防通道被旅游大巴临时停靠阻挡',bldName:'十八梯消防通道',mgmtUnit:'南纪门街道办',reportTime:'2026-07-27 12:18:55',judge:'旅游旺季加强景区周边消防通道巡查',judgeTime:'2026-07-27 12:35:00',status:'done',closeTime:'2026-07-27 13:00:00',duration:'41min',devCode:'50010300800100007'},
+    {hazardId:'SPGXF20260727010',street:'七星岗街道',level:'乡镇级',eventType:'消防车道占用',source:'AI视频巡检',content:'通远门消防车道被夜间违停车辆占用，已持续超过3小时',bldName:'通远门消防车道',mgmtUnit:'七星岗街道办',reportTime:'2026-07-27 04:15:00',judge:'凌晨违停需安排拖车处置',judgeTime:'2026-07-27 04:30:00',status:'over',closeTime:'--',duration:'215min',devCode:'50010300100100011'},
+    {hazardId:'SPGXF20260726011',street:'大坪街道',level:'区县级',eventType:'消防车通行保畅',source:'AI视频巡检',content:'大坪正街消防通道高层住宅区消防车道被社会车辆占用',bldName:'大坪正街消防通道',mgmtUnit:'大坪街道办',reportTime:'2026-07-26 08:45:30',judge:'高层住宅区优先处置，防范火灾风险',judgeTime:'2026-07-26 09:00:00',status:'done',closeTime:'2026-07-26 11:30:00',duration:'165min',devCode:'50010301200100008'},
+    {hazardId:'SPGXF20260727012',street:'大溪沟街道',level:'区县级',eventType:'消防设施损坏',source:'单位巡查发现',content:'人民路消防通道监控摄像头疑似故障，连续9天未触发告警',bldName:'人民路消防通道',mgmtUnit:'渝中区消防救援支队',reportTime:'2026-07-27 09:00:00',judge:'疑似设备故障需派技术人员检修',judgeTime:'2026-07-27 09:15:00',status:'over',closeTime:'--',duration:'27min',devCode:'50010300200100012'},
+    {hazardId:'SPGXF20260727013',street:'解放碑街道',level:'乡镇级',eventType:'疏散通道堵塞',source:'市民热线举报',content:'较场口得意世界消防疏散通道被商家杂物堆放堵塞',bldName:'较场口得意世界消防通道',mgmtUnit:'解放碑街道办',reportTime:'2026-07-27 13:00:00',judge:'通知商家立即清理，安排安监复查',judgeTime:'2026-07-27 13:15:00',status:'doing',closeTime:'--',duration:'42min',devCode:'50010300300100013'},
+    {hazardId:'SPGXF20260726014',street:'两路口街道',level:'区县级',eventType:'消防车通行保畅',source:'AI视频巡检',content:'两路口急救中心通道消防车通行受阻',bldName:'两路口急救中心',mgmtUnit:'两路口街道办',reportTime:'2026-07-26 16:20:00',judge:'急救中心通道优先保障',judgeTime:'2026-07-26 16:35:00',status:'done',closeTime:'2026-07-26 17:10:00',duration:'50min',devCode:'50010300400100014'},
+    {hazardId:'SPGXF20260727015',street:'上清寺街道',level:'乡镇级',eventType:'消防车道占用',source:'AI视频巡检',content:'美专校街消防车道夜间被社会车辆占道停放',bldName:'美专校街消防车道',mgmtUnit:'上清寺街道办',reportTime:'2026-07-27 02:30:00',judge:'夜间占道需安排早上拖车处置',judgeTime:'2026-07-27 02:45:00',status:'doing',closeTime:'--',duration:'156min',devCode:'50010300500100015'}
+  ];
+
+  var _trkFiltered=[],_trkPage=1,_trkPageSize=10,_trkActiveStatus='';
+
+  function openTrackingPage(status){
+    _trkActiveStatus=status||'';
+    var sel=document.getElementById('trk-filter-status');
+    if(sel)sel.value=_trkActiveStatus;
+    var hint=document.getElementById('tracking-filter-hint');
+    var statusMap={doing:'处置中',over:'已超时',done:'已处置'};
+    if(hint)hint.textContent=_trkActiveStatus?'· '+statusMap[_trkActiveStatus]:'';
+    handleTrackingQuery();
+    document.getElementById('tracking-overlay').classList.add('show');
+    document.body.style.overflow='hidden';
+  }
+
+  function closeTrackingPage(e){
+    if(e&&e.target!==document.getElementById('tracking-overlay'))return;
+    document.getElementById('tracking-overlay').classList.remove('show');
+    document.body.style.overflow='';
+  }
+
+  function filterTrackingData(){
+    var street=document.getElementById('trk-filter-street').value;
+    var eventType=document.getElementById('trk-filter-event-type').value;
+    var status=document.getElementById('trk-filter-status').value||_trkActiveStatus;
+    var bld=(document.getElementById('trk-filter-bld').value||'').trim().toLowerCase();
+    var dev=(document.getElementById('trk-filter-dev').value||'').trim().toLowerCase();
+    return _trackingData.filter(function(r){
+      if(street&&r.street!==street)return false;
+      if(eventType&&r.eventType!==eventType)return false;
+      if(status&&r.status!==status)return false;
+      if(bld&&r.bldName.toLowerCase().indexOf(bld)===-1)return false;
+      if(dev&&r.devCode.toLowerCase().indexOf(dev)===-1)return false;
+      return true;
+    });
+  }
+
+  function handleTrackingQuery(){
+    _trkPage=1;
+    _trkFiltered=filterTrackingData();
+    renderTrackingTable();
+  }
+
+  function handleTrackingReset(){
+    document.getElementById('trk-filter-street').value='';
+    document.getElementById('trk-filter-event-type').value='';
+    document.getElementById('trk-filter-status').value=_trkActiveStatus||'';
+    document.getElementById('trk-filter-bld').value='';
+    document.getElementById('trk-filter-dev').value='';
+    _trkPage=1;
+    _trkFiltered=filterTrackingData();
+    renderTrackingTable();
+  }
+
+  function handleTrackingPageSize(){
+    _trkPageSize=parseInt(document.getElementById('trk-page-size').value)||10;
+    _trkPage=1;
+    renderTrackingTable();
+  }
+
+  function goTrackingPage(action){
+    var totalPages=Math.ceil(_trkFiltered.length/_trkPageSize)||1;
+    if(action==='first')_trkPage=1;
+    else if(action==='prev')_trkPage=Math.max(1,_trkPage-1);
+    else if(action==='next')_trkPage=Math.min(totalPages,_trkPage+1);
+    else if(action==='last')_trkPage=totalPages;
+    renderTrackingTable();
+  }
+
+  function renderTrackingTable(){
+    var total=_trkFiltered.length;
+    var totalPages=Math.ceil(total/_trkPageSize)||1;
+    if(_trkPage>totalPages)_trkPage=totalPages;
+    var start=(_trkPage-1)*_trkPageSize;
+    var pageData=_trkFiltered.slice(start,start+_trkPageSize);
+
+    document.getElementById('tracking-result-hint').innerHTML='共 <b>'+total+'</b> 条';
+
+    var statusMap={doing:'处置中',over:'已超时',done:'已处置'};
+    var statusClass={doing:'doing',over:'over',done:'done'};
+
+    var html='';
+    for(var i=0;i<pageData.length;i++){
+      var r=pageData[i];
+      var idx=start+i+1;
+      html+='<tr>'+
+        '<td class="text-center">'+idx+'</td>'+
+        '<td>'+r.hazardId+'</td>'+
+        '<td>'+r.street+'</td>'+
+        '<td>'+r.level+'</td>'+
+        '<td>'+r.eventType+'</td>'+
+        '<td>'+r.source+'</td>'+
+        '<td style="max-width:160px;overflow:hidden;text-overflow:ellipsis" title="'+r.content.replace(/"/g,'&quot;')+'">'+r.content+'</td>'+
+        '<td><span class="tracking-link" onclick="openEventDetail(\''+r.hazardId+'\',\''+r.bldName+'\')">'+r.bldName+'</span></td>'+
+        '<td>'+r.mgmtUnit+'</td>'+
+        '<td>'+r.reportTime+'</td>'+
+        '<td>'+r.judge+'</td>'+
+        '<td>'+r.judgeTime+'</td>'+
+        '<td><span class="tracking-status '+statusClass[r.status]+'">'+statusMap[r.status]+'</span></td>'+
+        '<td>'+r.closeTime+'</td>'+
+        '<td>'+r.duration+'</td>'+
+        '<td>'+r.devCode+'</td>'+
+        '</tr>';
+    }
+    if(!pageData.length)html='<tr><td colspan="16" style="text-align:center;padding:1.5rem;color:var(--text-muted)">暂无匹配数据</td></tr>';
+    document.getElementById('tracking-table-body').innerHTML=html;
+
+    document.getElementById('trk-page-cur').textContent=_trkPage+' / '+totalPages;
+    document.getElementById('trk-btn-first').disabled=(_trkPage<=1);
+    document.getElementById('trk-btn-prev').disabled=(_trkPage<=1);
+    document.getElementById('trk-btn-next').disabled=(_trkPage>=totalPages);
+    document.getElementById('trk-btn-last').disabled=(_trkPage>=totalPages);
+  }
+
+  window.openTrackingPage=openTrackingPage;
+  window.closeTrackingPage=closeTrackingPage;
+  window.handleTrackingQuery=handleTrackingQuery;
+  window.handleTrackingReset=handleTrackingReset;
+  window.handleTrackingPageSize=handleTrackingPageSize;
+  window.goTrackingPage=goTrackingPage;
 })();
 </script>
 </body>
