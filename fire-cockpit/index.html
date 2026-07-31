@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>高层建筑消防安全综合智管 v3.38</title>
+<title>高层建筑消防安全综合智管 v3.39</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap');
   :root {
@@ -436,6 +436,37 @@
   .modal-radar{width:100%;height:14rem;margin-top:0.3rem;background:rgba(8,24,40,0.5);border:1px solid rgba(74,158,255,0.12);border-radius:4px}
   /* Footer */
   .modal-footer{text-align:center;padding:0.7rem 0 0.3rem;font-size:0.55rem;color:var(--text-muted);border-top:1px solid rgba(74,158,255,0.08);margin-top:0.4rem;letter-spacing:0.3px}
+
+  /* ===== AI对话流式输出 ===== */
+  .ai-chat-stream{display:flex;flex-direction:column;gap:0.6rem}
+  .ai-chat-message{display:flex;gap:0.5rem;animation:chatSlideIn .35s ease-out}
+  @keyframes chatSlideIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+  .ai-chat-avatar{width:1.8rem;height:1.8rem;border-radius:50%;background:linear-gradient(135deg,#4a9eff,#0064c8);color:#fff;font-size:0.6rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;letter-spacing:-0.5px;box-shadow:0 0 8px rgba(74,158,255,0.25)}
+  .ai-chat-bubble{flex:1;min-width:0;background:rgba(8,24,40,0.55);border:1px solid rgba(74,158,255,0.15);border-radius:0 6px 6px 6px;padding:0.6rem 0.75rem}
+  .ai-chat-title{font-size:0.72rem;font-weight:600;color:var(--accent-blue);margin-bottom:0.3rem}
+  .ai-chat-text{font-size:0.66rem;color:var(--text-secondary);line-height:1.7;min-height:1em}
+  .ai-chat-cursor{display:inline-block;width:0.4rem;height:0.85rem;background:var(--accent-blue);vertical-align:text-bottom;margin-left:0.05rem;animation:cursorBlink .8s step-end infinite}
+  @keyframes cursorBlink{0%,100%{opacity:1}50%{opacity:0}}
+  .ai-chat-extra{margin-top:0.4rem}
+  .ai-chat-kpi-row{display:grid;grid-template-columns:repeat(3,1fr);gap:0.4rem;margin-top:0.3rem}
+  .ai-chat-kpi{background:rgba(74,158,255,0.04);border:1px solid rgba(74,158,255,0.12);border-left:3px solid var(--accent-blue);border-radius:4px;padding:0.4rem 0.5rem}
+  .ai-chat-kpi.green{border-left-color:var(--green)}
+  .ai-chat-kpi-num{font-family:'Oswald',sans-serif;font-size:1.1rem;font-weight:600;color:var(--accent-blue);line-height:1.1}
+  .ai-chat-kpi.green .ai-chat-kpi-num{color:var(--green)}
+  .ai-chat-kpi-num small{font-size:0.45rem;font-weight:400;color:var(--text-muted);margin-left:0.05rem}
+  .ai-chat-kpi-label{font-size:0.52rem;color:var(--text-muted);margin-top:0.1rem}
+  .ai-chat-kpi-trend{font-size:0.5rem;color:var(--green);margin-top:0.1rem;font-weight:600}
+  .ai-chat-kpi-sub{font-size:0.5rem;color:var(--text-muted);margin-top:0.1rem}
+  .ai-chat-chart{width:100%;height:12rem;margin-top:0.4rem;background:rgba(8,24,40,0.5);border:1px solid rgba(74,158,255,0.12);border-radius:4px}
+  .ai-chat-rec-row{display:grid;grid-template-columns:repeat(3,1fr);gap:0.35rem;margin-top:0.3rem}
+  .ai-chat-rec{background:rgba(74,158,255,0.04);border:1px solid rgba(74,158,255,0.1);border-radius:4px;padding:0.4rem 0.5rem}
+  .ai-chat-rec-title{font-size:0.6rem;font-weight:600;color:var(--text-primary);margin-bottom:0.15rem;display:flex;align-items:center;gap:0.25rem}
+  .ai-chat-rec-tag{font-size:0.45rem;padding:0.04rem 0.35rem;border-radius:3px;font-weight:600;letter-spacing:0.2px}
+  .ai-chat-rec-tag.p1{background:rgba(255,165,2,0.15);color:var(--orange)}
+  .ai-chat-rec-tag.p2{background:rgba(74,158,255,0.16);color:var(--accent-blue)}
+  .ai-chat-rec-body{font-size:0.54rem;color:var(--text-secondary);line-height:1.5}
+  .ai-chat-rec-impact{font-size:0.5rem;color:var(--green);margin-top:0.2rem;padding-top:0.2rem;border-top:1px dashed rgba(51,204,102,0.18);font-weight:500}
+  .ai-chat-footer{text-align:center;padding:0.5rem 0 0;font-size:0.55rem;color:var(--text-muted);border-top:1px solid rgba(74,158,255,0.08);margin-top:0.2rem;letter-spacing:0.03em}
 
   /* ===== 告警列表弹窗 ===== */
   .alert-list-overlay{position:fixed;inset:0;z-index:1200;background:rgba(0,0,0,0.65);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center}
@@ -1059,91 +1090,8 @@
         <span>2026年消防通道保畅一件事分析报告</span>
         <span class="ai-modal-close" onclick="closeReportModal()">&#x2715;</span>
       </div>
-      <div class="ai-modal-body">
-        <!-- 01 核心结论 -->
-        <div class="modal-section">
-          <div class="modal-section-title"><span class="modal-section-num">01</span>核心结论</div>
-          <div class="modal-section-desc">两个年份看同一份消防通道保畅一件事，看到的是全面改善</div>
-          <div class="modal-callout">
-            <div class="modal-callout-body">2026年上半年，消防通道保畅一件事整体运行平稳，六大核心指标同比全面改善。年度一件事累计处置<strong>53件</strong>，办结率<strong>98.6%</strong>，占堵相关舆情<strong>0件</strong>。</div>
-          </div>
-          <div class="modal-kpi-grid">
-            <div class="modal-kpi green"><div class="modal-kpi-label">年度一件事</div><div class="modal-kpi-value">53<small>件</small></div><div class="modal-kpi-trend">&#x2193;1.8%</div></div>
-            <div class="modal-kpi green"><div class="modal-kpi-label">办结率</div><div class="modal-kpi-value">98.6<small>%</small></div><div class="modal-kpi-sub">51 / 53 件</div></div>
-            <div class="modal-kpi green"><div class="modal-kpi-label">占堵舆情</div><div class="modal-kpi-value">0<small>件</small></div><div class="modal-kpi-sub">连续 12 月</div></div>
-          </div>
-        </div>
-
-        <!-- 02 六维指标同比 -->
-        <div class="modal-section">
-          <div class="modal-section-title"><span class="modal-section-num">02</span>六维指标同比</div>
-          <div class="modal-section-desc">2026 vs 2025 · 六项核心指标全部改善</div>
-          <div class="modal-radar" id="modal-radar-chart"></div>
-        </div>
-
-        <!-- 03 + 04 亮点成效 & 待改进领域（双栏） -->
-        <div class="modal-two-col">
-          <div class="modal-section">
-            <div class="modal-section-title"><span class="modal-section-num">03</span>亮点成效</div>
-            <div class="modal-finding">
-              <div class="modal-finding-title"><span class="modal-finding-badge">亮点</span>高峰占比 &#x2193;30%</div>
-              <div class="modal-finding-body">错时巡查与智能调度策略有效实施，高峰时段占道事件大幅压减。</div>
-            </div>
-            <div class="modal-finding">
-              <div class="modal-finding-title"><span class="modal-finding-badge">亮点</span>超长占道率 &#x2193;20%</div>
-              <div class="modal-finding-body">长期占用预警机制发挥作用，超长占道事件显著减少。</div>
-            </div>
-            <div class="modal-finding">
-              <div class="modal-finding-title"><span class="modal-finding-badge">亮点</span>舆情管控 0件</div>
-              <div class="modal-finding-body">全年消防通道占堵相关舆情 0 件，公众满意度持续提升。</div>
-            </div>
-            <div class="modal-finding info">
-              <div class="modal-finding-title"><span class="modal-finding-badge info">AI赋能</span>识别准确率 98.6%</div>
-              <div class="modal-finding-body">AI 智能识别准确率提升至 98.6%，误报率降至历史最低。</div>
-            </div>
-          </div>
-
-          <div class="modal-section">
-            <div class="modal-section-title"><span class="modal-section-num">04</span>待改进领域</div>
-            <div class="modal-finding warning">
-              <div class="modal-finding-title"><span class="modal-finding-badge warning">弱项</span>夜间响应偏慢</div>
-              <div class="modal-finding-body">处置响应均时改善幅度仅 5%，夜间时段响应速度仍有提升空间。</div>
-            </div>
-            <div class="modal-finding warning">
-              <div class="modal-finding-title"><span class="modal-finding-badge warning">弱项</span>老旧小区反复率高</div>
-              <div class="modal-finding-body">个别老旧小区通道占用反复率偏高，需加强源头治理与硬件投入。</div>
-            </div>
-            <div class="modal-finding warning">
-              <div class="modal-finding-title"><span class="modal-finding-badge warning">弱项</span>极端天气掉线</div>
-              <div class="modal-finding-body">设备离线率在极端天气下波动较大，需增强硬件抗灾能力与冗余部署。</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 05 下半年建议 -->
-        <div class="modal-section">
-          <div class="modal-section-title"><span class="modal-section-num">05</span>下半年建议</div>
-          <div class="modal-section-desc">力争年末六项指标全面优于 2025 年基准值 20% 以上</div>
-          <div class="modal-rec-grid">
-            <div class="modal-rec">
-              <div class="modal-rec-title"><span class="modal-rec-tag p1">P1</span>夜间智能巡检</div>
-              <div class="modal-rec-body">推进夜间 AI 智能巡检覆盖，缩短夜间响应均时。</div>
-              <div class="modal-rec-impact">&#x2191; 响应均时 &#x2192; &#x2193;10%</div>
-            </div>
-            <div class="modal-rec">
-              <div class="modal-rec-title"><span class="modal-rec-tag p1">P1</span>老旧小区改造</div>
-              <div class="modal-rec-body">消防通道标准化改造，从源头降低反复占道率。</div>
-              <div class="modal-rec-impact">&#x2191; 反复率 &#x2192; &#x2193;25%</div>
-            </div>
-            <div class="modal-rec">
-              <div class="modal-rec-title"><span class="modal-rec-tag p2">P2</span>设备冗余部署</div>
-              <div class="modal-rec-body">关键点位设备冗余部署，降低极端天气离线率。</div>
-              <div class="modal-rec-impact">&#x2191; 抗灾能力 &#x2192; 离线率 &#x2193;50%</div>
-            </div>
-          </div>
-        </div>
-
-        <div class="modal-footer">报告生成时间：2026-07-22 · 渝中区消防通道保畅一件事驾驶舱</div>
+      <div class="ai-modal-body" id="ai-chat-body">
+        <div class="ai-chat-stream" id="ai-chat-stream"></div>
       </div>
     </div>
   </div>
@@ -2205,60 +2153,140 @@
   }
 
   var _modalRadar=null;
+  var _aiStreamTimer=null;
+  var _aiStreamQueue=[];
+  var _aiStreamIndex=0;
+
   function openReportModal(){
     var modal=document.getElementById('ai-report-modal');
-    if(modal)modal.classList.add('show');
-    setTimeout(function(){
-      var dom=document.getElementById('modal-radar-chart');
-      if(!dom||!dom.clientHeight)return;
-      if(_modalRadar){_modalRadar.dispose();_modalRadar=null;}
-      _modalRadar=echarts.init(dom);
-      _modalRadar.setOption({
-        color:['#6b8294','#7db9ff'],
-        legend:{
-          data:['2025','2026'],
-          left:4,top:2,orient:'vertical',
-          itemWidth:12,itemHeight:5,itemGap:4,
-          textStyle:{color:'rgba(255,255,255,0.65)',fontSize:9}
-        },
-        radar:{
-          center:['54%','55%'],radius:'58%',
-          axisName:{color:'rgba(255,255,255,0.6)',fontSize:8},
-          indicator:[
-            {name:'占用率',max:1},{name:'响应均时',max:1},{name:'占道时长',max:1},
-            {name:'超长占道',max:1},{name:'高峰占比',max:1},{name:'日均告警',max:1}
-          ],
-          splitNumber:4,
-          splitArea:{areaStyle:{color:['rgba(74,158,255,0.06)','rgba(74,158,255,0.03)','rgba(74,158,255,0.06)','rgba(74,158,255,0.03)','rgba(74,158,255,0.09)']}},
-          splitLine:{lineStyle:{color:'rgba(74,158,255,0.18)',width:.8}},
-          axisLine:{lineStyle:{color:'rgba(74,158,255,0.14)',width:.8}}
-        },
-        series:[{
-          type:'radar',symbol:'circle',symbolSize:3,
-          emphasis:{focus:'self',lineStyle:{width:2}},
-          data:[
-            {name:'2025',value:[1,1,1,1,1,1],
-              lineStyle:{color:'#9bb0c4',width:1,type:'dashed'},
-              areaStyle:{color:'rgba(155,176,196,0.05)'},
-              itemStyle:{color:'#9bb0c4'}
-            },
-            {name:'2026',value:[0.85,0.95,0.9,0.8,0.7,0.9],
-              lineStyle:{color:'#7db9ff',width:1.8,shadowColor:'rgba(74,158,255,0.4)',shadowBlur:4},
-              areaStyle:{color:new echarts.graphic.RadialGradient(.5,.5,1,[
-                {offset:0,color:'rgba(74,158,255,0.3)'},{offset:.7,color:'rgba(0,150,220,0.12)'},{offset:1,color:'rgba(0,100,180,0.03)'}
-              ])},
-              itemStyle:{color:'#7ef0ff',borderColor:'#7db9ff',borderWidth:1,shadowColor:'#7db9ff',shadowBlur:4}
-            }
-          ]
-        }]
-      });
-    },200);
+    if(!modal)return;
+    modal.classList.add('show');
+    var stream=document.getElementById('ai-chat-stream');
+    if(!stream)return;
+    stream.innerHTML='';
+    _aiStreamIndex=0;
+    if(_aiStreamTimer){clearTimeout(_aiStreamTimer);_aiStreamTimer=null;}
+    if(_modalRadar){_modalRadar.dispose();_modalRadar=null;}
+    _aiStreamQueue=[
+      {title:'📊 核心结论',text:'2026年上半年，消防通道保畅一件事整体运行平稳，六大核心指标同比全面改善。年度一件事累计处置53件，办结率98.6%，占堵相关舆情0件，连续12个月保持零舆情。',kpis:[
+        {num:'53',unit:'件',label:'年度一件事',trend:'↓1.8%'},
+        {num:'98.6',unit:'%',label:'办结率',sub:'51/53件'},
+        {num:'0',unit:'件',label:'占堵舆情',sub:'连续12月'}
+      ]},
+      {title:'📈 六维指标同比',text:'2026年 vs 2025年，六项核心指标全部改善：占用率↓15%、响应均时↓5%、占道时长↓10%、超长占道↓20%、高峰占比↓30%、日均告警↓10%。',chart:true},
+      {title:'✅ 亮点成效',text:'三大亮点：①高峰占比↓30%，错时巡查与智能调度策略有效实施；②超长占道率↓20%，长期占用预警机制发挥作用；③舆情管控0件，全年无相关舆情。AI赋能：识别准确率提升至98.6%，误报率降至历史最低。'},
+      {title:'⚠️ 待改进领域',text:'三个关注点：①夜间响应偏慢，处置响应均时改善幅度仅5%，夜间时段响应速度仍有提升空间；②老旧小区反复率偏高，个别老旧小区通道占用反复率偏高，需加强源头治理；③极端天气下设备离线率波动较大，需增强硬件抗灾能力与冗余部署。'},
+      {title:'💡 下半年建议',text:'基于以上分析，提出三项建议：P1-夜间智能巡检，推进夜间AI智能巡检覆盖，缩短夜间响应均时，目标↓10%；P1-老旧小区改造，消防通道标准化改造，从源头降低反复占道率，目标↓25%；P2-设备冗余部署，关键点位设备冗余部署，降低极端天气离线率，目标↓50%。力争年末六项指标全面优于2025年基准值20%以上。',recs:[
+        {tag:'P1',title:'夜间智能巡检',body:'推进夜间AI智能巡检覆盖，缩短夜间响应均时。',impact:'↑ 响应均时 → ↓10%'},
+        {tag:'P1',title:'老旧小区改造',body:'消防通道标准化改造，从源头降低反复占道率。',impact:'↑ 反复率 → ↓25%'},
+        {tag:'P2',title:'设备冗余部署',body:'关键点位设备冗余部署，降低极端天气离线率。',impact:'↑ 抗灾能力 → ↓50%'}
+      ]}
+    ];
+    _aiStreamTimer=setTimeout(function(){streamNextMessage();},300);
   }
+
+  function streamNextMessage(){
+    if(_aiStreamIndex>=_aiStreamQueue.length){
+      var stream=document.getElementById('ai-chat-stream');
+      if(stream){
+        var footer=document.createElement('div');
+        footer.className='ai-chat-footer';
+        var now=new Date();
+        var nowStr=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0')+' '+String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
+        footer.textContent='报告生成时间：'+nowStr+' · 渝中区消防通道保畅一件事驾驶舱';
+        stream.appendChild(footer);
+        var body=document.getElementById('ai-chat-body');
+        if(body)body.scrollTop=body.scrollHeight;
+      }
+      return;
+    }
+    var msg=_aiStreamQueue[_aiStreamIndex];
+    var stream=document.getElementById('ai-chat-stream');
+    if(!stream)return;
+    var msgDiv=document.createElement('div');
+    msgDiv.className='ai-chat-message';
+    msgDiv.innerHTML='<div class="ai-chat-avatar">AI</div><div class="ai-chat-bubble"><div class="ai-chat-title">'+msg.title+'</div><div class="ai-chat-text" id="ai-chat-text-'+_aiStreamIndex+'"><span class="ai-chat-cursor"></span></div><div class="ai-chat-extra" id="ai-chat-extra-'+_aiStreamIndex+'"></div></div>';
+    stream.appendChild(msgDiv);
+    var body=document.getElementById('ai-chat-body');
+    if(body)body.scrollTop=body.scrollHeight;
+    var textEl=document.getElementById('ai-chat-text-'+_aiStreamIndex);
+    typeWriter(textEl,msg.text,0,function(){
+      var cursor=textEl.querySelector('.ai-chat-cursor');
+      if(cursor)cursor.remove();
+      var extra=document.getElementById('ai-chat-extra-'+_aiStreamIndex);
+      if(msg.kpis)renderChatKPIs(extra,msg.kpis);
+      if(msg.chart){
+        var chartDiv=document.createElement('div');
+        chartDiv.className='ai-chat-chart';
+        var chartId='ai-chat-radar-'+_aiStreamIndex;
+        chartDiv.id=chartId;
+        extra.appendChild(chartDiv);
+        setTimeout(function(){initModalRadar(chartId);},200);
+      }
+      if(msg.recs)renderChatRecs(extra,msg.recs);
+      _aiStreamIndex++;
+      _aiStreamTimer=setTimeout(function(){streamNextMessage();},400);
+    });
+  }
+
+  function typeWriter(el,text,i,callback){
+    if(i<text.length){
+      var cursor=el.querySelector('.ai-chat-cursor');
+      var txt=document.createTextNode(text.charAt(i));
+      el.insertBefore(txt,cursor);
+      var body=document.getElementById('ai-chat-body');
+      if(body)body.scrollTop=body.scrollHeight;
+      var speed=28+Math.random()*18;
+      if('。；.!?'.indexOf(text.charAt(i))>=0)speed+=90;
+      else if('，、,;'.indexOf(text.charAt(i))>=0)speed+=45;
+      _aiStreamTimer=setTimeout(function(){typeWriter(el,text,i+1,callback);},speed);
+    }else{if(callback)callback();}
+  }
+
+  function renderChatKPIs(container,kpis){
+    var row=document.createElement('div');
+    row.className='ai-chat-kpi-row';
+    kpis.forEach(function(kpi){
+      var card=document.createElement('div');
+      card.className='ai-chat-kpi green';
+      var subHtml=kpi.trend?'<div class="ai-chat-kpi-trend">'+kpi.trend+'</div>':(kpi.sub?'<div class="ai-chat-kpi-sub">'+kpi.sub+'</div>':'');
+      card.innerHTML='<div class="ai-chat-kpi-num">'+kpi.num+'<small>'+kpi.unit+'</small></div><div class="ai-chat-kpi-label">'+kpi.label+'</div>'+subHtml;
+      row.appendChild(card);
+    });
+    container.appendChild(row);
+  }
+
+  function renderChatRecs(container,recs){
+    var row=document.createElement('div');
+    row.className='ai-chat-rec-row';
+    recs.forEach(function(rec){
+      var card=document.createElement('div');
+      card.className='ai-chat-rec';
+      card.innerHTML='<div class="ai-chat-rec-title"><span class="ai-chat-rec-tag '+(rec.tag==='P1'?'p1':'p2')+'">'+rec.tag+'</span>'+rec.title+'</div><div class="ai-chat-rec-body">'+rec.body+'</div><div class="ai-chat-rec-impact">'+rec.impact+'</div>';
+      row.appendChild(card);
+    });
+    container.appendChild(row);
+  }
+
+  function initModalRadar(id){
+    var dom=document.getElementById(id);
+    if(!dom||!dom.clientHeight)return;
+    if(_modalRadar){_modalRadar.dispose();_modalRadar=null;}
+    _modalRadar=echarts.init(dom);
+    _modalRadar.setOption({
+      color:['#6b8294','#7db9ff'],
+      legend:{data:['2025','2026'],left:4,top:2,orient:'vertical',itemWidth:12,itemHeight:5,itemGap:4,textStyle:{color:'rgba(255,255,255,0.65)',fontSize:9}},
+      radar:{center:['54%','55%'],radius:'58%',axisName:{color:'rgba(255,255,255,0.6)',fontSize:8},indicator:[{name:'占用率',max:1},{name:'响应均时',max:1},{name:'占道时长',max:1},{name:'超长占道',max:1},{name:'高峰占比',max:1},{name:'日均告警',max:1}],splitNumber:4,splitArea:{areaStyle:{color:['rgba(74,158,255,0.06)','rgba(74,158,255,0.03)','rgba(74,158,255,0.06)','rgba(74,158,255,0.03)','rgba(74,158,255,0.09)']}},splitLine:{lineStyle:{color:'rgba(74,158,255,0.18)',width:.8}},axisLine:{lineStyle:{color:'rgba(74,158,255,0.14)',width:.8}}},
+      series:[{type:'radar',symbol:'circle',symbolSize:3,emphasis:{focus:'self',lineStyle:{width:2}},data:[{name:'2025',value:[1,1,1,1,1,1],lineStyle:{color:'#9bb0c4',width:1,type:'dashed'},areaStyle:{color:'rgba(155,176,196,0.05)'},itemStyle:{color:'#9bb0c4'}},{name:'2026',value:[0.85,0.95,0.9,0.8,0.7,0.9],lineStyle:{color:'#7db9ff',width:1.8,shadowColor:'rgba(74,158,255,0.4)',shadowBlur:4},areaStyle:{color:new echarts.graphic.RadialGradient(.5,.5,1,[{offset:0,color:'rgba(74,158,255,0.3)'},{offset:.7,color:'rgba(0,150,220,0.12)'},{offset:1,color:'rgba(0,100,180,0.03)'}])},itemStyle:{color:'#7ef0ff',borderColor:'#7db9ff',borderWidth:1,shadowColor:'#7db9ff',shadowBlur:4}}]}]
+    });
+  }
+
   function closeReportModal(e){
     if(e&&e.target!==document.getElementById('ai-report-modal'))return;
     var modal=document.getElementById('ai-report-modal');
     if(modal)modal.classList.remove('show');
     if(_modalRadar){_modalRadar.dispose();_modalRadar=null;}
+    if(_aiStreamTimer){clearTimeout(_aiStreamTimer);_aiStreamTimer=null;}
   }
   window.addEventListener('resize',function(){if(_modalRadar)_modalRadar.resize();});
   window.openReportModal=openReportModal;
