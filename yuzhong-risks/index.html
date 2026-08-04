@@ -1,0 +1,1175 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>渝中区风险隐患快响快处驾驶舱</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://webapi.amap.com/maps?v=2.0&key=565a46dc0aee68bd9bd42ce0b15e10fa&securityJsCode=04ffd8220acfa305570bd4a8f47b8a0c"></script>
+<style>
+  *{box-sizing:border-box} body{margin:0;background:#060E1F;color:#dcecff;font-family:Arial,"Microsoft YaHei",sans-serif;overflow:hidden}
+  /* ===== Header 驾驶舱风格（参考消防一件事驾驶舱） ===== */
+  .topbar{height:90px;flex-shrink:0;display:grid;grid-template-columns:1fr 2fr 1fr;align-items:center;padding:0 2rem;
+    background:linear-gradient(180deg,rgba(0,168,255,0.18) 0%,rgba(0,168,255,0.05) 60%,transparent 100%);border-bottom:1px solid rgba(0,168,255,0.25);position:relative;overflow:hidden}
+  .topbar::before{content:'';position:absolute;top:50%;left:10%;right:10%;height:1px;background:linear-gradient(90deg,transparent,#7db9ff,transparent);opacity:0.4}
+  .topbar::after{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:60%;height:4px;background:radial-gradient(ellipse at center,rgba(255,204,51,0.95) 0%,rgba(255,204,51,0.5) 40%,transparent 75%);box-shadow:0 0 14px rgba(255,204,51,0.5);pointer-events:none}
+  .topbar-left{display:flex;flex-direction:column;gap:0.3rem;z-index:1}
+  .topbar-date{font-family:'Courier New',monospace;font-size:1.4rem;color:#e6f3ff;font-weight:500;letter-spacing:1px}
+  .topbar-time{font-family:'Courier New',monospace;font-size:0.95rem;color:#557089}
+  .topbar-title{text-align:center;z-index:1}
+  .topbar-title h1{font-size:1.8rem;font-weight:700;color:#fff;letter-spacing:0.3em;background:linear-gradient(180deg,#fff 0%,#9fd9ff 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin:0}
+  .topbar-title .sub{font-size:0.75rem;color:#557089;letter-spacing:0.4em;margin-top:0.2rem}
+  .topbar-right{display:flex;align-items:center;justify-content:flex-end;gap:1.2rem;z-index:1}
+  .tb-action{display:flex;align-items:center;gap:0.4rem;color:#8faec9;font-size:0.85rem;cursor:pointer;padding:0.3rem 0.6rem;border-radius:3px;transition:all .2s}
+  .tb-action:hover{color:#7db9ff;background:rgba(74,158,255,0.08)}
+  .glass{background:rgba(6,23,52,.86);border:1px solid rgba(0,200,255,.28);box-shadow:0 0 44px rgba(0,140,255,.12),0 8px 28px rgba(0,0,0,.35),inset 0 0 22px rgba(0,160,255,.05)}
+  .line-grid{background-image:linear-gradient(rgba(0,200,255,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(0,200,255,.06) 1px,transparent 1px);background-size:32px 32px}
+  .map-bg{background-color:#05080d;background-image:linear-gradient(32deg,transparent 46%,rgba(92,183,255,.12) 47%,rgba(92,183,255,.12) 49%,transparent 50%),linear-gradient(118deg,transparent 47%,rgba(24,105,187,.22) 48%,rgba(24,105,187,.22) 50%,transparent 51%),linear-gradient(160deg,transparent 48%,rgba(93,192,255,.1) 49%,rgba(93,192,255,.1) 50%,transparent 51%);background-size:150px 120px,190px 170px,120px 180px;}
+  .scrollbar::-webkit-scrollbar{width:4px}.scrollbar::-webkit-scrollbar-thumb{background:#00A8E0;border-radius:8px}
+  .duty-btn{transition:all .2s ease;cursor:pointer}.duty-btn:hover{background:rgba(0,200,255,.12)}.duty-btn:active{transform:scale(.95)}.duty-btn.active{background:rgba(0,200,255,.18);border:1px solid rgba(0,200,255,.35);border-radius:4px}
+  .flow-node{display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer;transition:all .2s ease}.flow-node>div{transition:all .2s ease}.flow-node:active{transform:scale(.95)}.flow-node span{font-size:12px;color:rgba(180,220,240,.7);transition:color .2s ease}.flow-node.active span{color:#A8E4F8}.flow-node.active>div{box-shadow:0 0 18px rgba(0,200,255,.4)}
+  .pulse{animation:pulse 1.8s infinite}@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(40,185,255,.7)}50%{box-shadow:0 0 0 12px rgba(40,185,255,0)}}
+  .tab-active{color:#00D4FF;border-bottom:2px solid #00C8FF;background:rgba(0,180,255,.2)}
+  /* 流程节点选中：呼吸灯效果 + 右侧内容切换淡入 */
+  @keyframes flowBreathe{0%,100%{box-shadow:0 0 6px rgba(0,200,255,.35),0 0 12px rgba(0,200,255,.18)}50%{box-shadow:0 0 14px rgba(0,200,255,.75),0 0 30px rgba(0,200,255,.45)}}
+  @keyframes detailFade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+  .flow-node.tab-active{border-bottom:none;background:transparent}
+  .flow-node.tab-active>div{border-color:#00D4FF;animation:flowBreathe 2.2s ease-in-out infinite}
+  .flow-node.tab-active span{color:#A8E4F8}
+  .detail-fade{animation:detailFade .45s ease both}
+
+  /* ===== 鲜活视效包（纯装饰，不增原型内容） ===== */
+  /* 背景氛围：缓慢漂移的青蓝光晕 */
+  main{position:relative}
+  main::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;background:radial-gradient(42% 36% at 22% 26%,rgba(0,140,255,.10),transparent 70%),radial-gradient(36% 30% at 80% 74%,rgba(0,200,255,.08),transparent 70%),radial-gradient(30% 26% at 50% 52%,rgba(24,105,187,.06),transparent 70%);animation:ambientDrift 18s ease-in-out infinite alternate}
+  @keyframes ambientDrift{0%{transform:translate3d(-2%,-1%,0) scale(1)}100%{transform:translate3d(2%,1.5%,0) scale(1.06)}}
+  /* 流程连线：能量流动光点 */
+  .flow-line{position:relative;overflow:hidden}
+  .flow-line::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(130,225,255,.95),transparent);transform:translateX(-100%);animation:flowPulse 2.6s ease-in-out infinite}
+  @keyframes flowPulse{0%{transform:translateX(-100%)}55%,100%{transform:translateX(100%)}}
+  /* 三栏错峰入场 */
+  main>*{position:relative;z-index:1;animation:panelIn .7s cubic-bezier(.22,1,.36,1) both}
+  main>*:nth-child(1){animation-delay:.06s}
+  main>*:nth-child(2){animation-delay:.18s}
+  main>*:nth-child(3){animation-delay:.30s}
+  @keyframes panelIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+  /* 玻璃面板：边缘呼吸光 */
+  .glass{animation:glassBreathe 6s ease-in-out infinite}
+  @keyframes glassBreathe{0%,100%{box-shadow:0 0 44px rgba(0,140,255,.10),0 8px 28px rgba(0,0,0,.35),inset 0 0 22px rgba(0,160,255,.05)}50%{box-shadow:0 0 58px rgba(0,165,255,.18),0 8px 28px rgba(0,0,0,.35),inset 0 0 26px rgba(0,160,255,.08)}}
+  /* 连线进度点亮 */
+  .flow-line{transition:background-color .45s ease,box-shadow .45s ease}
+  .flow-line.lit{background:rgba(0,212,255,.85);box-shadow:0 0 10px rgba(0,200,255,.55)}
+  .flow-line.lit::after{background:linear-gradient(90deg,transparent,rgba(195,245,255,1),transparent)}
+  /* 风险行错峰入场 */
+  .risk-row-enter{animation:rowIn .42s ease both;animation-delay:calc(var(--i,0)*55ms)}
+  @keyframes rowIn{from{opacity:0;transform:translateX(-12px)}to{opacity:1;transform:translateX(0)}}
+  .status-btn{transition:all .2s ease;cursor:pointer}.status-btn:hover{background:rgba(0,180,255,.12)}.status-btn:active{transform:scale(.95)}
+  .map-ctrl{transition:all .2s ease;cursor:pointer}.map-ctrl:hover{background:rgba(0,180,255,.18);border-color:rgba(0,200,255,.4)}.map-ctrl:active{transform:scale(.95)}
+  .page-nav{transition:all .2s ease;cursor:pointer}.page-nav:hover{background:rgba(0,180,255,.25)!important}.page-nav:active{transform:scale(.9)}
+  .dispatch-btn{transition:all .25s ease;cursor:pointer}.dispatch-btn:hover{box-shadow:0 0 18px rgba(0,200,255,.35);border-color:rgba(0,212,255,.6)}.dispatch-btn:active{transform:scale(.96)}
+  .photo-thumb{transition:all .2s ease;cursor:zoom-in}.photo-thumb:hover{border-color:rgba(0,212,255,.55)!important;box-shadow:0 0 12px rgba(0,200,255,.2)}
+  .dialog-btn{transition:all .15s ease;cursor:pointer}.dialog-btn:hover{filter:brightness(1.2)}.dialog-btn:active{transform:scale(.95)}
+  .nav-btn{transition:all .2s ease;cursor:pointer}.nav-btn:hover{background:rgba(0,200,255,.15)!important}.nav-btn:active{transform:scale(.92)}
+  @keyframes rowGlow{0%,100%{border-left-color:#00D4FF}50%{border-left-color:#66E8FF}} @keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+  .risk-row{transition:all .25s ease;cursor:pointer}.risk-row:active{transform:translateX(2px) scale(.98)}.risk-row:hover{background:rgba(0,180,255,.14);transform:translateX(2px)}.risk-row.selected{background:linear-gradient(90deg,rgba(0,180,255,.25),rgba(18,70,130,.1));border-left:3px solid #00D4FF;animation:rowGlow 2s ease-in-out infinite}
+  .risk-pulse{animation:riskPulse .55s ease both}@keyframes riskPulse{0%{box-shadow:inset 0 0 0 0 rgba(0,200,255,.35)}50%{box-shadow:inset 0 0 26px 6px rgba(0,200,255,.15)}100%{box-shadow:inset 0 0 0 0 rgba(0,200,255,0)}}
+  .marker{position:absolute;transform:translate(-50%,-50%) scale(.72);cursor:pointer;transition:transform .2s ease;z-index:1}.marker.selected{transform:translate(-50%,-50%) scale(1.35);z-index:2}.marker-dot{width:15px;height:15px;border-radius:50%;border:3px solid #d7f6ff;background:#ffb13b;box-shadow:0 0 0 5px rgba(255,177,59,.2),0 0 18px #ff9d27}.marker.done .marker-dot{background:#30e6a0;box-shadow:0 0 0 5px rgba(48,230,160,.18),0 0 18px #20d98f}.marker.processing .marker-dot{background:#ffbb45}.marker-label{white-space:nowrap;margin-top:8px;margin-left:-25px;font-size:11px;color:#b9e8ff;background:rgba(3,25,58,.78);padding:3px 7px;border:1px solid rgba(77,184,255,.35);border-radius:4px}
+  #photoPreview,.feedback-photo{cursor:zoom-in;transition:all .2s ease}#photoPreview:hover,.feedback-photo:hover{border-color:rgba(0,212,255,.55)!important;box-shadow:0 0 12px rgba(0,200,255,.2)}#photoLightbox,#pdfLightbox{background:rgba(1,8,20,.94);z-index:9999!important}#photoLightbox img{display:block;max-width:min(92vw,1200px);max-height:88vh}
+  #amapCanvas{width:100%!important;height:100%!important;position:absolute!important}
+</style>
+</head>
+<body>
+<div id="loadingOverlay" class="fixed inset-0 z-[9999] flex items-center justify-center bg-[#060E1F]">       <div class="text-center"><div class="w-12 h-12 mx-auto rounded-full border-2 border-cyan-300/30 border-t-cyan-300 animate-spin"></div><div class="mt-4 text-sm text-cyan-200">渝中区风险隐患快响快处驾驶舱</div><div class="mt-1 text-xs text-sky-300/50">加载中...</div></div></div>
+<script>
+// 兜底：无论 JS 是否报错，3 秒后强制隐藏加载遮罩
+setTimeout(function() {
+  var o = document.getElementById('loadingOverlay');
+  if (o) { o.style.opacity = '0'; o.style.transition = 'opacity .4s'; setTimeout(function() { o.remove(); }, 400); }
+}, 3000);
+</script>
+<div class="h-screen flex flex-col line-grid">
+
+  <!-- ========== Header ========== -->
+  <header class="topbar">
+    <div class="topbar-left">
+      <div class="topbar-date" id="clockDate">----</div>
+      <div class="topbar-time" id="clockTime">--:--:--  --</div>
+    </div>
+    <div class="topbar-title">
+      <h1>渝中区风险隐患快响快处驾驶舱</h1>
+    </div>
+    <div class="topbar-right">
+      <div class="tb-action"><span class="tb-icon">🔔</span><span>信息</span></div>
+      <div class="tb-action"><span class="tb-icon">👤</span><span>管理员</span></div>
+      <div class="tb-action"><span class="tb-icon">⏻</span><span>退出登录</span></div>
+    </div>
+  </header>
+
+  <!-- ========== Main ========== -->
+  <main class="flex-1 min-h-0 grid grid-cols-[330px_1fr_396px] gap-3.5 p-3.5">
+
+    <!-- ========== 左栏 ========== -->
+    <aside class="min-h-0 flex flex-col gap-3.5">
+
+      <!-- 值班信息 -->
+      <section class="glass rounded-2xl p-3.5 flex-none">
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="font-bold text-sm flex items-center gap-2">
+                        <svg class="text-cyan-300 text-lg" xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="6" r="4"/><path stroke-linecap="round" d="M15 9a3 3 0 1 0 0-6"/><ellipse cx="9" cy="17" rx="7" ry="4"/><path stroke-linecap="round" d="M18 14c1.754.385 3 1.359 3 2.5c0 1.03-1.014 1.923-2.5 2.37"/></g></svg>值班信息
+          </h2>
+        </div>
+        <div class="grid grid-cols-5 gap-1 text-center">
+          <button class="duty-btn rounded p-1.5" data-duty="区领导">
+            <div class="text-[11px] text-sky-300/70 whitespace-nowrap">区领导</div>
+            <div class="mt-1 text-lg font-bold text-cyan-200 duty-count" data-count="区领导">31人</div>
+          </button>
+          <button class="duty-btn rounded p-1.5" data-duty="区政府办">
+            <div class="text-[11px] text-sky-300/70 whitespace-nowrap">区政府办</div>
+            <div class="mt-1 text-lg font-bold text-cyan-200 duty-count" data-count="区政府办">41人</div>
+          </button>
+          <button class="duty-btn rounded p-1.5" data-duty="部门">
+            <div class="text-[11px] text-sky-300/70 whitespace-nowrap">部门</div>
+            <div class="mt-1 text-lg font-bold text-cyan-200 duty-count" data-count="部门">0人</div>
+          </button>
+          <button class="duty-btn rounded p-1.5" data-duty="街道">
+            <div class="text-[11px] text-sky-300/70 whitespace-nowrap">街道</div>
+            <div class="mt-1 text-lg font-bold text-cyan-200 duty-count" data-count="街道">0人</div>
+          </button>
+          <button class="duty-btn rounded p-1.5" data-duty="三支力量">
+            <div class="text-[11px] text-sky-300/70 whitespace-nowrap">三支力量</div>
+            <div class="mt-1 text-lg font-bold text-cyan-200 duty-count" data-count="三支力量">19人</div>
+          </button>
+        </div>
+      </section>
+
+      <!-- 风险列表 -->
+      <section class="glass rounded-2xl p-3.5 flex-1 min-h-0 flex flex-col">
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="font-bold text-base flex items-center gap-2">
+                        <svg class="text-amber-300 text-xl" xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24"><g fill="none"><path stroke="currentColor" stroke-width="1.5" d="M5.312 10.762C8.23 5.587 9.689 3 12 3s3.77 2.587 6.688 7.762l.364.644c2.425 4.3 3.638 6.45 2.542 8.022S17.786 21 12.364 21h-.728c-5.422 0-8.134 0-9.23-1.572s.117-3.722 2.542-8.022z"/><path stroke="currentColor" stroke-linecap="round" stroke-width="1.5" d="M12 8v5"/><circle cx="12" cy="16" r="1" fill="currentColor"/></g></svg>风险列表
+          </h2>
+          <span class="text-xs text-cyan-300" id="riskCount">全部 8</span>
+        </div>
+        <div class="flex gap-1 mb-3">
+          <button class="status-btn flex-1 py-1.5 rounded text-xs bg-sky-500/30 text-cyan-200" data-status="全部">全部</button>
+          <button class="status-btn flex-1 py-1.5 rounded text-xs text-sky-200/65" data-status="处置中">处置中</button>
+          <button class="status-btn flex-1 py-1.5 rounded text-xs text-sky-200/65" data-status="已完成">已完成</button>
+        </div>
+        <div class="grid grid-cols-[1fr_74px_48px] gap-1 px-2.5 pb-2 border-b border-sky-400/20 text-[11px] text-sky-300/65">
+          <span>描述</span><span>发生时间</span><span>处置状态</span>
+        </div>
+        <div class="scrollbar overflow-y-auto flex-1" id="riskList"></div>
+        <div class="pt-3 flex items-center justify-between border-t border-sky-400/20 mt-2">
+          <span class="text-[11px] text-sky-300/60" id="pageInfo">第 1 / 2 页</span>
+          <div class="flex gap-1">
+            <button class="page-nav w-7 h-6 rounded bg-sky-900 text-sky-200" id="prevPage">&lsaquo;</button>
+            <button class="page-nav w-7 h-6 rounded bg-sky-600/50 text-white" id="nextPage">&rsaquo;</button>
+          </div>
+        </div>
+      </section>
+    </aside>
+
+    <!-- ========== 中栏 ========== -->
+    <section class="glass rounded-2xl min-w-0 relative overflow-hidden flex flex-col">
+
+      <!-- 流程节点 -->
+      <div class="h-[78px] flex-none flex items-center justify-center gap-2 border-b border-sky-400/40 bg-[#082a5a]/85">
+        <div class="flow-node tab-active" data-node="发现">
+          <div class="w-[42px] h-[42px] rounded-full flex items-center justify-center bg-cyan-400/20 border border-cyan-300 text-cyan-200">
+                        <svg class="text-xl text-current" xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24"><path fill="currentColor" d="m21.66 14.588l-.725-.194zm-12.248 7.07l-.194.725zM2.34 9.412l-.725-.194zm12.247-7.07l-.194.724zm-3.06 10.241a.75.75 0 1 0 .944-1.165zM5.002 6.336l.472-.583zm-1.366.178l-.627-.41zm3.082-3.876a.75.75 0 1 0 .737 1.306zm3.148 2.957a.75.75 0 0 0 .474 1.423zm11.069 8.8a9.25 9.25 0 0 1-11.329 6.54l-.388 1.45c5.735 1.536 11.63-1.867 13.166-7.602zm-11.329 6.54a9.25 9.25 0 0 1-6.54-11.329l-1.45-.388C.08 14.952 3.483 20.847 9.218 22.383zm4.788-17.87a9.25 9.25 0 0 1 6.54 11.33l1.45.388c1.536-5.735-1.867-11.63-7.602-13.166zm-1.922 8.353L5.474 5.752L4.53 6.918l6.998 5.664zM3.065 9.605a9.2 9.2 0 0 1 1.198-2.68L3.01 6.102a10.7 10.7 0 0 0-1.393 3.115zm4.39-5.662a9.22 9.22 0 0 1 6.94-.878l.387-1.45c-2.83-.757-5.7-.312-8.064 1.022zm-1.981 1.81c-.733-.594-1.891-.526-2.465.35l1.254.822a.13.13 0 0 1 .099-.06a.23.23 0 0 1 .168.053zM17.25 12A5.25 5.25 0 0 1 12 17.25v1.5A6.75 6.75 0 0 0 18.75 12zM12 17.25A5.25 5.25 0 0 1 6.75 12h-1.5A6.75 6.75 0 0 0 12 18.75zm0-10.5c2.9 0 5.25 2.35 5.25 5.25h1.5A6.75 6.75 0 0 0 12 5.25zM6.75 12c0-1.27.45-2.431 1.198-3.339L6.79 7.707A6.73 6.73 0 0 0 5.25 12zm3.59-4.983A5.2 5.2 0 0 1 12 6.75v-1.5c-.745 0-1.462.12-2.134.344z"/></svg>
+          </div>
+          <span class="text-xs">隐患发现</span>
+        </div>
+        <div class="flow-line w-[72px] h-0.5 bg-sky-400/45"></div>
+        <div class="flow-node" data-node="推送">
+          <div class="w-[42px] h-[42px] rounded-full flex items-center justify-center bg-sky-500/15 border border-sky-300/50 text-sky-200">
+                        <svg class="text-xl text-current" xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.5"><path d="m17.498 18.485l3.13-9.391c1.248-3.745 1.873-5.618.884-6.606c-.988-.989-2.86-.364-6.606.884l-9.331 3.11c-2.082.694-3.123 1.041-3.439 1.804q-.112.271-.133.564c-.059.824.717 1.6 2.269 3.151l.283.283c.254.254.382.382.478.523c.19.28.297.607.31.945c.008.171-.019.35-.072.705c-.196 1.304-.294 1.956-.179 2.458c.23 1 1.004 1.785 2 2.028c.5.123 1.154.034 2.46-.143l.072-.01c.368-.05.552-.075.729-.064c.32.019.63.124.898.303c.147.098.279.23.541.492l.252.252c1.51 1.51 2.265 2.265 3.066 2.226c.22-.011.438-.062.64-.152c.734-.323 1.072-1.336 1.747-3.362Z"/><path stroke-linecap="round" d="M6 18L21 3"/></g></svg>
+          </div>
+          <span class="text-xs">流程推送</span>
+        </div>
+        <div class="flow-line w-[72px] h-0.5 bg-sky-400/45"></div>
+        <div class="flow-node" data-node="反馈">
+          <div class="w-[42px] h-[42px] rounded-full flex items-center justify-center bg-emerald-400/10 border border-emerald-300/45 text-emerald-200">
+                        <svg class="text-xl text-current" xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path stroke-linecap="round" stroke-linejoin="round" d="m8.5 12.5l2 2l5-5"/></g></svg>
+          </div>
+          <span class="text-xs">处置反馈</span>
+        </div>
+      </div>
+
+      <!-- 地图区域 -->
+      <div class="map-bg flex-1 relative overflow-hidden" id="map">
+        <!-- 高德地图容器 -->
+        <div class="absolute inset-0" id="amapCanvas" style="width:100%;height:100%"></div>
+        <!-- 暗色叠加 -->
+        <div class="absolute inset-0 pointer-events-none bg-[#04336a]/10"></div>
+        <!-- 位置标签 -->
+        <div class="absolute top-4 left-5 text-xs text-cyan-100/70 tracking-wider">重庆市 · 渝中区二维风险态势图</div>
+        <!-- 图层/全屏 -->
+        <div class="absolute top-4 right-5 flex gap-2">
+          <button class="map-ctrl px-3 py-1.5 rounded bg-[#082451]/90 border border-sky-300/35 text-[11px] text-sky-100">图层 <svg class="inline-block align-middle ml-1" xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4.979 9.685C2.993 8.891 2 8.494 2 8s.993-.89 2.979-1.685l2.808-1.123C9.773 4.397 10.767 4 12 4s2.227.397 4.213 1.192l2.808 1.123C21.007 7.109 22 7.506 22 8s-.993.89-2.979 1.685l-2.808 1.124C14.227 11.603 13.233 12 12 12s-2.227-.397-4.213-1.191z"/><path d="m5.766 10l-.787.315C2.993 11.109 2 11.507 2 12s.993.89 2.979 1.685l2.808 1.124C9.773 15.603 10.767 16 12 16s2.227-.397 4.213-1.191l2.808-1.124C21.007 12.891 22 12.493 22 12s-.993-.89-2.979-1.685L18.234 10"/><path d="m5.766 14l-.787.315C2.993 15.109 2 15.507 2 16s.993.89 2.979 1.685l2.808 1.124C9.773 19.603 10.767 20 12 20s2.227-.397 4.213-1.192l2.808-1.123C21.007 16.891 22 16.494 22 16c0-.493-.993-.89-2.979-1.685L18.234 14"/></g></svg></button>
+          <button class="map-ctrl px-3 py-1.5 rounded bg-[#082451]/90 border border-sky-300/35 text-[11px] text-sky-100">全屏 <svg class="inline-block align-middle ml-1" xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="m9 15l-7 7m0 0h5.857M2 22v-5.857M15 9l7-7m0 0h-5.857M22 2v5.857"/></svg></button>
+        </div>
+
+        <!-- 自定义标记 -->
+        <div id="markers"></div>
+
+        <!-- 事件弹窗 -->
+        <div class="hidden absolute z-10 w-[245px] rounded-lg glass p-3" id="eventPopup">
+          <div class="flex items-center justify-between border-b border-sky-300/20 pb-2">
+            <b class="text-sm text-white" id="popTitle">风险事件</b>
+            <button class="text-sky-300" id="closePopup">&times;</button>
+          </div>
+          <div class="mt-3">
+            <h3 class="text-base font-bold text-cyan-200">AI分析</h3>
+            <div class="grid grid-cols-2 gap-y-2 mt-2 text-[11px]">
+              <span class="text-sky-300/70">是否需要一键调度</span>
+              <span class="text-right text-amber-200">是</span>
+              <span class="text-sky-300/70">风险等级</span>
+              <span class="text-right text-amber-300" id="popLevel">重大</span>
+              <span class="text-sky-300/70">处置建议</span>
+              <span class="col-span-2 text-right leading-5 text-sky-100" id="popAdvice">此次风险较为重大，正在联系相关部门进行处理。</span>
+            </div>
+          </div>
+          <button class="dispatch-btn mt-3 w-full py-2 rounded-lg bg-sky-600/60 text-white text-sm" id="dispatchBtn">一键调度</button>
+        </div>
+
+        <!-- 调度确认 -->
+        <div class="hidden absolute inset-0 z-20 flex items-center justify-center bg-[#030c1c]/85" id="dispatchConfirm">
+          <div class="rounded-xl glass p-5 w-[280px]">
+            <div class="text-sm text-center text-white mb-3">确认一键调度？</div>
+            <div class="flex gap-2">
+              <button class="dialog-btn flex-1 py-2 rounded-lg bg-emerald-500/40 text-white text-sm" id="dispatchYes">是</button>
+              <button class="dialog-btn flex-1 py-2 rounded-lg bg-slate-600/40 text-white text-sm" id="dispatchNo">否</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 调度通知 -->
+        <div class="hidden absolute top-4 left-1/2 -translate-x-1/2 z-30 px-5 py-2 rounded-lg glass text-sm text-cyan-200" id="dispatchNotice">
+          <span id="dispatchNoticeText">调度成功</span>
+          <button class="dialog-btn ml-3 text-sky-300" id="closeDispatchNotice">&times;</button>
+        </div>
+
+        <!-- 导航窗口 -->
+        <div class="hidden absolute bottom-16 right-5 z-10 w-[260px] rounded-lg glass p-3" id="navWindow">
+          <div class="flex items-center justify-between mb-2">
+            <b class="text-xs text-cyan-200">导航窗口</b>
+            <button class="dialog-btn text-sky-300" id="closeNav">&times;</button>
+          </div>
+          <div class="text-[10px] text-sky-300/60">请选择目标点位...</div>
+        </div>
+
+        <!-- 导航/缩放 -->
+        <button class="nav-btn absolute bottom-5 right-20 px-3 py-2 rounded-lg bg-[#082451]/90 border border-sky-300/35 text-xs text-cyan-200 flex items-center gap-1" id="navBtn">导航窗口</button>
+        <button class="absolute bottom-5 right-12 w-9 h-9 rounded-lg glass text-lg">&plus;</button>
+        <button class="absolute bottom-5 right-4 w-9 h-9 rounded-lg glass text-lg">&minus;</button>
+      </div>
+    </section>
+
+    <!-- ========== 右栏 ========== -->
+    <aside class="glass rounded-2xl min-h-0 overflow-hidden flex flex-col">
+      <div class="p-4 border-b border-sky-400/40">
+        <div class="flex items-center justify-between">
+          <h2 class="font-bold text-base flex items-center gap-2" id="detailHeading">
+                        <svg class="text-cyan-300 text-xl" xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.5"><path d="M16 4.002c2.175.012 3.353.109 4.121.877C21 5.758 21 7.172 21 10v6c0 2.829 0 4.243-.879 5.122C19.243 22 17.828 22 15 22H9c-2.828 0-4.243 0-5.121-.878C3 20.242 3 18.829 3 16v-6c0-2.828 0-4.242.879-5.121c.768-.768 1.946-.865 4.121-.877"/><path stroke-linecap="round" d="M7 14.5h8M7 18h5.5"/><path d="M8 3.5A1.5 1.5 0 0 1 9.5 2h5A1.5 1.5 0 0 1 16 3.5v1A1.5 1.5 0 0 1 14.5 6h-5A1.5 1.5 0 0 1 8 4.5z"/></g></svg>风险信息
+          </h2>
+          <span class="text-xs px-2 py-1 rounded bg-amber-400/15 text-amber-300" id="detailStatus">处置中</span>
+        </div>
+        <div class="mt-3 text-lg font-bold text-white" id="detailTitle">渝中区南纪门街道凯旋路22号附9号居民楼后侧崩塌</div>
+        <div class="mt-1 text-[11px] text-sky-300/60" id="detailCode">事件编号：YZXF-20260801-008</div>
+      </div>
+      <div class="scrollbar overflow-y-auto flex-1 p-4">
+        <div id="detailBody"></div>
+      </div>
+    </aside>
+
+  </main>
+</div>
+
+<!-- lightbox -->
+<div id="photoLightbox" class="hidden fixed inset-0 z-50 p-6 items-center justify-center bg-black/80">
+  <button type="button" class="absolute top-4 right-5 text-3xl text-white z-10" aria-label="关闭现场照片" onclick="closeLightbox()">&times;</button>
+  <button id="lbPrev" class="hidden absolute left-6 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/10 text-white text-2xl leading-none items-center justify-center hover:bg-white/25 z-10" onclick="lightboxPrev();event.stopPropagation()">&lsaquo;</button>
+  <button id="lbNext" class="hidden absolute right-6 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/10 text-white text-2xl leading-none items-center justify-center hover:bg-white/25 z-10" onclick="lightboxNext();event.stopPropagation()">&rsaquo;</button>
+  <span id="lbCounter" class="absolute bottom-5 left-1/2 -translate-x-1/2 text-sm text-white/60"></span>
+  <img class="max-w-[88vw] max-h-[85vh] object-contain rounded-lg shadow-2xl" alt="现场照片">
+</div>
+<div id="pdfLightbox" class="hidden fixed inset-0 z-50 p-4 items-center justify-center bg-black/80">
+  <div class="w-full max-w-4xl h-[88vh] rounded-xl bg-[#082a5a] border border-sky-300/30 overflow-hidden flex flex-col">
+    <div class="h-10 flex-shrink-0 px-3 flex items-center justify-between border-b border-sky-300/20 text-sm text-cyan-100">
+      风险排查报告
+      <button type="button" class="text-2xl text-white" aria-label="关闭报告">&times;</button>
+    </div>
+    <div id="reportContent" class="scrollbar flex-1 overflow-y-auto p-6 text-sm leading-relaxed text-sky-100"></div>
+  </div>
+</div>
+
+<script>
+// ========== 数据 ==========
+const risks = [
+  {id:'008',title:'渝中区南纪门街道凯旋路22号附9号居民楼后侧崩塌',time:'04-14 09:14:26',status:'处置中',street:'南纪门街道',community:'临江门社区',grid:'周晓峰',phone:'138****4821',level:'小型',x:53,y:57,disaster:'崩塌',address:'渝中区南纪门街道凯旋路22号附9号后侧',stability:'基本稳定，持续观察边坡稳定性',evacuated:'是',departments:['应急','住建','公安','经信','消防','城管','街道','卫健'],feedback:7,report:'网格员巡查发现居民楼后侧局部崩塌，存在岩土体掉落风险。',disasterId:'50010320260414310002',triggers:'屋后切坡,降雨,风化剥蚀',disasterType:'新生突发',avoided:'否',rainfall:'105.099998',residualVolume:'-',residualSize:'-',insar:'否',monitorWarn:'否',photos:['scene-collapse.png.jpg','scene-collapse.png01.jpg','scene-collapse.png02.jpg','scene-collapse.png03.jpg','scene-collapse.png05.jpg','scene-collapse.png06.jpg'],pdf:baseUrl + '/assets/images/渝中区南纪门街道凯旋路22号附9号居民楼后侧崩塌.pdf'},
+  {id:'007',title:'大坪正街围挡倾斜',time:'08-01 17:26',status:'处置中',street:'大坪街道',community:'大黄路社区',grid:'李思远',phone:'139****1038',level:'较重',x:42,y:48,disaster:'围挡倾斜',address:'渝中区大坪街道大坪正街施工路段',stability:'局部不稳定，存在倒塌风险',evacuated:'是',departments:['住建','街道','城管'],feedback:2,report:'连续降雨后发现施工围挡向人行道侧倾斜，存在倒塌风险。'},
+  {id:'006',title:'两路口路面积水',time:'08-01 16:08',status:'已完成',street:'两路口街道',community:'枣子岚垭社区',grid:'王莉',phone:'136****7622',level:'一般',x:46,y:53,disaster:'内涝',address:'渝中区两路口街道中山三路低洼路段',stability:'稳定，积水已排除',evacuated:'是',departments:['城管','街道'],feedback:7,report:'强降雨导致中山三路低洼路段积水，已完成排水疏通。'},
+  {id:'005',title:'朝天门码头护栏破损',time:'08-01 14:55',status:'处置中',street:'朝天门街道',community:'朝天门社区',grid:'陈浩',phone:'137****9156',level:'较重',x:56,y:45,disaster:'设施损坏',address:'渝中区朝天门街道码头观景平台',stability:'基本稳定，护栏局部松动',evacuated:'是',departments:['住建','交通','街道'],feedback:1,report:'码头观景平台一处金属护栏松动破损，需及时修复。'},
+  {id:'004',title:'山城巷燃气异味',time:'08-01 13:40',status:'已完成',street:'南纪门街道',community:'十八梯社区',grid:'赵敏',phone:'139****2051',level:'重大',x:53,y:55,disaster:'燃气泄漏',address:'渝中区南纪门街道山城巷十八梯社区楼栋入口',stability:'稳定，已完成排查处置',evacuated:'是',departments:['应急','燃气','消防'],feedback:7,report:'居民反映楼栋入口有明显燃气异味，燃气公司已排查处置。'},
+  {id:'003',title:'鹅岭公园古树枝干断裂',time:'08-01 11:18',status:'处置中',street:'上清寺街道',community:'鹅岭社区',grid:'何宇',phone:'138****6389',level:'一般',x:39,y:42,disaster:'树木倒伏',address:'渝中区上清寺街道鹅岭公园步道旁',stability:'基本稳定，断枝仍有坠落风险',evacuated:'是',departments:['园林','街道'],feedback:1,report:'公园步道旁古树出现大型断枝，存在坠落安全隐患。'},
+  {id:'002',title:'石油路井盖缺失',time:'08-01 09:46',status:'已完成',street:'石油路街道',community:'龙湖时代天街社区',grid:'刘洋',phone:'136****4810',level:'较重',x:40,y:50,disaster:'道路设施缺失',address:'渝中区石油路街道辅路窨井位置',stability:'稳定，已完成更换',evacuated:'是',departments:['城管','街道'],feedback:7,report:'石油路辅路窨井盖缺失，已设置警示并完成更换。'},
+  {id:'001',title:'临江门楼道堆放杂物',time:'08-01 08:30',status:'已完成',street:'解放碑街道',community:'临江门社区',grid:'周晓峰',phone:'138****4821',level:'一般',x:51,y:39,disaster:'消防通道堵塞',address:'渝中区解放碑街道临江门社区老旧小区楼道',stability:'稳定，杂物已完成清理',evacuated:'是',departments:['消防','街道'],feedback:7,report:'老旧小区楼道堆放纸箱及废旧家具，已完成清理。'}
+];
+// 由原型百分比坐标推导真实经纬度（渝中区中心 106.575,29.558 附近铺开）
+risks.forEach(function(r){ r.lng = 106.575 + (r.x - 50) * 0.00035; r.lat = 29.558 + (50 - r.y) * 0.0003; });
+
+const dutyData = {
+  '区领导':[
+    ['8月1日（周六）9时-次日9时','薛俨','余虹桥'],['8月2日（周日）9时-次日9时','赵意伦','陈大斌'],['8月3日（周一）18时-次日9时','邹晓宇','陈恒强'],['8月4日（周二）18时-次日9时','邓光怀','王轶'],['8月5日（周三）18时-次日9时','蔚传忠','龙友渔'],['8月6日（周四）18时-次日9时','刘世莉','张雨'],['8月7日（周五）18时-次日9时','李兴建','张义'],['8月8日（周六）9时-次日9时','朱荣堂','王轶'],['8月9日（周日）9时-次日9时','陈平','陈恒强'],['8月10日（周一）18时-次日9时','陈平','蒋勇'],['8月11日（周二）18时-次日9时','朱荣堂','周振超'],['8月12日（周三）18时-次日9时','赵意伦','李虎'],['8月13日（周四）18时-次日9时','薛俨','王紫玲'],['8月14日（周五）18时-次日9时','陈洁','余虹桥'],['8月15日（周六）9时-次日9时','李兴建','赵云'],['8月16日（周日）9时-次日9时','刘世莉','徐卓远'],['8月17日（周一）18时-次日9时','邹晓宇','何奇'],['8月18日（周二）18时-次日9时','邓光怀','陈大斌'],['8月19日（周三）18时-次日9时','蔚传忠','周泳滔'],['8月20日（周四）18时-次日9时','刘世莉','徐卓远'],['8月21日（周五）18时-次日9时','李兴建','赵云'],['8月22日（周六）9时-次日9时','蔚传忠','周泳滔'],['8月23日（周日）9时-次日9时','邓光怀','周振超'],['8月24日（周一）18时-次日9时','陈平','陈恒强'],['8月25日（周二）18时-次日9时','朱荣堂','王轶'],['8月26日（周三）18时-次日9时','赵意伦','周振超'],['8月27日（周四）18时-次日9时','薛俨','李虎'],['8月28日（周五）18时-次日9时','陈洁','王紫玲'],['8月29日（周六）9时-次日9时','邹晓宇','何奇'],['8月30日（周日）9时-次日9时','陈洁','李虎'],['8月31日（周一）18时-次日9时','邹晓宇','龙友渔']
+  ],
+  '区政府办':[
+    ['8月1日（周六）9时-18时','李锋超',''],['8月1日（周六）18时-次日9时','易婷',''],['8月2日（周日）9时-18时','吴卓毅',''],['8月2日（周日）18时-次日9时','李超然',''],['8月3日（周一）18时-次日9时','谷流',''],['8月4日（周二）18时-次日9时','陈庆',''],['8月5日（周三）18时-次日9时','向恩峣',''],['8月6日（周四）18时-次日9时','彭源',''],['8月7日（周五）18时-次日9时','李耕',''],['8月8日（周六）9时-18时','余国榜',''],['8月8日（周六）18时-次日9时','倪言',''],['8月9日（周日）9时-18时','刘洪涛',''],['8月9日（周日）18时-次日9时','李路遥',''],['8月10日（周一）18时-次日9时','张震',''],['8月11日（周二）18时-次日9时','晏梓栋',''],['8月12日（周三）18时-次日9时','杨帆',''],['8月13日（周四）18时-次日9时','李锋超',''],['8月14日（周五）18时-次日9时','易婷',''],['8月15日（周六）9时-18时','芦琦',''],['8月15日（周六）18时-次日9时','庞杰',''],['8月16日（周日）9时-18时','曹梓琳',''],['8月16日（周日）18时-次日9时','谷流',''],['8月17日（周一）18时-次日9时','吴卓毅',''],['8月18日（周二）18时-次日9时','李超然',''],['8月19日（周三）18时-次日9时','余国榜',''],['8月20日（周四）18时-次日9时','倪言',''],['8月21日（周五）18时-次日9时','刘洪涛',''],['8月22日（周六）9时-18时','陈庆',''],['8月22日（周六）18时-次日9时','向恩峣',''],['8月23日（周日）9时-18时','彭源',''],['8月23日（周日）18时-次日9时','李耕',''],['8月24日（周一）18时-次日9时','李路遥',''],['8月25日（周二）18时-次日9时','芦琦',''],['8月26日（周三）18时-次日9时','庞杰',''],['8月27日（周四）18时-次日9时','曹梓琳',''],['8月28日（周五）18时-次日9时','谷流',''],['8月29日（周六）9时-18时','张震',''],['8月29日（周六）18时-次日9时','晏梓栋',''],['8月30日（周日）9时-18时','杨帆',''],['8月30日（周日）18时-次日9时','李锋超',''],['8月31日（周一）18时-次日9时','陈庆','']
+  ],
+  '部门':[],
+  '街道':[],
+  '三支力量':{
+    网格:[],
+    下沉:[
+      ['区应急局 · 两路口街道','李渔','18523554353'],['区应急局 · 两路口街道','江礼松','13368290258'],['区应急局 · 两路口街道','孙杰','15025610241'],['区应急局 · 石油路街道','王天胜','15892228027'],['区城管局 · 两路口街道','李霞','18696551337'],['区城管局 · 两路口街道','于朋飞','18580758775'],['区城管局 · 两路口街道','岳斯坤','18623455223'],['区城管局 · 石油路街道','王焱','18983889937'],['区城管局 · 石油路街道','聂世明','13629795803'],['区城管局 · 石油路街道','邓燕','17723564806'],['区城管局 · 石油路街道','吴思聪','18680819918'],['区住建委 · 两路口街道','张成远','13896075759'],['区住建委 · 石油路街道','唐兴龙','19923257780'],['区规自局 · 两路口街道','高强洧','15111957418'],['区规自局 · 两路口街道','王圆元','18851750864'],['区规自局 · 两路口街道','卢笋','13883655073'],['区规自局 · 石油路街道','王昕亚','13883006111'],['区消防救援局 · 两路口街道','冉明君','13752809584'],['区消防救援局 · 石油路街道','邱东荣','15095887771']
+    ],
+    基干:[]
+  }
+};
+
+const pushDepartments = ['区应急局','区消防救援局','区交通运输委','区经信委','区城管局','区住建委','区规资局'];
+const feedbackData = [
+  ['区应急局','08-01 19:02','已完成现场风险复核，确认掉块区域暂时稳定，建议立即清理掉落岩体并持续监测。'],
+  ['区消防救援局','08-01 19:08','已安排人员到场设置警戒范围，疏导楼栋后侧通行人员，现场未发现被困和明火情况。'],
+  ['区交通运输委','08-01 19:14','已核查周边道路及梯步通行影响，建议增设夜间反光警示，暂不影响主干道车辆通行。'],
+  ['区经信委','08-01 19:21','已联系通信保障力量检查现场附近通信设施，确认通信信号和供电线路运行正常。'],
+  ['区城管局','08-01 19:27','已组织清理周边杂物及落叶，完成临时隔离栏布设，后续负责现场环境维护。'],
+  ['区住建委','08-01 19:33','已核查居民楼后侧挡墙和排水设施，建议修复老化排水系统并对砂岩陡坎采取拦挡措施。'],
+  ['区规资局','08-01 19:40','已完成地质风险初步判读，认为卸荷裂隙、雨水入渗及植物根劈共同诱发局部掉块，建议开展专项勘查。']
+];
+
+// 每个事件对应的 7 个部门响应文案（按 pushDepartments 顺序）
+var feedbackDataById = {
+  '008': [
+    ['区应急局','08-01 19:02','已完成现场风险复核，确认掉块区域暂时稳定，建议立即清理掉落岩体并持续监测。'],
+    ['区消防救援局','08-01 19:08','已安排人员到场设置警戒范围，疏导楼栋后侧通行人员，现场未发现被困和明火情况。'],
+    ['区交通运输委','08-01 19:14','已核查周边道路及梯步通行影响，建议增设夜间反光警示，暂不影响主干道车辆通行。'],
+    ['区经信委','08-01 19:21','已联系通信保障力量检查现场附近通信设施，确认通信信号和供电线路运行正常。'],
+    ['区城管局','08-01 19:27','已组织清理周边杂物及落叶，完成临时隔离栏布设，后续负责现场环境维护。'],
+    ['区住建委','08-01 19:33','已核查居民楼后侧挡墙和排水设施，建议修复老化排水系统并对砂岩陡坎采取拦挡措施。'],
+    ['区规资局','08-01 19:40','已完成地质风险初步判读，认为卸荷裂隙、雨水入渗及植物根劈共同诱发局部掉块，建议开展专项勘查。']
+  ],
+  '007': [
+    ['区应急局','08-01 17:30','已通知大坪街道和施工单位到场，对倾斜围挡进行临时加固。'],
+    ['区消防救援局','08-01 17:35','已到场设置警戒区域，做好围挡倒塌应急准备。'],
+    ['区交通运输委','08-01 17:42','已排查施工路段周边交通疏导需求，临时调整人行道通行路线。'],
+    ['区经信委','08-01 17:50','已通知相关通信施工单位，确认围挡内无地下管线二次受损风险。'],
+    ['区城管局','08-01 17:55','已责令施工单位限期整改，要求围挡恢复垂直稳固状态。'],
+    ['区住建委','08-01 18:05','已核查围挡搭设方案，要求补充防风加固措施并加强巡查。'],
+    ['区规资局','08-01 18:12','已完成周边地质稳定性评估，未发现边坡滑移等次生风险。']
+  ],
+  '006': [
+    ['区应急局','08-01 16:15','已启动防汛应急响应，协调排水力量赶赴现场。'],
+    ['区消防救援局','08-01 16:22','已到场协助抽排积水，设置安全警戒。'],
+    ['区交通运输委','08-01 16:30','已对中山三路低洼路段实施临时交通管制，引导车辆绕行。'],
+    ['区经信委','08-01 16:38','已通知供电、通信单位检查积水路段设施运行情况。'],
+    ['区城管局','08-01 16:45','已组织疏通排水管网，路面积水已基本排除。'],
+    ['区住建委','08-01 16:52','已排查周边排水设施，确认排水系统恢复正常。'],
+    ['区规资局','08-01 17:00','已完成积水区域地质影响评估，未发现地面塌陷隐患。']
+  ],
+  '005': [
+    ['区应急局','08-01 15:02','已要求朝天门街道和景区管理方立即设置安全警戒。'],
+    ['区消防救援局','08-01 15:08','已到场协助疏导游客，防止人员靠近破损护栏。'],
+    ['区交通运输委','08-01 15:15','已暂停码头观景平台临水区域通行，安排临时绕行通道。'],
+    ['区经信委','08-01 15:22','已排查平台周边照明及监控设施，确认供电正常。'],
+    ['区城管局','08-01 15:28','已清理破损护栏残渣，安排临时护栏替代。'],
+    ['区住建委','08-01 15:35','已制定护栏修复方案，将尽快更换锈蚀松动构件。'],
+    ['区规资局','08-01 15:42','已评估临水岸坡稳定性，未发现因护栏破损引发的边坡风险。']
+  ],
+  '004': [
+    ['区应急局','08-01 13:48','已协调燃气公司、消防到场，关闭相关区域燃气阀门。'],
+    ['区消防救援局','08-01 13:52','已到场使用可燃气体检测仪排查，确认浓度处于安全范围。'],
+    ['区交通运输委','08-01 13:58','已对山城巷周边道路实施临时管控，保障抢修车辆通行。'],
+    ['区经信委','08-01 14:05','已通知供电单位配合，防止抢修期间产生电火花。'],
+    ['区城管局','08-01 14:12','已协助疏散周边居民，设置警戒隔离带。'],
+    ['区住建委','08-01 14:20','已核查楼栋燃气管道入户段，确认泄漏点已修复。'],
+    ['区规资局','08-01 14:28','已完成周边地质与地下管网影响评估，建议持续监测。']
+  ],
+  '003': [
+    ['区应急局','08-01 11:25','已通知园林部门和街道到场处置断裂枝干。'],
+    ['区消防救援局','08-01 11:30','已到场设置警戒，防止断枝坠落伤人。'],
+    ['区交通运输委','08-01 11:38','已临时封闭鹅岭公园步道受影响路段。'],
+    ['区经信委','08-01 11:45','已排查步道周边照明及监控线路，确认无触电风险。'],
+    ['区城管局','08-01 11:52','已协助清理断枝，恢复步道部分通行。'],
+    ['区住建委','08-01 12:00','已评估周边建筑物受影响情况，确认无结构损伤。'],
+    ['区规资局','08-01 12:08','已评估古树根系及周边边坡稳定性，建议后续加固支撑。']
+  ],
+  '002': [
+    ['区应急局','08-01 09:55','已协调城管、街道到场，设置井盖缺失安全警示。'],
+    ['区消防救援局','08-01 10:00','已到场协助警戒，防止人员坠落。'],
+    ['区交通运输委','08-01 10:08','已对石油路辅路受影响车道实施临时交通引导。'],
+    ['区经信委','08-01 10:15','已通知供水、燃气单位确认井内管线安全。'],
+    ['区城管局','08-01 10:22','已完成新井盖安装，恢复道路正常通行。'],
+    ['区住建委','08-01 10:30','已核查井盖周边路基，确认无塌陷隐患。'],
+    ['区规资局','08-01 10:38','已完成周边地质稳定性评估，确认无次生灾害风险。']
+  ],
+  '001': [
+    ['区应急局','08-01 08:40','已协调消防、街道到场，对楼道杂物进行清理。'],
+    ['区消防救援局','08-01 08:45','已到场确认消防通道堵塞情况，并督促立即整改。'],
+    ['区交通运输委','08-01 08:52','已排查小区周边消防车道占用情况，确保救援车辆可达。'],
+    ['区经信委','08-01 09:00','已通知物业加强楼道巡查，防止杂物再次堆积。'],
+    ['区城管局','08-01 09:08','已协助街道完成楼道杂物清运，恢复消防通道畅通。'],
+    ['区住建委','08-01 09:15','已核查小区消防设施配置，确认灭火器、应急灯可正常使用。'],
+    ['区规资局','08-01 09:22','已完成老旧小区建筑安全评估，未发现因堵塞引发的结构隐患。']
+  ]
+};
+
+// ========== 状态 ==========
+let selected = risks[0], page = 1, filter = '全部', node = '发现';
+const $ = s => document.querySelector(s);
+function showToast(msg) {
+  var t = document.createElement('div');
+  t.className = 'fixed top-4 right-4 z-[10000] px-4 py-2 rounded-lg bg-amber-500/20 border border-amber-300/40 text-xs text-amber-200 animate-pulse';
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(function() { t.remove(); }, 3000);
+}
+
+// ========== COS 资源基础路径 ==========
+var baseUrl = 'https://szjg-assets-1302043498.cos.ap-shanghai.myqcloud.com';
+
+// ========== 图片映射 ==========
+var sceneImages = {
+  '008': baseUrl + '/assets/images/scene-collapse.png.jpg',
+  '007': baseUrl + '/assets/images/scene-fence.jpg',
+  '006': baseUrl + '/assets/images/scene-flood.jpg',
+  '005': baseUrl + '/assets/images/scene-railing.jpg',
+  '004': baseUrl + '/assets/images/scene-gas.jpg',
+  '003': baseUrl + '/assets/images/scene-tree.jpg',
+  '002': baseUrl + '/assets/images/scene-manhole.jpg',
+  '001': baseUrl + '/assets/images/scene-corridor.jpg'
+};
+var feedbackImg = baseUrl + '/assets/images/feedback-onsite.jpg';
+var feedbackImagesById = {
+  '008': baseUrl + '/assets/images/scene-collapse.png.jpg',
+  '007': baseUrl + '/assets/images/scene-fence.jpg',
+  '006': baseUrl + '/assets/images/scene-flood.jpg',
+  '005': baseUrl + '/assets/images/scene-railing.jpg',
+  '004': baseUrl + '/assets/images/scene-gas.jpg',
+  '003': baseUrl + '/assets/images/scene-tree.jpg',
+  '002': baseUrl + '/assets/images/scene-manhole.jpg',
+  '001': baseUrl + '/assets/images/scene-corridor.jpg'
+};
+const placeholderImg = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="0 0 800 600"><rect fill="#0a2a4a" width="800" height="600"/><rect fill="#1a4466" x="200" y="150" width="400" height="300" rx="8"/><text fill="#4a9cd6" font-family="Arial,sans-serif" font-size="20" x="400" y="310" text-anchor="middle">图片加载中...</text></svg>');
+const placeholderPdf = 'data:application/pdf;base64,' + btoa('%PDF-1.4 1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj 2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj 3 0 obj<</Type/Page/MediaBox[0 0 595 842]/Parent 2 0 R/Resources<</Font<</F1 4 0 R>>>>/Contents 5 0 R>>endobj 4 0 obj<</Type/Font/Subtype/Type1/BaseFont/Helvetica>>endobj 5 0 obj<</Length 44>>stream BT /F1 24 Tf 100 700 Td(PDF Placeholder)Tj ET endstream endobj xref 0 6 0000000000 65535 f 0000000009 00000 n 0000000058 00000 n 0000000115 00000 n 0000000266 00000 n 0000000337 00000 n trailer<</Size 6/Root 1 0 R>> startxref 432 %%EOF');
+
+// ========== 报告内容 ==========
+var reportDataById = {
+  '008': [
+    {time:'04-14 09:14',text:'居民楼后侧高边坡发生局部崩塌，崩塌体砸落到下方人行通道上。网格员周晓峰接到居民反映后通过渝快办上报，事件编号50010320260414310002。'},
+    {time:'04-14 09:30',text:'南纪门街道值班人员到场核实，在落地区域和楼栋后侧入口设置警戒带和警示牌，临时封闭后侧人行通道，劝离围观居民。'},
+    {time:'04-14 09:55',text:'区应急局、消防救援、住建委、规资局、城管局等先后到达现场。区规资局技术人员对边坡稳定性进行初步勘察，重点查看上方节理面和残留松动岩块。'},
+    {time:'04-14 10:40',text:'现场会商研判：崩塌主要因屋后切坡形成的临空面在近期连续降雨（当日雨量约105mm）和长期风化剥蚀下失稳，崩塌体约0.3立方米已清除，仍有若干松动岩块需清理。决定先清除松动岩块并对暴露坡面覆盖防水布。'},
+    {time:'04-14 12:20',text:'完成松动岩块清理，对高位坡面铺设防水布和临时压重，周边居民从后侧通行恢复但保留现场值守。楼栋暂未发生结构损伤，居民生活正常。'},
+    {time:'04-14 14:00',text:'各部门出具现场处置意见，由区应急局汇总形成本报告。建议将此处纳入区级地质灾害隐患监测点，由区规资局定期开展复测。'}
+  ],
+  '007': [
+    {time:'08-01 17:26',text:'网格员李思远巡查发现大坪正街施工路段围挡向人行道侧倾斜，目测倾斜角度约15°，围挡柱脚已部分松脱，存在倾倒伤及行人的可能。'},
+    {time:'08-01 17:38',text:'大坪街道城管人员到场核实，确认围挡长约12米、共5根立柱均有不同程度松动，立即在围挡两侧设置警示锥和警戒带。'},
+    {time:'08-01 17:55',text:'施工单位负责人到达，对倾斜围挡采取钢管斜撑临时加固，填补柱脚缝隙，消除即时倾倒风险。'},
+    {time:'08-01 18:30',text:'区城管局现场出具整改通知书，要求施工单位于48小时内完成围挡更换或全面修复，期间每日不少于两次巡查。'},
+    {time:'08-01 18:45',text:'临时加固完成并验收合格，围挡恢复垂直稳固状态，相邻人行道恢复正常通行，现场值守人员撤离。'}
+  ],
+  '006': [
+    {time:'08-01 16:08',text:'网格员王莉巡查发现中山三路低洼路段积水，积水面积约60平方米、最深处约25厘米，小型车辆通行明显受阻，部分骑行人员下车推行。'},
+    {time:'08-01 16:20',text:'两路口街道和区城管局排水作业人员到场，对沿线收水口逐一检查，发现3处进水格栅被落叶和少量淤泥堵塞，是积水的主要成因。'},
+    {time:'08-01 16:40',text:'疏通被堵收水口，清理窨井底部淤积物，积水开始明显消退，路面仅余薄层残留水。'},
+    {time:'08-01 17:00',text:'路面积水基本排空，交通恢复正常。安排街道人员在下次强降雨时重点查看该路段收水情况。'},
+    {time:'08-01 17:30',text:'现场处置完成，积水隐患消除。建议在此低洼路段增设收水井并标注水位警示线，纳入市政排水管网改造计划。'}
+  ],
+  '005': [
+    {time:'08-01 14:55',text:'网格员陈浩巡查发现朝天门码头观景平台临江侧一处金属护栏锈蚀，立柱底部有多处锈斑，横管焊接点见明显裂纹，手推有明显晃动。'},
+    {time:'08-01 15:10',text:'朝天门街道和景区管理方到场，在破损护栏周边设置硬隔离，暂停该段约15米区域的人员通行并设置绕行引导牌。'},
+    {time:'08-01 15:30',text:'区住建委和交通运输委到场联合查看，确认共4根立柱根部锈蚀、2处横管焊接点开裂，判定该段护栏已达更换标准。'},
+    {time:'08-01 16:00',text:'维修人员对锈蚀立柱进行临时加固，用镀锌管件对开裂横管做夹板固定，并增设临时钢管护栏替代。'},
+    {time:'08-01 16:30',text:'区住建委出具维修方案，计划3个工作日内完成该段12米护栏的整体更换，加固期间维持临时护栏并使用夜间警示灯。'}
+  ],
+  '004': [
+    {time:'08-01 13:40',text:'网格员赵敏接到居民反映，山城巷十八梯社区某楼栋一楼入口处有较明显燃气味，立即会同楼栋长到场确认，同时通过平台上报。'},
+    {time:'08-01 13:50',text:'南纪门街道和消防先后到达，使用便携式可燃气体检测仪在入口周边检测，确认浓度处于低值但持续存在，判断为入户管道微漏。'},
+    {time:'08-01 14:05',text:'燃气公司应急抢修人员到达现场，关闭该楼栋燃气入户总阀，布设通风并告知住户暂停使用燃气。'},
+    {time:'08-01 14:30',text:'经逐段检查，确定泄漏点位于一楼入户管道三通接头处，锈蚀穿孔导致微量泄漏，现场对三通及连管进行更换。'},
+    {time:'08-01 15:10',text:'完成更换后进行压气测试，压力保持正常，打开总阀后经过20分钟持续监测，确认无泄漏，可燃气体检测仪示数为零。'},
+    {time:'08-01 15:30',text:'各部门确认隐患消除、恢复供气，解除警戒。建议燃气公司将该楼栋纳入年度入户安检重点计划。'}
+  ],
+  '003': [
+    {time:'08-01 11:18',text:'网格员何宇巡查发现鹅岭公园主步道旁一棵古树有大枝干断裂，裂口处仍部分连接，断枝长约4米、最粗处直径约18厘米，悬于步道正上方约3米处。'},
+    {time:'08-01 11:30',text:'上清寺街道和公园管理方到场，对断枝下方约25米步道进行临时封闭，在两端设置禁止通行标识并安排人员引导游客绕行。'},
+    {time:'08-01 11:55',text:'园林工作人员使用高空作业车与油锯，对断枝进行分段切割和绑扎吊运，避免坠落损伤周边绿化。'},
+    {time:'08-01 12:30',text:'断枝全部清理完毕，对树体断面进行伤口涂敷处理防治病虫害，步道恢复正常通行。'},
+    {time:'08-01 13:00',text:'区规资局技术人员对古树根系和周边坡地做初步评估，未发现滑坡迹象；建议对古树增设钢缆支撑，并将该树纳入每月重点巡查清单。'}
+  ],
+  '002': [
+    {time:'08-01 09:46',text:'网格员刘洋巡查发现石油路辅路一窨井盖缺失，井口直径约70厘米、深度约3米，现场未发现警示标识，在井口周边放置3只警示锥并通知社区。'},
+    {time:'08-01 10:05',text:'石油路街道和区城管局到场，对井口进行临时封盖（使用钢制临时盖板），引导过往行人和非机动车从辅路外侧通行。'},
+    {time:'08-01 10:25',text:'市政维护人员携带球墨铸铁新井盖到达现场，下井检查内部管线、爬梯及井壁结构均正常，安装新井盖并坐浆固定。'},
+    {time:'08-01 10:50',text:'新井盖安装完成，使用平板振动夯对井盖周边路面压实，经开放通行后未见异响或松动。'},
+    {time:'08-01 11:10',text:'各部门确认处置完成，临时警示设施撤除。建议对石油路沿线窨井做一轮排查。'}
+  ],
+  '001': [
+    {time:'08-01 08:30',text:'网格员周晓峰巡查发现临江门社区某老旧小区4楼消防通道处堆放大量纸箱、废旧家具和塑料瓶，占用通道宽度过半，影响正常通行和疏散。'},
+    {time:'08-01 08:45',text:'解放碑街道和消防到场查看，物业人员确认杂物业主为4楼一户居民，消防当场出具限期清理告知书，要求2小时内清理完毕。'},
+    {time:'08-01 09:20',text:'物业组织保洁人员协助业主清理，将纸箱、家具等清运至小区暂存点等待环卫收运，消防通道初步恢复可用状态。'},
+    {time:'08-01 10:00',text:'杂物清运完毕，消防人员对通道宽度进行实测，确认疏散通道净宽达到1.2米以上要求，楼道照明和应急指示灯正常。'},
+    {time:'08-01 10:30',text:'区住建委对楼栋消防设施进行复查，检查灭火器有效期和应急灯工作状态，均符合要求。'},
+    {time:'08-01 11:00',text:'物业书面承诺此后每周对消防通道巡查不少于两次，发现杂物及时督促清理。街道将不定期抽查。'}
+  ]
+};
+
+// ========== 风险列表 ==========
+function renderList() {
+  var arr = risks.filter(function(r) { return filter === '全部' || r.status === filter; });
+  // 排序：处置中在前，已完成在后
+  arr.sort(function(a, b) {
+    if (a.status === '处置中' && b.status !== '处置中') return -1;
+    if (a.status !== '处置中' && b.status === '处置中') return 1;
+    return 0;
+  });
+  $('#riskCount').textContent = (filter === '全部' ? '全部' : filter) + ' ' + arr.length;
+  $('#pageInfo').textContent = '共 ' + arr.length + ' 条';
+  $('#prevPage').style.display = 'none';
+  $('#nextPage').style.display = 'none';
+  $('#riskList').innerHTML = arr.map(function(r, idx) {
+    return '<div class="risk-row risk-row-enter ' + (r.id === selected.id ? 'selected' : '') + ' grid grid-cols-[1fr_74px_48px] gap-1 px-2.5 py-3.5 border-b border-sky-400/10 cursor-pointer" data-id="' + r.id + '" style="--i:' + idx + '">' +
+    '<span class="text-xs leading-4 text-sky-100">' + r.title + '</span>' +
+    '<span class="text-[11px] text-sky-300/65">' + r.time + '</span>' +
+    '<span class="text-[11px] ' + (r.status === '已完成' ? 'text-emerald-300' : 'text-amber-300') + '">' + r.status + '</span>' +
+    '</div>';
+  }).join('');
+  document.querySelectorAll('.risk-row').forEach(x => x.onclick = function() {
+    selectRisk(risks.find(r => r.id === x.dataset.id));
+  });
+}
+
+// ========== 详情模块 ==========
+function renderModule(r) {
+  var percent = Math.round(r.feedback / pushDepartments.length * 100);
+  if (node === '发现') {
+    var photoHtml;
+    if (r.photos && r.photos.length > 1) {
+      photoHtml = '<div class="mt-4"><div class="text-xs text-sky-300/60 mb-2">现场照片（共' + r.photos.length + '张）</div>' +
+        '<div class="relative overflow-hidden rounded-lg border border-sky-300/25" style="background:#05080d">' +
+          '<img id="detailCarouselImg" src="' + baseUrl + '/assets/images/' + r.photos[0] + '" class="w-full h-28 object-cover cursor-zoom-in" onclick="openDetailGallery(detailPhotoIdx)">' +
+          '<button id="detailCarouselPrev" class="absolute left-1 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-black/50 text-white text-[10px] leading-none flex items-center justify-center hover:bg-black/70">&lt;</button>' +
+          '<button id="detailCarouselNext" class="absolute right-1 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-black/50 text-white text-[10px] leading-none flex items-center justify-center hover:bg-black/70">&gt;</button>' +
+          '<div id="detailCarouselDots" class="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1"></div>' +
+          '<span class="absolute bottom-2 right-2 text-[9px] bg-black/60 px-1 py-0.5 rounded text-white/60">' + r.photos.length + '张 · 点击放大</span>' +
+        '</div></div>';
+    } else {
+      photoHtml = '<div class="mt-4"><div class="text-xs text-sky-300/60 mb-2">现场照片</div>' +
+        '<button id="photoPreview" type="button" class="block w-full h-28 rounded-lg overflow-hidden relative bg-gradient-to-br from-blue-800 to-slate-900 border border-sky-300/25 text-left" aria-label="查看现场照片">' +
+        '<img src="' + (sceneImages[r.id] || placeholderImg) + '" alt="现场照片" class="w-full h-full object-cover" onerror="this.src=\'' + placeholderImg + '\'">' +
+        '<span class="absolute bottom-2 left-2 text-[10px] bg-black/60 px-2 py-1 rounded">现场采集 · ' + r.time + ' · 点击放大</span></button></div>';
+    }
+    return '<div class="grid grid-cols-2 gap-3 text-xs">' +
+      '<div><span class="text-sky-300/60">发生时间</span><p class="mt-1 text-sky-100">2026年' + r.time + '</p></div>' +
+      '<div><span class="text-sky-300/60">风险等级</span><p class="mt-1 ' + (r.level === '重大' ? 'text-red-300' : 'text-amber-300') + '">' + r.level + '</p></div>' +
+      '<div><span class="text-sky-300/60">所属街道</span><p class="mt-1 text-sky-100">' + r.street + '</p></div>' +
+      '<div><span class="text-sky-300/60">所属社区</span><p class="mt-1 text-sky-100">' + r.community + '</p></div>' +
+      '<div><span class="text-sky-300/60">网格员姓名</span><p class="mt-1 text-sky-100">' + r.grid + '</p></div>' +
+      '<div><span class="text-sky-300/60">联系电话</span><p class="mt-1 text-sky-100">' + r.phone + '</p></div>' +
+      '</div>' +
+      '<div class="mt-4"><div class="text-xs text-sky-300/60 mb-2">灾害类型</div><p class="text-sky-100 text-sm">' + r.disaster + '</p></div>' +
+      '<div class="mt-4"><div class="text-xs text-sky-300/60 mb-2">地址描述</div><p class="text-sky-100 text-sm">' + r.address + '</p></div>' +
+      '<div class="mt-4"><div class="text-xs text-sky-300/60 mb-2">稳定性评估</div><p class="text-sky-100 text-sm">' + r.stability + '</p></div>' +
+      '<div class="mt-4"><div class="text-xs text-sky-300/60 mb-2">是否疏散</div><p class="text-sky-100 text-sm">' + r.evacuated + '</p></div>' +
+      photoHtml +
+      '<div class="mt-4 p-3 rounded-lg bg-sky-950/60 border border-sky-300/15"><div class="text-xs text-sky-300/60 mb-2">上报内容</div><div class="text-[11px] leading-5 text-sky-100 whitespace-pre-wrap">' + r.report + '</div></div>' +
+      '<div class="mt-3 bg-gradient-to-r from-cyan-500/5 to-transparent rounded-lg border border-cyan-300/15 p-3"><h3 class="text-base font-bold text-cyan-200">AI分析</h3>' +
+      '<div class="grid grid-cols-2 gap-y-2 mt-2 text-[11px]"><span class="text-sky-300/70">是否需要一键调度</span><span class="text-right text-amber-200">是</span><span class="text-sky-300/70">风险等级</span><span class="text-right text-amber-300">' + r.level + '</span><span class="text-sky-300/70">处置建议</span><span class="col-span-2 text-right leading-5 text-sky-100">' + (r.status === '已完成' ? '风险已完成闭环处置，现场复核通过。' : '此次风险较为重大，正在联系相关部门进行处理。') + '</span></div></div>' +
+      '<button class="dispatch-btn w-full mt-3 py-2 rounded-lg bg-sky-600/60 text-white text-sm">一键调度</button>';
+  }
+  if (node === '推送') {
+    var responses = feedbackDataById[r.id] || feedbackData;
+    var deptHtml = pushDepartments.map(function(d, i) {
+      var responded = i < r.feedback;
+      return '<div class="p-2 rounded bg-sky-950/40 border border-sky-300/15 flex items-center gap-2">' +
+        (responded
+          ? '<svg class="text-emerald-400 text-sm" xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24"><path fill="currentColor" fill-rule="evenodd" d="M22 12c0 5.523-4.477 10-10 10S2 17.523 2 12S6.477 2 12 2s10 4.477 10 10m-5.97-3.03a.75.75 0 0 1 0 1.06l-5 5a.75.75 0 0 1-1.06 0l-2-2a.75.75 0 1 1 1.06-1.06l1.47 1.47l2.235-2.235L14.97 8.97a.75.75 0 0 1 1.06 0" clip-rule="evenodd"/></svg>'
+          : '<svg class="text-sky-400/50 text-sm" xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l2.5 2.5"/></g></svg>') +
+        '<span class="text-[11px] text-sky-100 w-28">' + d + '</span>' +
+        '<span class="text-[10px] text-sky-300/60">' + (responded ? responses[i][1] : '待响应') + '</span>' +
+        '<span class="text-[10px] text-sky-200/70 ml-auto truncate w-32">' + (responded ? responses[i][2] : '') + '</span></div>';
+    }).join('');
+    return '<div class="mb-4 p-2 rounded bg-sky-950/60"><div class="text-xs text-sky-300/60 mb-1">处置部门进度</div>' +
+      '<div class="w-full h-2 rounded-full bg-sky-800"><div class="h-full rounded-full bg-gradient-to-r from-sky-400 to-cyan-400" style="width:' + percent + '%"></div></div>' +
+      '<div class="text-[10px] text-right text-sky-200/60 mt-1">' + r.feedback + ' / ' + pushDepartments.length + ' 部门已响应</div></div>' +
+      '<div class="mt-4 space-y-2">' + deptHtml + '</div>' +
+      '<button class="w-full mt-4 py-2 rounded-lg bg-sky-600/60 hover:bg-sky-500/70 text-white text-sm">一键调度</button>';
+  }
+  if (node === '反馈') {
+    var fbResponses = feedbackDataById[r.id] || feedbackData;
+    var fbImg = feedbackImagesById[r.id] || feedbackImg;
+    return '<div class="space-y-3">' +
+      fbResponses.map(function(f) {
+        return '<div class="p-3 rounded-lg bg-sky-950/60 border border-sky-300/15"><div class="flex items-center justify-between mb-2"><span class="text-sm text-cyan-200 font-bold">' + f[0] + '</span><span class="text-[10px] text-sky-300/60">' + f[1] + '</span></div><p class="text-[11px] leading-5 text-sky-100">' + f[2] + '</p></div>';
+      }).join('') +
+      '<div class="mt-3"><div class="text-xs text-sky-300/60 mb-2">反馈照片</div>' +
+      '<button class="feedback-photo block w-full h-24 rounded-lg overflow-hidden relative border border-sky-300/25 text-left" data-src="' + fbImg + '">' +
+      '<img src="' + fbImg + '" class="w-full h-full object-cover" alt="反馈现场照片" onerror="this.src=\'' + placeholderImg + '\'"><span class="absolute bottom-2 left-2 text-[10px] bg-black/60 px-2 py-1 rounded">反馈现场 · 点击放大</span></button></div>' +
+      '<div class="mt-3"><div class="text-xs text-sky-300/60 mb-2">反馈附件</div>' +
+      '<button class="feedback-pdf w-full p-3 rounded-lg bg-sky-950/40 border border-sky-300/15 flex items-center gap-2 text-left" data-src="' + placeholderPdf + '">' +
+      '<svg class="text-xl text-red-300" xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 10c0-3.771 0-5.657 1.172-6.828S7.229 2 11 2h2c3.771 0 5.657 0 6.828 1.172S21 6.229 21 10v4c0 3.771 0 5.657-1.172 6.828S16.771 22 13 22h-2c-3.771 0-5.657 0-6.828-1.172S3 17.771 3 14z"/><path stroke-linecap="round" d="M8 12h8M8 8h8m-8 8h5"/></g></svg><div><div class="text-[11px] text-sky-100">风险排查报告.pdf</div><div class="text-[10px] text-sky-300/60">附件占位</div></div></button></div>' +
+      '</div>';
+  }
+  return '';
+}
+
+function renderDetail() {
+  var r = selected;
+  $('#detailTitle').textContent = r.title;
+  $('#detailCode').textContent = '事件编号：' + (r.disasterId || ('YZXF-20260801-' + r.id));
+  $('#detailStatus').textContent = r.status;
+  $('#detailStatus').className = 'text-[11px] px-2 py-1 rounded ' + (r.status === '已完成' ? 'bg-emerald-400/15 text-emerald-300' : 'bg-amber-400/15 text-amber-300');
+  $('#detailBody').innerHTML = renderModule(r);
+  var db = $('#detailBody'); db.classList.remove('detail-fade'); void db.offsetWidth; db.classList.add('detail-fade');
+  // 初始化首页现场照片轮播
+  stopDetailCarousel();
+  if (r.photos && r.photos.length > 1) {
+    detailPhotos = r.photos.map(function(p) { return baseUrl + '/assets/images/' + p; });
+    detailPhotoIdx = 0;
+    initDetailCarousel();
+  }
+  var photo = $('#photoPreview');
+  if (photo) photo.onclick = function() {
+    var img = photo.querySelector('img');
+    $('#photoLightbox img').src = img.src;
+    $('#photoLightbox').classList.remove('hidden');
+    $('#photoLightbox').classList.add('flex');
+  };
+  document.querySelectorAll('.feedback-photo').forEach(function(b) {
+    b.onclick = function() {
+      $('#photoLightbox img').src = b.dataset.src;
+      $('#photoLightbox').classList.remove('hidden');
+      $('#photoLightbox').classList.add('flex');
+    };
+  });
+  document.querySelectorAll('.feedback-pdf').forEach(function(b) {
+    b.onclick = function() {
+      showReport(selected);
+    };
+  });
+}
+
+// ========== 标记 ==========
+// 自定义点样式（与 .marker-dot 视觉一致），用于 AMap 原生标记的 content
+function markerHTML(r) {
+  var sel = selected && r.id === selected.id;
+  var color = r.status === '已完成' ? '#30e6a0' : '#ffbb45';
+  var glow = r.status === '已完成' ? '#20d98f' : '#ff9d27';
+  return '<div style="width:15px;height:15px;border-radius:50%;border:3px solid #d7f6ff;' +
+    'background:' + color + ';box-shadow:0 0 0 5px rgba(255,177,59,.2),0 0 18px ' + glow + ';' +
+    'transform:scale(' + (sel ? 1.35 : 0.72) + ');transition:transform .2s ease;' +
+    (r.status === '处置中' ? 'animation:pulse 1.8s infinite;' : '') + '"></div>';
+}
+// 统一选中逻辑（列表点击仅切换 class+脉冲，避免重播入场动画）
+function selectRisk(r) {
+  selected = r;
+  var found = false;
+  document.querySelectorAll('.risk-row').forEach(function(row) {
+    row.classList.remove('selected', 'risk-pulse');
+    if (row.dataset.id === r.id) {
+      row.classList.add('selected');
+      void row.offsetWidth;
+      row.classList.add('risk-pulse');
+      found = true;
+    }
+  });
+  if (!found) renderList(); // 地图标记点击等行不在列表中的情况
+  renderDetail(); renderMarkers(); showPopup(r);
+}
+// 主入口：AMap 已加载 -> 更新原生标记内容；否则降级为 CSS 叠层
+function renderMarkers() {
+  if (mapLoaded && map) {
+    risks.forEach(function(r) {
+      var mk = mapMarkers[r.id];
+      if (mk) mk.setContent(markerHTML(r));
+    });
+    return;
+  }
+  // 降级：CSS 百分比叠层
+  $('#markers').innerHTML = risks.map(function(r) {
+    var cls = 'marker ' + (r.status === '已完成' ? 'done' : 'processing') + (r.id === selected.id ? ' selected' : '');
+    return '<div class="' + cls + '" style="left:' + r.x + '%;top:' + r.y + '%" data-id="' + r.id + '" aria-label="Risk event marker"><div class="marker-dot"></div></div>';
+  }).join('');
+  document.querySelectorAll('#markers .marker').forEach(function(m) {
+    m.onclick = function(e) {
+      e.stopPropagation();
+      selectRisk(risks.find(function(r) { return r.id === m.dataset.id; }));
+    };
+  });
+}
+
+// ========== 弹窗 ==========
+function positionPopup(r) {
+  var p = $('#eventPopup');
+  if (mapLoaded && map) {
+    var px = map.lngLatToContainer(new AMap.LngLat(r.lng, r.lat));
+    var w = p.offsetWidth || 245, h = p.offsetHeight || 160;
+    var size = map.getSize();
+    var left = Math.max(8, Math.min(px.x - w / 2, size.width - w - 8));
+    var top = Math.max(8, px.y - h - 18);
+    p.style.left = left + 'px';
+    p.style.top = top + 'px';
+  } else {
+    p.style.left = Math.min(Math.max(r.x - 10, 4), 72) + '%';
+    p.style.top = Math.min(Math.max(r.y - 26, 8), 58) + '%';
+  }
+}
+function repositionPopup() {
+  var p = $('#eventPopup');
+  if (!p.classList.contains('hidden') && selected) positionPopup(selected);
+}
+function showPopup(r) {
+  var p = $('#eventPopup');
+  p.classList.remove('hidden');
+  positionPopup(r);
+  $('#popTitle').textContent = r.title;
+  $('#popLevel').textContent = r.level;
+  $('#popAdvice').textContent = r.status === '已完成' ? '风险已完成闭环处置，现场复核通过。' : '此次风险较为重大，正在联系相关部门进行处理。';
+  $('#dispatchBtn').onclick = function() { $('#dispatchConfirm').classList.remove('hidden'); };
+}
+
+// ========== 高德地图 + Fallback ==========
+var mapLoaded = false;
+var mapFallbackTimer = null;
+var map = null;
+var mapMarkers = {};
+
+function initMap() {
+  if (!window.AMap) {
+    if (!mapFallbackTimer) mapFallbackTimer = setTimeout(showMapFallback, 8000);
+    return setTimeout(initMap, 500);
+  }
+  clearTimeout(mapFallbackTimer);
+  mapLoaded = true;
+  map = new AMap.Map('amapCanvas', {
+    zoom: 14,
+    center: [106.575, 29.558],
+    mapStyle: 'amap://styles/dark',
+    viewMode: '3D',
+    pitch: 45,
+    showLabel: true,
+    showBuildingBlock: true
+  });
+  // 清空 CSS 降级叠层，避免与原生标记重复
+  $('#markers').innerHTML = '';
+  risks.forEach(function(r) {
+    var marker = new AMap.Marker({
+      position: new AMap.LngLat(r.lng, r.lat),
+      title: r.title,
+      content: markerHTML(r),
+      offset: new AMap.Pixel(-7.5, -7.5)
+    });
+    marker.setMap(map);
+    marker.on('click', function(e) {
+      if (e && e.stopPropagation) e.stopPropagation();
+      selectRisk(r);
+    });
+    mapMarkers[r.id] = marker;
+  });
+  map.on('mapmove', repositionPopup);
+  map.on('zoomchange', repositionPopup);
+}
+
+function showMapFallback() {
+  mapLoaded = false;
+  renderMarkers();
+  var toast = document.createElement('div');
+  toast.className = 'absolute top-10 left-1/2 -translate-x-1/2 z-20 px-4 py-2 rounded-lg bg-amber-500/20 border border-amber-300/40 text-xs text-amber-200';
+  toast.textContent = '地图服务暂不可用，已降级为静态视图';
+  toast.id = 'mapFallbackToast';
+  document.getElementById('map').appendChild(toast);
+  setTimeout(function() { var t = document.getElementById('mapFallbackToast'); if (t) t.remove(); }, 5000);
+}
+
+// ========== 值班详情 ==========
+var dutyPages = {};
+function dutyPeople(level) {
+  return level === '三支力量' ? dutyData[level].网格.concat(dutyData[level].下沉, dutyData[level].基干) : dutyData[level];
+}
+function updateDutyCounts() {
+  document.querySelectorAll('.duty-count').forEach(function(x) {
+    var data = dutyPeople(x.dataset.count) || [];
+    x.textContent = data.length + '人';
+  });
+}
+
+function dutyTable(title, rows, key) {
+  var current = dutyPages[key] || 1;
+  var size = rows.length > 12 ? 'text-[9px]' : 'text-[10px]';
+  var pages = Math.ceil(rows.length / 8) || 1;
+  current = Math.min(current, pages);
+  dutyPages[key] = current;
+  var showContact = key === '三支力量' || key === '网格' || key === '下沉' || key === '基干';
+  var colspan = showContact ? 3 : 2;
+  return '<div class="rounded-lg border border-sky-300/15 bg-sky-950/50 p-3 overflow-hidden">' +
+    '<div class="text-sm font-bold text-cyan-200 mb-2">' + title + '</div>' +
+    '<table class="w-full table-fixed ' + size + ' text-left"><thead><tr class="text-sky-300/65">' +
+    '<th class="w-[42%] py-1 pr-2">值班时间/单位</th><th class="' + (showContact ? 'w-[25%]' : 'w-[58%]') + ' py-1 pr-2">人员</th>' +
+    (showContact ? '<th class="w-[33%] py-1">联系电话</th>' : '') + '</tr></thead><tbody>' +
+    (rows.length ? rows.slice((current - 1) * 8, current * 8).map(function(x) {
+      return '<tr class="border-t border-sky-300/10"><td class="py-1.5 pr-2 text-white break-words">' + x[0] + '</td><td class="py-1.5 pr-2 text-sky-100 break-words">' + x[1] + '</td>' +
+        (showContact ? '<td class="py-1.5 text-sky-200/70 break-words">' + (x[2] || '') + '</td>' : '') + '</tr>';
+    }).join('') : '<tr class="border-t border-sky-300/10"><td colspan="' + colspan + '" class="py-3 text-center text-sky-300/65">暂无数据</td></tr>') +
+    '</tbody></table>' +
+    (rows.length > 8 ? '<div class="mt-2 flex items-center justify-between text-[10px] text-sky-300/60"><span>第 ' + current + ' / ' + pages + ' 页</span><span class="flex gap-1"><button class="duty-prev w-6 h-5 rounded bg-sky-900 text-sky-200" data-duty-key="' + key + '">&lsaquo;</button>' +
+    Array.from({length: pages}, function(_, i) {
+      return '<button class="duty-page w-6 h-5 rounded ' + (i + 1 === current ? 'bg-cyan-500 text-white' : 'bg-sky-900 text-sky-200') + '" data-duty-key="' + key + '" data-page="' + (i + 1) + '">' + (i + 1) + '</button>';
+    }).join('') +
+    '<button class="duty-next w-6 h-5 rounded bg-sky-600/50 text-white" data-duty-key="' + key + '">&rsaquo;</button></span></div>' : '') + '</div>';
+}
+
+function renderDutyPage(level) {
+  if (level === '三支力量') {
+    $('#detailBody').innerHTML = '<div class="space-y-3">' +
+      dutyTable('基层网格力量', dutyData[level].网格, '网格') +
+      dutyTable('镇街下沉力量', dutyData[level].下沉, '下沉') +
+      dutyTable('基干力量', dutyData[level].基干, '基干') + '</div>';
+  } else {
+    $('#detailBody').innerHTML = '<div class="space-y-3">' + dutyTable(level, dutyData[level], level) + '</div>';
+  }
+  document.querySelectorAll('.duty-prev,.duty-next,.duty-page').forEach(function(b) {
+    b.onclick = function() {
+      var key = b.dataset.dutyKey;
+      var rows = level === '三支力量' ? dutyData[level][key] : dutyData[level];
+      var pages = Math.ceil(rows.length / 8) || 1;
+      var current = dutyPages[key] || 1;
+      if (b.classList.contains('duty-prev')) current = Math.max(1, current - 1);
+      else if (b.classList.contains('duty-next')) current = Math.min(pages, current + 1);
+      else current = Number(b.dataset.page);
+      dutyPages[key] = current;
+      renderDutyPage(level);
+    };
+  });
+}
+
+function renderDuty(level) {
+  dutyPages = {};
+  $('#detailHeading').innerHTML = '<svg class="text-cyan-300 text-xl" xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="6" r="4"/><path stroke-linecap="round" d="M15 9a3 3 0 1 0 0-6"/><ellipse cx="9" cy="17" rx="7" ry="4"/><path stroke-linecap="round" d="M18 14c1.754.385 3 1.359 3 2.5c0 1.03-1.014 1.923-2.5 2.37"/></g></svg>值班详情';
+  $('#detailStatus').textContent = level;
+  $('#detailStatus').className = 'text-[11px] px-2 py-1 rounded bg-cyan-400/15 text-cyan-200';
+  $('#detailTitle').textContent = level + '值班安排';
+  $('#detailCode').textContent = '值班分类：' + level;
+  renderDutyPage(level);
+}
+
+// ========== 事件绑定 ==========
+document.querySelectorAll('.duty-btn').forEach(function(b) {
+  b.onclick = function() {
+    document.querySelectorAll('.duty-btn').forEach(function(x) { x.classList.remove('active'); });
+    b.classList.add('active');
+    renderDuty(b.dataset.duty);
+  };
+});
+updateDutyCounts();
+
+// lightbox
+function closeLightbox() {
+  $('#photoLightbox').classList.add('hidden');
+  $('#photoLightbox').classList.remove('flex');
+  startCarousel();
+  startDetailCarousel();
+}
+var closePhoto = closeLightbox;
+var closePdf = function() {
+  $('#pdfLightbox').classList.add('hidden');
+  $('#pdfLightbox').classList.remove('flex');
+  stopCarousel();
+};
+// 打开排查报告 lightbox
+var galleryItems = [], galleryIdx = 0, carouselTimer = null;
+
+function initCarousel() {
+  stopCarousel();
+  updateCarousel();
+  var dots = document.getElementById('carouselDots');
+  if (dots) {
+    dots.innerHTML = galleryItems.map(function(_, i) {
+      return '<span class="inline-block w-1.5 h-1.5 rounded-full ' + (i === 0 ? 'bg-cyan-300 scale-125' : 'bg-white/35') + ' cursor-pointer transition-all" onclick="goSlide(' + i + ')"></span>';
+    }).join('');
+  }
+  var prev = document.getElementById('carouselPrev'), next = document.getElementById('carouselNext');
+  if (prev) prev.onclick = prevSlide;
+  if (next) next.onclick = nextSlide;
+  startCarousel();
+}
+
+function updateCarousel() {
+  var img = document.getElementById('carouselImg');
+  if (img) img.src = galleryItems[galleryIdx];
+  var dots = document.getElementById('carouselDots');
+  if (dots) {
+    [].forEach.call(dots.children, function(d, i) {
+      d.className = 'inline-block w-1.5 h-1.5 rounded-full ' + (i === galleryIdx ? 'bg-cyan-300 scale-125' : 'bg-white/35') + ' cursor-pointer transition-all';
+    });
+  }
+}
+
+function nextSlide() { galleryIdx = (galleryIdx + 1) % galleryItems.length; updateCarousel(); }
+function prevSlide() { galleryIdx = (galleryIdx - 1 + galleryItems.length) % galleryItems.length; updateCarousel(); }
+function goSlide(idx) { galleryIdx = idx; updateCarousel(); startCarousel(); }
+
+function startCarousel() { stopCarousel(); if (galleryItems.length > 1) carouselTimer = setInterval(nextSlide, 3500); }
+function stopCarousel() { if (carouselTimer) { clearInterval(carouselTimer); carouselTimer = null; } }
+
+function openGallery(idx) {
+  galleryIdx = idx; stopCarousel();
+  updateLightbox();
+  $('#photoLightbox').classList.remove('hidden');
+  $('#photoLightbox').classList.add('flex');
+}
+function updateLightbox() {
+  if (galleryItems.length === 0) return;
+  $('#photoLightbox img').src = galleryItems[galleryIdx] || galleryItems[0];
+  var cnt = document.getElementById('lbCounter');
+  if (cnt) cnt.textContent = galleryItems.length > 1 ? (galleryIdx + 1) + ' / ' + galleryItems.length : '';
+  var p = document.getElementById('lbPrev'), n = document.getElementById('lbNext');
+  if (p) { p.style.display = galleryItems.length > 1 ? 'flex' : 'none'; }
+  if (n) { n.style.display = galleryItems.length > 1 ? 'flex' : 'none'; }
+}
+function lightboxNext() { galleryIdx = (galleryIdx + 1) % galleryItems.length; updateLightbox(); }
+function lightboxPrev() { galleryIdx = (galleryIdx - 1 + galleryItems.length) % galleryItems.length; updateLightbox(); }
+
+// ========== 首页详情面板轮播 ==========
+var detailPhotos = [], detailPhotoIdx = 0, detailCarouselTimer = null;
+
+function initDetailCarousel() {
+  stopDetailCarousel();
+  updateDetailCarousel();
+  var dots = document.getElementById('detailCarouselDots');
+  if (dots) {
+    dots.innerHTML = detailPhotos.map(function(_, i) {
+      return '<span class="inline-block w-1 h-1 rounded-full ' + (i === 0 ? 'bg-cyan-300' : 'bg-white/35') + ' cursor-pointer transition-all" onclick="goDetailSlide(' + i + ')"></span>';
+    }).join('');
+  }
+  var prev = document.getElementById('detailCarouselPrev'), next = document.getElementById('detailCarouselNext');
+  if (prev) prev.onclick = prevDetailSlide;
+  if (next) next.onclick = nextDetailSlide;
+  startDetailCarousel();
+}
+function updateDetailCarousel() {
+  var img = document.getElementById('detailCarouselImg');
+  if (img) img.src = detailPhotos[detailPhotoIdx];
+  var dots = document.getElementById('detailCarouselDots');
+  if (dots) {
+    [].forEach.call(dots.children, function(d, i) {
+      d.className = 'inline-block w-1 h-1 rounded-full ' + (i === detailPhotoIdx ? 'bg-cyan-300' : 'bg-white/35') + ' cursor-pointer transition-all';
+    });
+  }
+}
+function nextDetailSlide() { detailPhotoIdx = (detailPhotoIdx + 1) % detailPhotos.length; updateDetailCarousel(); }
+function prevDetailSlide() { detailPhotoIdx = (detailPhotoIdx - 1 + detailPhotos.length) % detailPhotos.length; updateDetailCarousel(); }
+function goDetailSlide(idx) { detailPhotoIdx = idx; updateDetailCarousel(); startDetailCarousel(); }
+function startDetailCarousel() { stopDetailCarousel(); if (detailPhotos.length > 1) detailCarouselTimer = setInterval(nextDetailSlide, 3500); }
+function stopDetailCarousel() { if (detailCarouselTimer) { clearInterval(detailCarouselTimer); detailCarouselTimer = null; } }
+function openDetailGallery(idx) {
+  galleryItems = detailPhotos;
+  galleryIdx = idx;
+  stopDetailCarousel();
+  updateLightbox();
+  $('#photoLightbox').classList.remove('hidden');
+  $('#photoLightbox').classList.add('flex');
+}
+function showReport(r) {
+  if (!r) return;
+  var data = reportDataById[r.id] || [];
+  var img = sceneImages[r.id] || placeholderImg;
+  var idText = r.disasterId || ('YZXF-20260801-' + r.id);
+  var extras = '';
+  if (r.triggers) extras += '<div><span class="text-sky-300/60">主要诱因</span><p class="text-sky-100 mt-0.5">' + r.triggers + '</p></div>';
+  if (r.rainfall) extras += '<div><span class="text-sky-300/60">当日降雨量(mm)</span><p class="text-sky-100 mt-0.5">' + r.rainfall + '</p></div>';
+  if (r.disasterType) extras += '<div><span class="text-sky-300/60">灾险情类型</span><p class="text-sky-100 mt-0.5">' + r.disasterType + '</p></div>';
+  if (r.avoided !== undefined) extras += '<div><span class="text-sky-300/60">是否成功避险</span><p class="text-sky-100 mt-0.5">' + r.avoided + '</p></div>';
+
+  var photoSection;
+  if (r.photos && r.photos.length > 1) {
+    photoSection = '<h3 class="text-sm font-bold text-cyan-200 mt-5 mb-3">二、现场图片（共' + r.photos.length + '张）</h3>' +
+      '<div class="relative overflow-hidden rounded-lg border border-sky-300/20" style="background:#05080d">' +
+        '<img id="carouselImg" src="' + baseUrl + '/assets/images/' + r.photos[0] + '" class="w-full h-52 object-cover cursor-zoom-in" onclick="openGallery(galleryIdx)">' +
+        '<button id="carouselPrev" class="absolute left-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-black/50 text-white text-sm leading-none flex items-center justify-center hover:bg-black/70">&lt;</button>' +
+        '<button id="carouselNext" class="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-black/50 text-white text-sm leading-none flex items-center justify-center hover:bg-black/70">&gt;</button>' +
+        '<div id="carouselDots" class="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5"></div>' +
+      '</div>';
+  } else {
+    photoSection = '<h3 class="text-sm font-bold text-cyan-200 mt-5 mb-3">二、现场图片</h3>' +
+      '<img src="' + img + '" alt="现场照片" class="max-w-full max-h-64 rounded-lg object-cover border border-sky-300/20 cursor-zoom-in" onclick="openGallery(0)" onerror="this.style.display=\'none\'">';
+  }
+
+  var pdfSection = '';
+  if (r.pdf) {
+    pdfSection = '<div class="mt-5 p-3 rounded-lg bg-sky-950/60 border border-sky-300/15 flex items-center gap-3">' +
+      '<svg class="text-red-300 text-2xl" xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 10c0-3.771 0-5.657 1.172-6.828S7.229 2 11 2h2c3.771 0 5.657 0 6.828 1.172S21 6.229 21 10v4c0 3.771 0 5.657-1.172 6.828S16.771 22 13 22h-2c-3.771 0-5.657 0-6.828-1.172S3 17.771 3 14z"/><path stroke-linecap="round" d="M8 12h8M8 8h8m-8 8h5"/></g></svg>' +
+      '<div class="flex-1"><div class="text-xs text-sky-100">原始排查报告（PDF附件）</div><div class="text-[10px] text-sky-300/60">在新窗口打开查看完整 PDF 文件</div></div>' +
+      '<a href="' + r.pdf + '" target="_blank" rel="noopener" class="px-3 py-1.5 rounded bg-sky-600/60 hover:bg-sky-500/70 text-white text-xs whitespace-nowrap">查看PDF</a>' +
+      '</div>';
+  }
+
+  var html = '<h2 class="text-lg font-bold text-cyan-200 mb-4 border-b border-sky-300/20 pb-3">' + r.title + ' — 风险排查报告</h2>' +
+    '<div class="grid grid-cols-3 gap-x-5 gap-y-2 mb-5 text-xs bg-sky-950/60 p-4 rounded-lg">' +
+    '<div><span class="text-sky-300/60">事件编号</span><p class="text-sky-100 mt-0.5">' + idText + '</p></div>' +
+    '<div><span class="text-sky-300/60">发现时间</span><p class="text-sky-100 mt-0.5">2026年' + r.time + '</p></div>' +
+    '<div><span class="text-sky-300/60">风险类型</span><p class="text-sky-100 mt-0.5">' + r.disaster + '</p></div>' +
+    '<div><span class="text-sky-300/60">风险等级</span><p class="' + (r.level === '重大' ? 'text-red-300' : 'text-amber-300') + ' mt-0.5">' + r.level + '</p></div>' +
+    '<div><span class="text-sky-300/60">所属街道</span><p class="text-sky-100 mt-0.5">' + r.street + '</p></div>' +
+    '<div><span class="text-sky-300/60">当前状态</span><p class="' + (r.status === '已完成' ? 'text-emerald-300' : 'text-amber-300') + ' mt-0.5">' + r.status + '</p></div>' +
+    extras +
+    '</div>' +
+    '<h3 class="text-sm font-bold text-cyan-200 mt-5 mb-3">一、处置过程</h3>' +
+    '<div class="space-y-3">' +
+    data.map(function(s) {
+      return '<div class="flex gap-3"><span class="text-[10px] text-sky-300/60 w-28 flex-shrink-0">' + s.time + '</span><span class="text-[12px] text-sky-100 leading-6">' + s.text + '</span></div>';
+    }).join('') +
+    '</div>' +
+    photoSection +
+    '<h3 class="text-sm font-bold text-cyan-200 mt-5 mb-3">三、现场视频</h3>' +
+    '<div class="w-full h-36 rounded-lg bg-sky-950/60 border border-sky-300/20 flex items-center justify-center">' +
+    '<div class="text-center"><svg class="mx-auto text-4xl text-sky-300/40" xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24"><path fill="currentColor" d="M8 5.14v14l11-7z"/></svg><span class="block mt-2 text-xs text-sky-300/50">现场排查视频片段（模拟）</span></div></div>' +
+    pdfSection +
+    '<div class="mt-6 pt-3 border-t border-sky-300/20 text-[10px] text-sky-300/40">报告生成时间：2026年04月14日  ·  渝中区城市运行保障中心</div>';
+  $('#reportContent').innerHTML = html;
+  $('#pdfLightbox').classList.remove('hidden');
+  $('#pdfLightbox').classList.add('flex');
+  // 初始化轮播或多图相册
+  if (r.photos && r.photos.length > 1) {
+    galleryItems = r.photos.map(function(p) { return baseUrl + '/assets/images/' + p; });
+    galleryIdx = 0; initCarousel();
+  } else {
+    galleryItems = [img];
+    galleryIdx = 0;
+  }
+}
+$('#photoLightbox').onclick = function(e) {
+  if (e.target === $('#photoLightbox') || e.target.tagName === 'BUTTON') closePhoto();
+};
+$('#pdfLightbox').onclick = function(e) {
+  if (e.target === $('#pdfLightbox') || e.target.tagName === 'BUTTON') closePdf();
+};
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') { closePhoto(); closePdf(); }
+  if (!$('#photoLightbox').classList.contains('hidden')) {
+    if (e.key === 'ArrowLeft') { lightboxPrev(); e.preventDefault(); }
+    if (e.key === 'ArrowRight') { lightboxNext(); e.preventDefault(); }
+  }
+});
+
+// 状态筛选
+document.querySelectorAll('.status-btn').forEach(function(b) {
+  b.onclick = function() {
+    filter = b.dataset.status;
+    page = 1;
+    document.querySelectorAll('.status-btn').forEach(function(x) {
+      x.className = 'status-btn flex-1 py-1.5 rounded text-xs text-sky-200/65';
+    });
+    b.className = 'status-btn flex-1 py-1.5 rounded text-xs bg-sky-500/30 text-cyan-200';
+    renderList();
+  };
+});
+
+// 分页
+$('#prevPage').onclick = function() { if (page > 1) { page--; renderList(); } };
+$('#nextPage').onclick = function() {
+  var n = risks.filter(function(r) { return filter === '全部' || r.status === filter; }).length;
+  if (page < Math.ceil(n / 4)) { page++; renderList(); }
+};
+
+// 弹窗交互
+$('#closePopup').onclick = function() { $('#eventPopup').classList.add('hidden'); };
+$('#dispatchYes').onclick = function() {
+  $('#dispatchConfirm').classList.add('hidden');
+  $('#dispatchNoticeText').textContent = '调度成功';
+  $('#dispatchNotice').classList.remove('hidden');
+};
+$('#dispatchNo').onclick = function() {
+  $('#dispatchConfirm').classList.add('hidden');
+  $('#dispatchNoticeText').textContent = '已取消';
+  $('#dispatchNotice').classList.remove('hidden');
+};
+$('#closeDispatchNotice').onclick = function() { $('#dispatchNotice').classList.add('hidden'); };
+
+// 导航窗口
+$('#navBtn').onclick = function() { $('#navWindow').classList.remove('hidden'); };
+$('#closeNav').onclick = function() { $('#navWindow').classList.add('hidden'); };
+
+// 流程节点
+document.querySelectorAll('.flow-node').forEach(function(n) {
+  n.onclick = function() {
+    node = n.dataset.node;
+    document.querySelectorAll('.flow-node').forEach(function(x) { x.classList.remove('tab-active'); });
+    n.classList.add('tab-active');
+    renderDetail();
+    updateFlowProgress();
+    $('#detailHeading').innerHTML = '<svg class="text-cyan-300 text-xl" xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.5"><path d="M16 4.002c2.175.012 3.353.109 4.121.877C21 5.758 21 7.172 21 10v6c0 2.829 0 4.243-.879 5.122C19.243 22 17.828 22 15 22H9c-2.828 0-4.243 0-5.121-.878C3 20.242 3 18.829 3 16v-6c0-2.828 0-4.242.879-5.121c.768-.768 1.946-.865 4.121-.877"/><path stroke-linecap="round" d="M7 14.5h8M7 18h5.5"/><path d="M8 3.5A1.5 1.5 0 0 1 9.5 2h5A1.5 1.5 0 0 1 16 3.5v1A1.5 1.5 0 0 1 14.5 6h-5A1.5 1.5 0 0 1 8 4.5z"/></g></svg>' +
+      (node === '推送' ? '流程推送' : node === '反馈' ? '处置反馈' : '隐患发现');
+  };
+});
+
+// 值班数字 count-up + 流程连线进度点亮
+function countUp() {
+  document.querySelectorAll('.duty-count').forEach(function(el) {
+    var target = parseInt(el.textContent, 10) || 0;
+    if (target === 0) { el.textContent = '0人'; return; }
+    var dur = 900, start = null;
+    function step(ts) {
+      if (!start) start = ts;
+      var p = Math.min((ts - start) / dur, 1);
+      var eased = 1 - Math.pow(1 - p, 3);
+      el.textContent = Math.round(eased * target) + '人';
+      if (p < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  });
+}
+function updateFlowProgress() {
+  var order = ['发现', '推送', '反馈'];
+  var activeIdx = order.indexOf(node);
+  document.querySelectorAll('.flow-line').forEach(function(line, i) {
+    if (activeIdx > i) line.classList.add('lit'); else line.classList.remove('lit');
+  });
+}
+
+// 实时时钟
+function updateClock() {
+  var now = new Date();
+  var y = now.getFullYear();
+  var m = String(now.getMonth() + 1).padStart(2, '0');
+  var d = String(now.getDate()).padStart(2, '0');
+  var h = String(now.getHours()).padStart(2, '0');
+  var mi = String(now.getMinutes()).padStart(2, '0');
+  var s = String(now.getSeconds()).padStart(2, '0');
+  var weekdays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+  document.getElementById('clockDate').textContent = y + '-' + m + '-' + d;
+  document.getElementById('clockTime').textContent = h + ':' + mi + ':' + s + '  ' + weekdays[now.getDay()];
+}
+updateClock();
+setInterval(updateClock, 1000);
+
+// ========== 启动 ==========
+renderList();
+renderDetail();
+renderMarkers();
+initMap();
+updateFlowProgress();
+setTimeout(countUp, 650);
+// 加载遮罩：初始化完成后立即隐藏，同时兜底 load 事件
+function hideLoading() {
+  var overlay = document.getElementById('loadingOverlay');
+  if (overlay) { overlay.style.opacity = '0'; overlay.style.transition = 'opacity .4s'; setTimeout(function() { overlay.remove(); }, 400); }
+}
+// 方案1：初始化渲染完成后立即隐藏（不依赖外部资源加载）
+setTimeout(hideLoading, 300);
+// 方案2：兜底——window.load 触发时也尝试隐藏
+window.addEventListener('load', function() { hideLoading(); });
+</script>
+</body>
+</html>
