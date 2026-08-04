@@ -1,4 +1,4 @@
-const SECRET = process.env.AUTH_SECRET || 'fallback-dev-secret-change-me';
+﻿const SECRET = process.env.AUTH_SECRET || 'fallback-dev-secret-change-me';
 
 function base64UrlDecode(str) {
   str = str.replace(/-/g, '+').replace(/_/g, '/');
@@ -38,7 +38,7 @@ export default async function middleware(req) {
   const url = new URL(req.url);
   const path = url.pathname;
 
-  const isProtected = /^\/(gdp|dashboard|fire-event-detail|fire-cockpit)(\/|$)/.test(path);
+  const isProtected = /^\/(gdp|dashboard|fire-event-detail|fire-cockpit|yuzhong-risks)(\/|$)/.test(path);
   if (!isProtected) return;
 
   const cookieHeader = req.headers.get('cookie');
