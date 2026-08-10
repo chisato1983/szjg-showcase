@@ -134,10 +134,10 @@
   .todo-point{font-size:0.7rem;font-weight:500;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .todo-meta{font-size:0.8rem;color:var(--text-muted);display:flex;gap:0.3rem;margin-top:0.1rem}
   .todo-meta .tag{background:rgba(42,195,252,0.08);color:var(--accent-blue);padding:0 0.2rem;border-radius:1px;font-family:'Oswald',monospace}
-  .btn-dispatch{background:linear-gradient(135deg,var(--accent-blue),#0098cc);color:#001828;border:none;padding:0.2rem 0.55rem;border-radius:2px;font-size:0.6rem;font-weight:600;cursor:pointer;font-family:'Noto Sans SC',sans-serif;white-space:nowrap;transition:all .2s}
+  .btn-dispatch{background:linear-gradient(135deg,var(--accent-blue),#0098cc);color:#001828;border:none;padding:0.2rem 0.55rem;border-radius:2px;font-size:0.7rem;font-weight:600;cursor:pointer;font-family:'Noto Sans SC',sans-serif;white-space:nowrap;transition:all .2s}
   .btn-dispatch:hover{filter:brightness(1.15)}
   .btn-dispatch.done{background:linear-gradient(135deg,#33cc66,#1abc9c);color:#001a10}
-  .btn-move-car{background:linear-gradient(135deg,#5b8def,#3b6fd4);color:#fff;border:none;padding:0.2rem 0.45rem;border-radius:2px;font-size:0.6rem;font-weight:600;cursor:pointer;font-family:'Noto Sans SC',sans-serif;white-space:nowrap;transition:all .2s}
+  .btn-move-car{background:linear-gradient(135deg,#5b8def,#3b6fd4);color:#fff;border:none;padding:0.2rem 0.45rem;border-radius:2px;font-size:0.7rem;font-weight:600;cursor:pointer;font-family:'Noto Sans SC',sans-serif;white-space:nowrap;transition:all .2s}
   .btn-move-car:hover{filter:brightness(1.15)}
   .btn-move-car.done{background:linear-gradient(135deg,#33cc66,#1abc9c);color:#001a10}
   .todo-actions{display:flex;gap:0.25rem;align-items:center;flex-shrink:0}
@@ -236,21 +236,21 @@
   .cam-popup::before{content:'';position:absolute;bottom:-8px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:8px solid transparent;border-right:8px solid transparent;border-top:8px solid rgba(42,195,252,0.3)}
   .cam-popup::after{content:'';position:absolute;bottom:-6px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-top:6px solid var(--bg-card)}
   .cam-popup-header{display:flex;justify-content:space-between;align-items:center;padding:0.35rem 0.5rem;background:linear-gradient(135deg,rgba(255,71,87,0.3),rgba(200,0,0,0.2));border-bottom:1px solid rgba(255,71,87,0.25)}
-  .cam-popup-live{font-family:'Oswald',sans-serif;font-size:0.6rem;font-weight:600;color:#fff;background:var(--red);padding:0.08rem 0.4rem;border-radius:2px;animation:livePulse 1.5s ease-in-out infinite;letter-spacing:0.5px}
+  .cam-popup-live{font-family:'Oswald',sans-serif;font-size:0.8rem;font-weight:600;color:#fff;background:var(--red);padding:0.08rem 0.4rem;border-radius:2px;animation:livePulse 1.5s ease-in-out infinite;letter-spacing:0.5px}
   @keyframes livePulse{0%,100%{box-shadow:0 0 0 rgba(255,71,87,0)}50%{box-shadow:0 0 8px rgba(255,71,87,0.6)}}
-  .cam-popup-name{font-size:0.6rem;color:rgba(255,255,255,0.85);font-weight:500;flex:1;margin-left:0.4rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .cam-popup-close{cursor:pointer;font-size:0.7rem;color:rgba(255,255,255,0.5);width:1rem;height:1rem;display:flex;align-items:center;justify-content:center;border-radius:50%;flex-shrink:0;transition:all .2s}
+  .cam-popup-name{font-size:0.8rem;color:rgba(255,255,255,0.85);font-weight:500;flex:1;margin-left:0.4rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .cam-popup-close{cursor:pointer;font-size:0.8rem;color:rgba(255,255,255,0.5);width:1rem;height:1rem;display:flex;align-items:center;justify-content:center;border-radius:50%;flex-shrink:0;transition:all .2s}
   .cam-popup-close:hover{color:#fff;background:rgba(255,71,87,0.4)}
   .cam-popup-video{position:relative;width:100%;height:7.5rem;background:linear-gradient(135deg,#0a1a2e 0%,#0d2040 50%,#0a1628 100%);overflow:hidden}
   .cam-popup-video canvas{width:100%;height:100%;display:block}
-  .cam-popup-timestamp{position:absolute;bottom:0.2rem;right:0.3rem;font-family:'Oswald',sans-serif;font-size:0.7rem;color:rgba(255,255,255,0.6);background:rgba(0,0,0,0.5);padding:0.05rem 0.3rem;border-radius:2px}
-  .cam-popup-footer{display:flex;justify-content:space-between;align-items:center;padding:0.3rem 0.5rem;background:rgba(0,0,0,0.3);font-size:0.6rem;color:var(--text-muted)}
+  .cam-popup-timestamp{position:absolute;bottom:0.2rem;right:0.3rem;font-family:'Oswald',sans-serif;font-size:0.8rem;color:rgba(255,255,255,0.6);background:rgba(0,0,0,0.5);padding:0.05rem 0.3rem;border-radius:2px}
+  .cam-popup-footer{display:flex;justify-content:space-between;align-items:center;padding:0.3rem 0.5rem;background:rgba(0,0,0,0.3);font-size:0.8rem;color:var(--text-muted)}
   .cam-popup-footer .cam-device{color:var(--accent-blue)}
   .cam-popup-footer .cam-quality{color:var(--green)}
   .pin-dot{width:1rem;height:1rem;border-radius:50%;position:relative}
   .pin-dot::after{content:'';position:absolute;inset:-0.3rem;border-radius:50%}
   .pin-tri{width:0;margin-top:-1px;border:0.4rem solid transparent;border-top-width:0.55rem}
-  .pin-label{font-size:0.6rem;white-space:nowrap;margin-top:1px;padding:0.05rem 0.25rem;background:rgba(0,0,0,0.65);border-radius:1px;font-weight:500}
+  .pin-label{font-size:0.7rem;white-space:nowrap;margin-top:1px;padding:0.05rem 0.25rem;background:rgba(0,0,0,0.65);border-radius:1px;font-weight:500}
   .pin.red .pin-dot{background:var(--red)}.pin.red .pin-dot::after{background:rgba(255,71,87,0.3);animation:pinPulse 1.4s infinite}
   .pin.red .pin-tri{border-top-color:var(--red)}.pin.red .pin-label{color:var(--red)}
   .pin.orange .pin-dot{background:var(--orange)}.pin.orange .pin-dot::after{background:rgba(255,140,26,0.3);animation:pinPulse 1.8s infinite}
@@ -259,7 +259,7 @@
   .pin.gray .pin-dot{background:var(--gray)}.pin.gray .pin-tri{border-top-color:var(--gray)}.pin.gray .pin-label{color:var(--gray)}
   @keyframes pinPulse{0%,100%{transform:scale(1);opacity:.3}50%{transform:scale(1.8);opacity:.02}}
   .map-legend{position:absolute;right:0.4rem;bottom:0.4rem;display:flex;flex-direction:column;gap:0.1rem;background:rgba(0,0,0,0.75);padding:0.3rem 0.4rem;border-radius:2px;border:1px solid var(--border);z-index:1000}
-  .map-legend .ml{display:flex;align-items:center;gap:0.25rem;font-size:0.6rem;color:var(--text-secondary)}
+  .map-legend .ml{display:flex;align-items:center;gap:0.25rem;font-size:0.7rem;color:var(--text-secondary)}
   .map-legend .ml-dot{width:0.4rem;height:0.4rem;border-radius:50%}
   .ml-dot.red{background:var(--red)}.ml-dot.orange{background:var(--orange)}.ml-dot.yellow{background:var(--yellow)}.ml-dot.gray{background:var(--gray)}
   .map-stat{display:flex;gap:0.4rem;font-size:0.7rem;align-items:center;flex-wrap:wrap}
@@ -521,7 +521,7 @@
   /* 表格壳 */
   .alert-table-shell{background:var(--bg-inner);border:1px solid var(--border);border-radius:2px;overflow:hidden;margin-bottom:0.5rem}
   .alert-table-wrapper{overflow-x:auto;max-height:56vh;overflow-y:auto}
-  .alert-table{width:100%;border-collapse:collapse;table-layout:auto;min-width:50rem}
+  .alert-table{width:100%;border-collapse:collapse;table-layout:fixed;min-width:50rem}
   .alert-table thead{position:sticky;top:0;z-index:2}
   .alert-table th{background:#022e5f;color:#93edff;font-weight:500;font-size:0.8rem;padding:0.4rem 0.4rem;border-bottom:1px solid var(--border-strong);text-align:left;white-space:nowrap;letter-spacing:.02em;position:sticky;top:0;z-index:2}
   .alert-table td{font-size:0.8rem;color:var(--text-secondary);padding:0.4rem 0.4rem;border-bottom:1px solid rgba(22,104,178,0.25);white-space:nowrap}
@@ -561,6 +561,7 @@
   /* 操作链接 */
   .alert-link{cursor:pointer;color:var(--accent-blue);font-size:0.8rem;text-decoration:none;transition:all .2s}
   .alert-link:hover{text-decoration:underline;color:#7ef0ff}
+  .alert-dispatch-done{color:var(--green);cursor:default;font-weight:500}
   /* 分页 */
   .alert-table-footer{display:flex;justify-content:space-between;align-items:center;padding:0.5rem 0 0.3rem;flex-shrink:0;font-size:0.8rem;color:var(--text-muted);gap:0.5rem;flex-wrap:wrap}
   .alert-pagination-total{white-space:nowrap}
@@ -816,11 +817,6 @@
   .section-title-text .section-dot{width:0.35rem;height:0.35rem;border-radius:50%;background:var(--text-muted);flex-shrink:0;transition:all .2s}
   .section-title-text.active .section-dot{background:var(--accent-cyan);box-shadow:0 0 10px rgba(21,206,254,0.9),0 0 4px #15CEFE}
   .section-title-badge{font-family:'Oswald',sans-serif;font-size:0.7rem;color:var(--text-muted)}
-  /* 三区块标签切换 */
-  .left-tabs{display:flex;gap:0.2rem;border-bottom:1px solid var(--border);padding-bottom:0.3rem}
-  .left-tab{font-size:0.7rem;color:var(--text-muted);cursor:pointer;padding:0.2rem 0.5rem;border-radius:2px;border:1px solid transparent;transition:all .15s;font-family:'Noto Sans SC',sans-serif;background:transparent}
-  .left-tab:hover{color:var(--text-secondary);border-color:var(--border)}
-  .left-tab.active{color:var(--accent-blue);border-color:rgba(42,195,252,0.3);background:rgba(42,195,252,0.06);font-weight:500}
   /* 环比指示器 */
   .huanbi{font-family:'Oswald',sans-serif;font-size:0.6rem;font-weight:500;display:flex;align-items:center;gap:0.1rem}
   .huanbi.up{color:var(--red)}.huanbi.down{color:var(--green)}.huanbi.flat{color:var(--text-muted)}
@@ -840,20 +836,12 @@
   .left-todo-point{font-size:0.7rem;font-weight:500;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .left-todo-meta{font-size:0.6rem;color:var(--text-muted)}
   .left-todo-meta .left-tag{background:rgba(42,195,252,0.08);color:var(--accent-blue);padding:0 0.2rem;border-radius:1px;font-family:'Oswald',monospace;font-size:0.6rem;margin-right:0.3rem}
-  /* 左列告警行（离线设备） */
-  .left-alert-item{display:flex;align-items:center;gap:0.35rem;font-size:0.6rem;padding:0.32rem 0.4rem;background:var(--bg-card);border-radius:2px;border-left:2px solid var(--red)}
-  .left-alert-item .alert-msg{color:var(--text-secondary);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:0.6rem}
-  .left-alert-item .alert-time{font-family:'Oswald',sans-serif;font-size:0.6rem;color:var(--text-muted);white-space:nowrap;flex-shrink:0}
-  /* 左列交办项（处置中） */
-  .left-dispatch-item{background:var(--bg-card);border:1px solid var(--border);border-left:3px solid var(--accent-blue);border-radius:2px;padding:0.35rem 0.45rem;display:flex;flex-direction:column;gap:0.15rem}
-  .left-dispatch-top{display:flex;justify-content:space-between;align-items:center;gap:0.3rem}
-  .left-dispatch-pt{font-size:0.7rem;font-weight:500;color:var(--text-primary)}
-  .left-dispatch-dept{font-size:0.6rem;color:var(--text-muted);background:rgba(42,195,252,0.06);padding:0.05rem 0.3rem;border-radius:2px}
-  .left-dispatch-time{font-family:'Oswald',sans-serif;font-size:0.6rem;color:var(--accent-blue)}
   /* 右列趋势图 */
   .right-trend-header{display:flex;justify-content:space-between;align-items:center;padding-bottom:0.3rem;border-bottom:1px solid var(--border);flex-shrink:0}
   .right-trend-title{font-size:0.85rem;font-weight:600;color:var(--accent-cyan);letter-spacing:1.5px;text-shadow:0 0 14px rgba(21,206,254,0.7),0 0 4px rgba(21,206,254,0.9);border-left:3px solid #3ad8fc;padding-left:0.35rem;display:flex;align-items:center;gap:0.25rem}
 .right-trend-title .section-dot{width:0.35rem;height:0.35rem;border-radius:50%;background:var(--accent-cyan);box-shadow:0 0 10px rgba(21,206,254,0.9),0 0 4px #15CEFE;flex-shrink:0}
+  .right-trend-title .trend-info-icon{width:0.75rem;height:0.75rem;border-radius:50%;border:1px solid rgba(21,206,254,0.65);color:var(--accent-cyan);font-size:0.55rem;font-weight:700;display:inline-flex;align-items:center;justify-content:center;cursor:help;flex-shrink:0;text-shadow:none;font-family:'Oswald',monospace;line-height:1;transition:all .15s ease}
+  .right-trend-title .trend-info-icon:hover{border-color:#15CEFE;color:#fff;background:rgba(21,206,254,0.18);box-shadow:0 0 8px rgba(21,206,254,0.7)}
   .right-trend-select{border-radius:2px;border:1px solid var(--border);background:var(--bg-inner);color:var(--text-secondary);font-size:0.6rem;padding:0.2rem 0.35rem;font-family:'Noto Sans SC',sans-serif;outline:none;cursor:pointer}
   .right-trend-select:focus{border-color:var(--accent-blue)}
   .right-trend-chart{flex:1 1 0;min-height:0;overflow:hidden;width:100%;position:relative}
@@ -956,9 +944,9 @@
       <div id="map-container">
         <div id="mapid"></div>
         <div class="map-legend">
-          <div class="ml"><span class="ml-dot red"></span>告警≥60min</div>
-          <div class="ml"><span class="ml-dot orange"></span>预警45-60min</div>
-          <div class="ml"><span class="ml-dot yellow"></span>智处30-45min</div>
+          <div class="ml"><span class="ml-dot red"></span>告警：≥60分钟</div>
+          <div class="ml"><span class="ml-dot orange"></span>预警：40-60分钟</div>
+          <div class="ml"><span class="ml-dot yellow"></span>智处：30-45分钟</div>
           <div class="ml"><span class="ml-dot gray"></span>离线</div>
         </div>
       </div>
@@ -969,7 +957,7 @@
       <!-- 区域2：趋势图 -->
       <div class="right-section" style="overflow:hidden;min-height:0">
         <div class="right-trend-header">
-          <span class="right-trend-title"><span class="section-dot"></span>消防通道占用态势</span>
+          <span class="right-trend-title"><span class="section-dot"></span>消防通道占用态势<span class="trend-info-icon" title="趋势图统计规则">!</span></span>
           <select class="right-trend-select" id="right-trend-period" onchange="switchRightTrend()">
             <option value="30d" selected>近30天</option>
             <option value="quarter">当季</option>
@@ -1218,7 +1206,7 @@
               <colgroup>
                 <col width="50"><col width="100"><col width="120"><col width="110"><col width="110">
                 <col width="190"><col width="95"><col width="140"><col width="95">
-                <col width="100"><col width="85"><col width="85"><col width="95">
+                <col width="100"><col width="85"><col width="85" id="alert-col-handle-w"><col width="95">
               </colgroup>
               <thead>
                 <tr>
@@ -1233,7 +1221,7 @@
                   <th class="text-center" id="alert-col-status">预警状态</th>
                   <th>占道时长</th>
                   <th>现场视频</th>
-                  <th>处置</th>
+                  <th id="alert-col-handle">处置</th>
                   <th>研判次数</th>
                 </tr>
               </thead>
@@ -1893,14 +1881,44 @@
   ];
   var _dispatchCurrentIdx=0;
   var _dispatchToastTimer=null;
+  var _dispatchAlertCode=null;
+  var _dispatchDoneCodes={};
 
   function formatDispatchDate(){
     var d=new Date();
     return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())+' '+pad(d.getHours())+':'+pad(d.getMinutes())+':'+pad(d.getSeconds());
   }
 
+  // 预警列表「一键转派」联动研判交办弹窗
+  function openAlertDispatch(devCode){
+    var list=_alertWarnData;
+    var item=null;
+    for(var i=0;i<list.length;i++){
+      if(list[i].devCode===devCode){item=list[i];break;}
+    }
+    if(!item)return;
+    _dispatchCurrentIdx=0;
+    _dispatchAlertCode=devCode;
+    document.getElementById('dispatch-dev-code').textContent=item.devCode;
+    document.getElementById('dispatch-dev-name').textContent=item.devName;
+    document.getElementById('dispatch-street').textContent=item.street;
+    document.getElementById('dispatch-install-addr').textContent=item.addr;
+    document.getElementById('dispatch-bld-name').textContent=item.bldName||'--';
+    document.getElementById('dispatch-bld-addr').textContent=item.bldAddr||'--';
+    document.getElementById('dispatch-date').value=formatDispatchDate();
+    document.getElementById('dispatch-content').value='事件类型: 消防车通道||设备地址: '+item.addr;
+    selectDispatchUnit('','请选择');
+    var toast=document.getElementById('dispatch-toast');
+    if(toast)toast.classList.remove('show');
+    if(_dispatchToastTimer){clearTimeout(_dispatchToastTimer);_dispatchToastTimer=null;}
+    document.getElementById('dispatch-submit-btn').disabled=false;
+    document.getElementById('dispatch-overlay').classList.add('show');
+    document.body.style.overflow='hidden';
+  }
+
   function openDispatchModal(idx){
     _dispatchCurrentIdx=idx;
+    _dispatchAlertCode=null;
     var item=_dispatchTodoData[idx];
     if(!item)return;
     // 填充设备信息
@@ -1954,10 +1972,17 @@
       return;
     }
     // 更新按钮状态
-    var btns=document.querySelectorAll('.btn-dispatch');
-    if(btns[_dispatchCurrentIdx]){
-      btns[_dispatchCurrentIdx].classList.add('done');
-      btns[_dispatchCurrentIdx].textContent='已转派';
+    if(_dispatchAlertCode){
+      _dispatchDoneCodes[_dispatchAlertCode]=true;
+      var span=document.querySelector('#alert-table-body span[data-code="'+_dispatchAlertCode+'"]');
+      if(span){span.className='alert-dispatch-done';span.textContent='已转派';span.removeAttribute('onclick');}
+      _dispatchAlertCode=null;
+    }else{
+      var btns=document.querySelectorAll('.btn-dispatch');
+      if(btns[_dispatchCurrentIdx]){
+        btns[_dispatchCurrentIdx].classList.add('done');
+        btns[_dispatchCurrentIdx].textContent='已转派';
+      }
     }
     // 禁用提交按钮
     document.getElementById('dispatch-submit-btn').disabled=true;
@@ -2499,6 +2524,11 @@
     var isDevice=_alertActiveTab==='device';
     var colStatus=document.getElementById('alert-col-status');
     if(colStatus)colStatus.textContent=isDevice?'设备状态':'预警状态';
+    // 动态处置列表头/列宽：设备列表隐藏，预警列表显示
+    var handleTh=document.getElementById('alert-col-handle');
+    var handleCol=document.getElementById('alert-col-handle-w');
+    if(handleTh)handleTh.style.display=isDevice?'none':'';
+    if(handleCol)handleCol.style.width=isDevice?'0':'';
 
     var tbody=document.getElementById('alert-table-body');
     if(!tbody)return;
@@ -2527,7 +2557,7 @@
         '<td class="text-center">'+statusHtml+'</td>'+
         '<td>'+r.duration+'</td>'+
         '<td><span class="alert-link">'+r.video+'</span></td>'+
-        '<td><span class="alert-link">'+r.handle+'</span></td>'+
+        (isDevice?'':'<td>'+(_dispatchDoneCodes[r.devCode]?'<span class="alert-dispatch-done">已转派</span>':'<span class="alert-link" data-code="'+r.devCode+'" onclick="openAlertDispatch(\''+r.devCode+'\')">一键转派</span>')+'</td>')+
         '<td>'+(function(){var n=parseInt(r.judge)||0;return n>0?'<span class="alert-link" onclick="openEventDetail(\''+r.devCode+'\',\''+r.devName+'\')">'+r.judge+'</span>':r.judge;})()+'</td>'+
         '</tr>';
     }).join('');
@@ -2583,6 +2613,7 @@
   window.toggleStatusDropdown=toggleStatusDropdown;
   window.handleStatusSelection=handleStatusSelection;
   window.openDispatchModal=openDispatchModal;
+  window.openAlertDispatch=openAlertDispatch;
   window.closeDispatchModal=closeDispatchModal;
   window.toggleDispatchFormDropdown=toggleDispatchFormDropdown;
   window.selectDispatchUnit=selectDispatchUnit;
@@ -3035,17 +3066,6 @@
       {point:'学田湾正街65号',time:'87min',tag:'≥60告警',status:'L3'},
       {point:'菜园坝正街88号',time:'48min',tag:'≥45预警',status:'L2'},
       {point:'解放碑民权路消防车道',time:'36min',tag:'≥30预警',status:'L2'}
-    ],
-    device:[
-      {msg:'菜园坝支路·离线超30min',time:'47m',warn:'red'},
-      {msg:'朝天门正街·9天零告警',time:'9d',warn:'orange'},
-      {msg:'学田湾·检测量骤降↓62%',time:'7,020',warn:'orange'},
-      {msg:'解放碑·心跳延迟异常',time:'8.4s',warn:'cyan'}
-    ],
-    dispatch:[
-      {point:'大溪沟正街12号',dept:'交巡警',time:'2h17m',state:'超时',stateClass:'flag-over'},
-      {point:'学田湾正街65号',dept:'大坪街道',time:'35min',state:'均时',stateClass:'flag-warn'},
-      {point:'菜园坝正街88号',dept:'渝中治理',time:'22min',state:'处置中',stateClass:''}
     ]
   };
 
@@ -3056,10 +3076,6 @@
     titles.forEach(function(t){t.classList.remove('active');});
     var activeTitle=document.getElementById('lt-title-'+tab);
     if(activeTitle)activeTitle.classList.add('active');
-    // Update list title
-    var titleMap={occupy:'占道情况列表',device:'设备情况列表',dispatch:'交办情况列表'};
-    var lt=document.getElementById('left-list-title');
-    if(lt)lt.textContent=titleMap[tab]||'列表';
     renderLeftScrollList();
     _leftScrollY=0;
   }
@@ -3086,21 +3102,6 @@
         html+='<button class="btn-move-car" onclick="openMoveCarModal('+i+')">一键挪车</button>';
         html+='<button class="btn-dispatch" onclick="openDispatchModal('+i+')">一键转派</button>';
         html+='</div></div>';
-      }
-    }else if(_leftActiveTab==='device'){
-      for(var j=0;j<items.length;j++){
-        var di=items[j];
-        var ico=di.warn==='red'?'⚠':'ℹ';
-        var icoColor='color:var(--'+di.warn+');';
-        html+='<div class="left-alert-item"><span style="'+icoColor+'">'+ico+'</span><span class="alert-msg">'+di.msg+'</span><span class="alert-time">'+di.time+'</span></div>';
-      }
-    }else if(_leftActiveTab==='dispatch'){
-      for(var k=0;k<items.length;k++){
-        var dp=items[k];
-        html+='<div class="left-dispatch-item">';
-        html+='<div class="left-dispatch-top"><span class="left-dispatch-pt">'+dp.point+'</span><span class="left-dispatch-dept">'+dp.dept+'</span></div>';
-        html+='<div style="display:flex;justify-content:space-between;align-items:center"><span class="left-dispatch-time">'+dp.time+'</span><span class="ev-flag '+dp.stateClass+'">'+dp.state+'</span></div>';
-        html+='</div>';
       }
     }
     if(!html)html='<div style="text-align:center;padding:0.8rem;color:var(--text-muted);font-size:0.6rem">暂无数据</div>';
@@ -3234,3 +3235,4 @@
 </html>
 
 
+
