@@ -408,7 +408,7 @@
 
   /* ===== About ===== */
   .about-content {
-    max-width: 620px;
+    max-width: 780px;
   }
   .about-content p {
     font-size: 0.95rem; color: var(--text-secondary);
@@ -419,6 +419,16 @@
   }
   .about-links .btn {
     font-size: 0.75rem;
+  }
+  .about-bottom {
+    margin-top: var(--space-lg);
+    padding-top: var(--space-md);
+    border-top: 1px solid var(--border);
+    display: flex; justify-content: space-between; align-items: center;
+    flex-wrap: wrap; gap: var(--space-sm);
+  }
+  .about-meta {
+    display: flex; flex-direction: column; align-items: flex-end; gap: var(--space-xs);
   }
 
   /* ===== Footer ===== */
@@ -456,6 +466,8 @@
     .hero-title { font-size: 2.2rem; }
     .stats-bar { flex-direction: column; align-items: flex-start; }
     .footer { flex-direction: column; align-items: flex-start; }
+    .about-bottom { flex-direction: column; align-items: flex-start; }
+    .about-meta { align-items: flex-start; }
   }
 </style>
 </head>
@@ -669,22 +681,22 @@
     <div class="about-content reveal">
       <h2 style="font-size:1.6rem;font-weight:700;letter-spacing:-0.02em;margin-bottom:var(--space-md)">关于</h2>
       <p>一个相信产品设计应由始至终应易于理解，便于使用，终于价值的人。从数据 schema 到交互动效，从 Docker 部署到色彩系统——每个环节都是设计决策。</p>
-      <div class="about-links">
-        <a href="mailto:16003269@qq.com" class="btn btn-secondary">邮件联系</a>
-        <a href="tencent://message/?uin=16003269" class="btn btn-secondary">QQ 联系</a>
+      <div class="about-bottom">
+        <div class="about-links">
+          <a href="mailto:16003269@qq.com" class="btn btn-secondary">邮件联系</a>
+          <a href="tencent://message/?uin=16003269" class="btn btn-secondary">QQ 联系</a>
+        </div>
+        <div class="about-meta">
+          <div class="footer-tags">
+            <span>HTML/CSS</span>
+            <span>无框架</span>
+            <span>Satoshi</span>
+          </div>
+          <div class="footer-left">&copy; 2026 BanFeng 16003269@qq.com</div>
+        </div>
       </div>
     </div>
   </section>
-
-  <!-- ===== Footer ===== -->
-  <footer class="footer reveal">
-    <div class="footer-left">&copy; 2026 BianFeng 1600329@qq.com</div>
-    <div class="footer-tags">
-      <span>HTML/CSS</span>
-      <span>无框架</span>
-      <span>Satoshi</span>
-    </div>
-  </footer>
 
 </div>
 
