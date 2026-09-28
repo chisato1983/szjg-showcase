@@ -304,7 +304,21 @@
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
     gap: var(--space-lg);
+    /* 限高内滚动：约 2 行完整卡片 + 第 3 行半张，暗示可继续滚动 */
+    max-height: 650px;
+    overflow-y: auto;
+    padding-right: 6px;
+    padding-bottom: 90px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+    /* 底部渐隐遮罩（配合 padding-bottom，滚到底时最后一行不被遮挡） */
+    mask-image: linear-gradient(to bottom, #000 0, #000 calc(100% - 90px), transparent 100%);
+    -webkit-mask-image: linear-gradient(to bottom, #000 0, #000 calc(100% - 90px), transparent 100%);
   }
+  .products-grid::-webkit-scrollbar { width: 6px; }
+  .products-grid::-webkit-scrollbar-track { background: transparent; }
+  .products-grid::-webkit-scrollbar-thumb { background: var(--border); border-radius: 999px; }
+  .products-grid::-webkit-scrollbar-thumb:hover { background: var(--border-hover); }
   .product-card {
     background: var(--surface-1);
     border: 1px solid var(--border);
@@ -333,6 +347,10 @@
   .product-name {
     font-size: 1.15rem; font-weight: 700; letter-spacing: -0.02em;
     transition: color 200ms var(--ease-out);
+    /* 统一卡片高度：名称恒为 2 行 */
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+    overflow: hidden;
+    min-height: calc(2 * 1.15rem * 1.65);
   }
   .product-card:hover .product-name { color: var(--accent); }
   .product-port {
@@ -349,9 +367,16 @@
   .product-desc {
     font-size: 0.82rem; color: var(--text-secondary);
     line-height: 1.7; flex: 1; margin-bottom: var(--space-md);
+    /* 统一卡片高度：描述恒为 3 行 */
+    display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
+    overflow: hidden;
+    min-height: calc(3 * 0.82rem * 1.7);
   }
   .product-tech {
     display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: var(--space-md);
+    /* 统一卡片高度：标签区恒为 2 行高度 */
+    min-height: calc(2 * 0.65rem * 1.65 + 22px);
+    align-content: flex-start;
   }
   .product-tech span {
     font-size: 0.65rem; font-weight: 500; letter-spacing: 0.04em;
@@ -461,7 +486,11 @@
 
   /* ===== Responsive ===== */
   @media (max-width: 700px) {
-    .products-grid { grid-template-columns: 1fr; }
+    .products-grid {
+      grid-template-columns: 1fr;
+      max-height: none; overflow: visible; padding-right: 0; padding-bottom: 0;
+      mask-image: none; -webkit-mask-image: none;
+    }
     .header-nav { gap: var(--space-md); }
     .hero-title { font-size: 2.2rem; }
     .stats-bar { flex-direction: column; align-items: flex-start; }
