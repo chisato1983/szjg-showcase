@@ -1,4 +1,5 @@
-const SECRET = process.env.AUTH_SECRET || 'fallback-dev-secret-change-me';
+// 安全约束：不设默认密钥。缺失时由 middleware 直接返回 503（fail-closed）。
+const SECRET = process.env.AUTH_SECRET;
 
 function base64UrlDecode(str) {
   str = str.replace(/-/g, '+').replace(/_/g, '/');
@@ -35,6 +36,14 @@ async function verify(token) {
 }
 
 export default async function middleware(req) {
+  // fail-closed：密钥缺失时不放行任何受保护路径，也不静默降级到默认密钥
+  if (!SECRET) {
+    return new Response('Authentication service not configured', {
+      status: 503,
+      headers: { 'content-type': 'text/plain; charset=utf-8' },
+    });
+  }
+
   const url = new URL(req.url);
   const path = url.pathname;
 
