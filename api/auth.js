@@ -1,8 +1,10 @@
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 
-const PASSWORD_HASH = process.env.PASSWORD_HASH || '$2b$10$exgu/yQGURr.2k.QBHoquO4SpiV632mzrfC/al.VsR3LU8.N8H77W';
-const AUTH_SECRET = process.env.AUTH_SECRET || 'fallback-dev-secret-change-me';
+// 安全约束：不设任何默认值。环境变量缺失时由下方 handler 直接返回 503（fail-closed），
+// 避免出现"环境变量丢失 → 静默回落到硬编码密码"的失效方式。
+const PASSWORD_HASH = process.env.PASSWORD_HASH;
+const AUTH_SECRET = process.env.AUTH_SECRET;
 
 // ===== 登录限流 =====
 // 说明：Vercel Serverless 各实例内存不共享，此计数为实例级。
@@ -41,6 +43,11 @@ module.exports = async function handler(req, res) {
 
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ success: false, message: 'Method Not Allowed' });
+
+  // fail-closed：配置缺失时明确报错，绝不回落到任何内置默认值
+  if (!PASSWORD_HASH || !AUTH_SECRET) {
+    return res.status(503).json({ success: false, message: '服务未正确配置，请联系管理员' });
+  }
 
   const ip = getClientIp(req);
   const now = Date.now();
