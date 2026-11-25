@@ -47,7 +47,7 @@ export default async function middleware(req) {
   const url = new URL(req.url);
   const path = url.pathname;
 
-  const isProtected = /^\/(gdp|dashboard|fire-event-detail|fire-cockpit|fire-control-room|yuzhong-risks|fire-water|elevator-monitor|fire-vehicle-wartime)(\/|$)/.test(path);
+  const isProtected = /^\/(gdp|dashboard|fire-event-detail|fire-cockpit|fire-control-room|yuzhong-risks|fire-water|elevator-monitor|fire-vehicle-wartime|fire-hi-rise-report)(\/|$)/.test(path);
   if (!isProtected) return;
 
   const cookieHeader = req.headers.get('cookie');
@@ -61,5 +61,10 @@ export default async function middleware(req) {
 }
 
 export const config = {
-  matcher: ['/((?!api|login\\.html|_next|favicon|assets|.*\\.svg|.*\\.png|.*\\.jpg).*)'],
+  matcher: [
+    // 该产品的图片置于 protected/ 下，需强制进入 middleware 鉴权，
+    // 否则会被下方通用的 .jpg/.png 排除规则跳过而裸奔。
+    '/fire-hi-rise-report/protected/:path*',
+    '/((?!api|login\\.html|_next|favicon|assets|.*\\.svg|.*\\.png|.*\\.jpg).*)',
+  ],
 };
